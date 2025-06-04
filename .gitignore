@@ -1,3 +1,7 @@
 # idea ignores
 cmake-build-**/**
 .idea/**
+
+# clangd stuff
+compile_commands.json
+.cache
