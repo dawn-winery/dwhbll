@@ -9,6 +9,5 @@ int main(int argc, char** argv) {
     } else
         std::cerr << "[PASSED] memory pool." << std::endl;
 
-
     return 0;
 }

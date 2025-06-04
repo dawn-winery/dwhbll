@@ -19,7 +19,7 @@ namespace dwhbll::memory {
 			std::size_t blockAvailable = BlockSize;
 			bool used[BlockSize] = {};
 			T object[BlockSize];
-			Obj* next;
+			Obj* next{nullptr};
 		};
 #pragma pack(pop)
 
