@@ -88,6 +88,16 @@ namespace dwhbll::memory {
 			}
 
 			~ObjectWrapper();
+
+			T& operator* ()
+			{
+				return *object;
+			}
+
+			T* operator-> ()
+			{
+				return object;
+			}
 		};
 
 		explicit Pool(const std::size_t default_size = 16) {
