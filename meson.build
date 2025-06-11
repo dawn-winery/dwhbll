@@ -4,6 +4,7 @@ dwhbll_inc = include_directories('include')
 
 dwhbll_sources = [
   'include/dwhbll/memory/pool.h',
+  'include/dwhbll/collections/ring.h',
   'include/dwhbll/linalg/matrix.h'
 ]
 

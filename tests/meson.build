@@ -1,6 +1,7 @@
 test_sources = [
   'test_main.cpp',
   'pool.cpp',
+  'collections/ring.cpp',
   'matrix.cpp'
 ]
 
