@@ -1,5 +1,6 @@
 #include <dwhbll/linalg/matrix.h>
 #include <functional>
+#include <initializer_list>
 #include <iostream>
 #include <string>
 #include <optional>
@@ -8,6 +9,7 @@
 bool matrix_init() 
 {
     bool test_failed = false;
+
     // Test zero init
     {
         constexpr int M = 5;
@@ -15,6 +17,7 @@ bool matrix_init()
 
         dwhbll::linealg::Matrix<int, M, N> mat;
         test_failed = mat.storageSize() != (M * N);
+        if(test_failed) std::println(std::cerr, "Failed to allocated enough storage");
 
         for(int i = 0; i < M; i++) {
             for(int j = 0; j < M; j++) {
@@ -25,9 +28,35 @@ bool matrix_init()
         if(test_failed) std::println(std::cerr, "Zero initialization failed");
     }
 
+    // Test init list
+    {
+        dwhbll::linealg::Matrix<int, 3, 3> mat {
+            0, 1, 2,
+            3, 4, 5,
+            6, 7, 8
+        };
+
+        test_failed = mat.storageSize() != 9;
+        if(test_failed) std::println(std::cerr, "Failed to allocated enough storage");
+
+
+        for(int i = 0; i < 3; i++) {
+            for(int j = 0; j < 3; j++) {
+                test_failed = mat[i,j] != i * mat.rowCount() + j;
+            }
+        }
+
+        if(test_failed) std::println(std::cerr, "Initialization list failed");
+    }
+
     return test_failed;
 }
 
+bool matrix_mul() {
+
+
+    return false;
+}
 
 std::unordered_map<std::string, std::function<bool()>> test_dispatch {
     { "init", matrix_init },

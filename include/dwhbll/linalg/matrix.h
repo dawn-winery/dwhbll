@@ -17,6 +17,13 @@ class Matrix {
         {
         }
 
+        template<typename... Args> requires (sizeof...(Args) == M * N && (std::convertible_to<Args, T> && ...))
+        Matrix(Args... d)
+        {
+            size_t i = 0;
+            ((data[i++] = static_cast<T>(d)), ...);
+        }
+
         constexpr size_t rowCount() const { return M; }
         constexpr size_t colCount() const { return N; }
         constexpr size_t storageSize() const { return data.size(); }
