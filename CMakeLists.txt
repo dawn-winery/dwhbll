@@ -18,6 +18,7 @@ set_target_properties(dwhbll PROPERTIES LINKER_LANGUAGE CXX)
 add_executable(dwhbll_test
         tests/test_main.cpp
         tests/pool.cpp
+        tests/matrix.cpp
         tests/collections/ring.cpp
 )
 target_link_libraries(dwhbll_test PRIVATE dwhbll)
