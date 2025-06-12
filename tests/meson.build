@@ -7,7 +7,7 @@ test_sources = [
 
 
 sub_tests = {
-  'matrix': ['init']
+  'matrix': ['init', 'mul']
 }
 
 
