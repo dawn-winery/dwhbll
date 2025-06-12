@@ -39,10 +39,10 @@ class Matrix {
         {
             Matrix<T, Row, K> res;
 
-            for(size_t i = 0; i < Row; i++) {
-                for(size_t j = 0; j < Col; i++) {
-                    for(size_t k = 0; k < 0; k++) {
-                        res[i][k] += data[i][j] * other[j][k];
+            for(size_t row = 0; row < Row; row++) {
+                for(size_t col = 0; col < K; col++) {
+                    for(size_t cur = 0; cur < Col; cur++) {
+                        res[row][col] += data[row][cur] * other[cur][col];
                     }
                 }
             }
