@@ -16,16 +16,17 @@ bool matrix_init()
         constexpr int N = 5;
 
         dwhbll::linealg::Matrix<int, M, N> mat;
-        test_failed = mat.storageSize() != (M * N);
+        test_failed |= mat.storageSize() != (M * N);
         if(test_failed) std::println(std::cerr, "Failed to allocated enough storage");
 
         for(int i = 0; i < M; i++) {
             for(int j = 0; j < M; j++) {
-                test_failed = mat[i,j] != 0;
+                test_failed |= mat[i,j] != 0;
             }
         }
 
-        if(test_failed) std::println(std::cerr, "Zero initialization failed");
+        if(test_failed)
+            std::println(std::cerr, "Zero initialization failed");
     }
 
     // Test init list
@@ -36,17 +37,19 @@ bool matrix_init()
             6, 7, 8
         };
 
-        test_failed = mat.storageSize() != 9;
-        if(test_failed) std::println(std::cerr, "Failed to allocated enough storage");
+        test_failed |= mat.storageSize() != 9;
+        if(test_failed)
+            std::println(std::cerr, "Failed to allocated enough storage");
 
 
         for(int i = 0; i < 3; i++) {
             for(int j = 0; j < 3; j++) {
-                test_failed = mat[i,j] != i * mat.rowCount() + j;
+                test_failed |= mat[i,j] != i * mat.rowCount() + j;
             }
         }
 
-        if(test_failed) std::println(std::cerr, "Initialization list failed");
+        if(test_failed)
+            std::println(std::cerr, "Initialization list failed");
     }
 
     return test_failed;
