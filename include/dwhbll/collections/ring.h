@@ -127,6 +127,12 @@ namespace dwhbll::collections {
             sz--;
         }
 
+        void clear() {
+            head = 0;
+            tail = 0;
+            sz = 0;
+        }
+
         [[nodiscard]] std::size_t size() const {
             return sz;
             //if (tail > head)
