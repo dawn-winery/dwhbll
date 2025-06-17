@@ -12,6 +12,8 @@ endif()
 add_library(dwhbll STATIC
         include/dwhbll/memory/pool.h
         include/dwhbll/collections/ring.h
+        include/dwhbll/console/Logging.h
+        src/dwhbll/network/console/Logging.cpp
 )
 set_target_properties(dwhbll PROPERTIES LINKER_LANGUAGE CXX)
 
