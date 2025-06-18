@@ -146,7 +146,7 @@ namespace dwhbll::memory {
 			--obj->blockAvailable;
 			obj->used[index] = true;
 			auto* f = obj->object;
-			f = new(f + index)T(args...);
+			auto* newobj = new(f + index)T(args...);
 			returning[f + index] = {obj, index};
 			return ObjectWrapper(this, f + index);
 		}
