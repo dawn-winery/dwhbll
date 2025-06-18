@@ -19,12 +19,12 @@ namespace dwhbll::collections {
         // head == tail means the buffer is full (or entire thing is empty);
         std::size_t head{}, tail{};
         std::size_t sz{};
-        std::vector<T> data;
+        std::vector<T> _M_data;
         bool needsResize{false};
 
         void inc_tail() {
             tail++;
-            if (tail >= data.size()) {
+            if (tail >= _M_data.size()) {
                 tail = 0; // wrap around
             }
             if (tail == head) {
@@ -35,7 +35,7 @@ namespace dwhbll::collections {
 
         void dec_tail() {
             if (tail == 0)
-                tail = data.size() - 1;
+                tail = _M_data.size() - 1;
             else
                 tail--;
             if (needsResize) {
@@ -46,7 +46,7 @@ namespace dwhbll::collections {
 
         void inc_head() {
             head++;
-            if (head >= data.size()) {
+            if (head >= _M_data.size()) {
                 head = 0; // wrap around
             }
             if (needsResize) {
@@ -57,7 +57,7 @@ namespace dwhbll::collections {
 
         void dec_head() {
             if (head == 0)
-                head = data.size() - 1;
+                head = _M_data.size() - 1;
             else
                 head--;
             if (tail == head) {
@@ -68,20 +68,20 @@ namespace dwhbll::collections {
 
         void resize() {
             std::vector<T> newData;
-            if (data.size() == 0)
+            if (_M_data.size() == 0)
                 newData.resize(2);
             else
-                newData.resize(data.size() * 2); // double size
+                newData.resize(_M_data.size() * 2); // double size
             // put it all in order
             if (tail >= head) {
                 // it's actually already in order.
-                std::memcpy(newData.data(), data.data() + head, sz * sizeof(T));
+                std::memcpy(newData.data(), _M_data.data() + head, sz * sizeof(T));
             } else {
                 // it's not quite in order
-                std::memcpy(newData.data(), data.data() + head, (data.size() - head) * sizeof(T));
-                std::memcpy(newData.data() + (data.size() - head), data.data(), tail * sizeof(T));
+                std::memcpy(newData.data(), _M_data.data() + head, (_M_data.size() - head) * sizeof(T));
+                std::memcpy(newData.data() + (_M_data.size() - head), _M_data.data(), tail * sizeof(T));
             }
-            data = std::move(newData);
+            _M_data = std::move(newData);
             head = 0;
             tail = sz;
             needsResize = false;
@@ -93,14 +93,14 @@ namespace dwhbll::collections {
         using const_reference = typename std::vector<T>::const_reference;
         using pointer = typename std::vector<T>::pointer;
 
-        explicit Ring(std::size_t defaultSize) : data(defaultSize) {}
+        explicit Ring(std::size_t defaultSize) : _M_data(defaultSize) {}
 
-        Ring() : data(16) {}
+        Ring() : _M_data(16) {}
 
         void push_back(T data) {
             if (needsResize)
                 resize();
-            this->data[tail] = data;
+            this->_M_data[tail] = data;
             inc_tail();
             sz++;
         }
@@ -116,7 +116,7 @@ namespace dwhbll::collections {
             if (needsResize)
                 resize();
             dec_head();
-            this->data[head] = data;
+            this->_M_data[head] = data;
             sz++;
         }
 
@@ -133,6 +133,72 @@ namespace dwhbll::collections {
             sz = 0;
         }
 
+        /**
+         * Rebuild the buffer such that the data inside is now continuous
+         */
+        void make_cont() {
+            std::vector<T> newData;
+            newData.resize(_M_data.size());
+
+            // put it all in order
+            if (tail >= head) {
+                // it's actually already in order.
+                std::memcpy(newData.data(), _M_data.data() + head, sz * sizeof(T));
+            } else {
+                // it's not quite in order
+                std::memcpy(newData.data(), _M_data.data() + head, (_M_data.size() - head) * sizeof(T));
+                std::memcpy(newData.data() + (_M_data.size() - head), _M_data.data(), tail * sizeof(T));
+            }
+            _M_data = std::move(newData);
+            head = 0;
+            tail = sz;
+        }
+
+        void resize(std::size_t target) {
+            std::vector<T> newData;
+            newData.resize(target);
+            if (target > _M_data.size()) {
+                // put it all in order
+                if (tail >= head) {
+                    // it's actually already in order.
+                    std::memcpy(newData.data(), _M_data.data() + head, sz * sizeof(T));
+                } else {
+                    // it's not quite in order
+                    std::memcpy(newData.data(), _M_data.data() + head, (_M_data.size() - head) * sizeof(T));
+                    std::memcpy(newData.data() + (_M_data.size() - head), _M_data.data(), tail * sizeof(T));
+                }
+            } else {
+                // we gonna run out of space, chop off the end
+                if (tail >= head) {
+                    // it's actually already in order.
+                    std::memcpy(newData.data(), _M_data.data() + head, target * sizeof(T));
+                } else {
+                    // it's not quite in order
+                    std::memcpy(newData.data(), _M_data.data() + head, std::min((_M_data.size() - head), target) * sizeof(T));
+                    if (target > _M_data.size() - head)
+                        std::memcpy(newData.data() + (_M_data.size() - head), _M_data.data(), (target - (_M_data.size() - head)) * sizeof(T));
+                }
+            }
+            _M_data = std::move(newData);
+            head = 0;
+            tail = sz;
+            needsResize = false;
+        }
+
+        void used(std::size_t count) {
+            if (count > _M_data.size()) {
+                resize(count);
+            }
+            tail = count;
+            sz = count;
+            if (sz == _M_data.size())
+                needsResize = true;
+        }
+
+        std::vector<T>& data() {
+            return _M_data;
+        }
+
         [[nodiscard]] std::size_t size() const {
             return sz;
             //if (tail > head)
@@ -141,7 +207,7 @@ namespace dwhbll::collections {
         }
 
         [[nodiscard]] std::size_t capacity() const {
-            return data.size();
+            return _M_data.size();
         }
 
         class iterator {
@@ -163,9 +229,9 @@ namespace dwhbll::collections {
                 iterator n = *this;
                 n.index += count;
                 if (n.index < 0)
-                    n.index += parent->data.size();
-                if (n.index > parent->data.size())
-                    n.index -= parent->data.size();
+                    n.index += parent->_M_data.size();
+                if (n.index > parent->_M_data.size())
+                    n.index -= parent->_M_data.size();
                 return n;
             }
 
@@ -186,39 +252,39 @@ namespace dwhbll::collections {
                 std::size_t ia = index;
                 std::size_t ib = other.index;
                 if (ia < parent->head)
-                    ia += parent->data.size();
+                    ia += parent->_M_data.size();
                 if (ib < parent->head)
-                    ib += parent->data.size();
+                    ib += parent->_M_data.size();
                 return static_cast<long>(ia - ib);
             }
 
             reference operator*() {
-                return parent->data[index];
+                return parent->_M_data[index];
             }
 
             pointer operator->() {
-                return parent->data.data() + index;
+                return parent->_M_data.data() + index;
             }
 
             iterator& operator++() {
                 index += 1;
-                if (index >= parent->data.size())
-                    index -= parent->data.size();
+                if (index >= parent->_M_data.size())
+                    index -= parent->_M_data.size();
                 return *this;
             }
 
             iterator operator++(int) {
                 iterator tmp = *this;
                 index += 1;
-                if (index >= parent->data.size())
-                    index -= parent->data.size();
+                if (index >= parent->_M_data.size())
+                    index -= parent->_M_data.size();
                 return tmp;
             }
 
             iterator& operator--() {
                 index -= 1;
                 if (index < 0)
-                    index += parent->data.size();
+                    index += parent->_M_data.size();
                 return *this;
             }
 
@@ -226,7 +292,7 @@ namespace dwhbll::collections {
                 iterator tmp = *this;
                 index -= 1;
                 if (index < 0)
-                    index += parent->data.size();
+                    index += parent->_M_data.size();
                 return tmp;
             }
 
@@ -259,9 +325,9 @@ namespace dwhbll::collections {
                 reverse_iterator n = *this;
                 n.index += count;
                 if (n.index < 0)
-                    n.index += parent->data.size();
-                if (n.index > parent->data.size())
-                    n.index -= parent->data.size();
+                    n.index += parent->_M_data.size();
+                if (n.index > parent->_M_data.size())
+                    n.index -= parent->_M_data.size();
                 return n;
             }
 
@@ -290,32 +356,32 @@ namespace dwhbll::collections {
 //             }
 
             reference operator*() {
-                return parent->data[index];
+                return parent->_M_data[index];
             }
 
             pointer operator->() {
-                return parent->data.data() + index;
+                return parent->_M_data.data() + index;
             }
 
             reverse_iterator& operator--() {
                 index += 1;
-                if (index >= parent->data.size())
-                    index -= parent->data.size();
+                if (index >= parent->_M_data.size())
+                    index -= parent->_M_data.size();
                 return *this;
             }
 
             reverse_iterator operator--(int) {
                 reverse_iterator tmp = *this;
                 index += 1;
-                if (index >= parent->data.size())
-                    index -= parent->data.size();
+                if (index >= parent->_M_data.size())
+                    index -= parent->_M_data.size();
                 return tmp;
             }
 
             reverse_iterator& operator++() {
                 index -= 1;
                 if (index < 0)
-                    index += parent->data.size();
+                    index += parent->_M_data.size();
                 return *this;
             }
 
@@ -323,7 +389,7 @@ namespace dwhbll::collections {
                 reverse_iterator tmp = *this;
                 index -= 1;
                 if (index < 0)
-                    index += parent->data.size();
+                    index += parent->_M_data.size();
                 return tmp;
             }
 
@@ -357,9 +423,9 @@ namespace dwhbll::collections {
                 const_iterator n = *this;
                 n.index += count;
                 if (n.index < 0)
-                    n.index += parent->data.size();
-                if (n.index > parent->data.size())
-                    n.index -= parent->data.size();
+                    n.index += parent->_M_data.size();
+                if (n.index > parent->_M_data.size())
+                    n.index -= parent->_M_data.size();
                 return n;
             }
 
@@ -380,39 +446,39 @@ namespace dwhbll::collections {
                 std::size_t ia = index;
                 std::size_t ib = other.index;
                 if (ia < parent->head)
-                    ia += parent->data.size();
+                    ia += parent->_M_data.size();
                 if (ib < parent->head)
-                    ib += parent->data.size();
+                    ib += parent->_M_data.size();
                 return static_cast<long>(ia - ib);
             }
 
             const_reference operator*() const {
-                return parent->data[index];
+                return parent->_M_data[index];
             }
 
             const_pointer operator->() const {
-                return parent->data.data() + index;
+                return parent->_M_data.data() + index;
             }
 
             const_iterator& operator++() {
                 index += 1;
-                if (index >= parent->data.size())
-                    index -= parent->data.size();
+                if (index >= parent->_M_data.size())
+                    index -= parent->_M_data.size();
                 return *this;
             }
 
             const_iterator operator++(int) {
                 const_iterator tmp = *this;
                 index += 1;
-                if (index >= parent->data.size())
-                    index -= parent->data.size();
+                if (index >= parent->_M_data.size())
+                    index -= parent->_M_data.size();
                 return tmp;
             }
 
             const_iterator& operator--() {
                 index -= 1;
                 if (index < 0)
-                    index += parent->data.size();
+                    index += parent->_M_data.size();
                 return *this;
             }
 
@@ -420,7 +486,7 @@ namespace dwhbll::collections {
                 const_iterator tmp = *this;
                 index -= 1;
                 if (index < 0)
-                    index += parent->data.size();
+                    index += parent->_M_data.size();
                 return tmp;
             }
 
@@ -454,9 +520,9 @@ namespace dwhbll::collections {
                 const_reverse_iterator n = *this;
                 n.index += count;
                 if (n.index < 0)
-                    n.index += parent->data.size();
-                if (n.index > parent->data.size())
-                    n.index -= parent->data.size();
+                    n.index += parent->_M_data.size();
+                if (n.index > parent->_M_data.size())
+                    n.index -= parent->_M_data.size();
                 return n;
             }
 
@@ -485,32 +551,32 @@ namespace dwhbll::collections {
 //             }
 
             const_reference operator*() const {
-                return parent->data[index];
+                return parent->_M_data[index];
             }
 
             const_pointer operator->() {
-                return parent->data.data() + index;
+                return parent->_M_data.data() + index;
             }
 
             const_reverse_iterator& operator--() {
                 index += 1;
-                if (index >= parent->data.size())
-                    index -= parent->data.size();
+                if (index >= parent->_M_data.size())
+                    index -= parent->_M_data.size();
                 return *this;
             }
 
             const_reverse_iterator operator--(int) {
                 const_reverse_iterator tmp = *this;
                 index += 1;
-                if (index >= parent->data.size())
-                    index -= parent->data.size();
+                if (index >= parent->_M_data.size())
+                    index -= parent->_M_data.size();
                 return tmp;
             }
 
             const_reverse_iterator& operator++() {
                 index -= 1;
                 if (index < 0)
-                    index += parent->data.size();
+                    index += parent->_M_data.size();
                 return *this;
             }
 
@@ -518,7 +584,7 @@ namespace dwhbll::collections {
                 const_reverse_iterator tmp = *this;
                 index -= 1;
                 if (index < 0)
-                    index += parent->data.size();
+                    index += parent->_M_data.size();
                 return tmp;
             }
 
@@ -539,14 +605,14 @@ namespace dwhbll::collections {
         {
             // compute the index
             index += head;
-            if (index > data.size())
-                index -= data.size();
+            if (index > _M_data.size())
+                index -= _M_data.size();
 #ifdef DWHBLL_HARDEN
             // bounds check
             if (index >= tail)
                 throw std::out_of_range("index is out of range.");
 #endif
-            return data[index];
+            return _M_data[index];
         }
 
         const_reference operator[](std::size_t index) const
@@ -556,14 +622,14 @@ namespace dwhbll::collections {
         {
             // compute the index
             index += head;
-            if (index > data.size())
-                index -= data.size();
+            if (index > _M_data.size())
+                index -= _M_data.size();
 #ifdef DWHBLL_HARDEN
             // bounds check
             if (index >= tail)
                 throw std::out_of_range("index is out of range.");
 #endif
-            return data[index];
+            return _M_data[index];
         }
 
         /**
@@ -575,12 +641,12 @@ namespace dwhbll::collections {
         reference at(std::size_t index) {
             // compute the index
             index += head;
-            if (index > data.size())
-                index -= data.size();
+            if (index > _M_data.size())
+                index -= _M_data.size();
             // bounds check
             if (index >= tail)
                 throw std::out_of_range("index is out of range.");
-            return data[index];
+            return _M_data[index];
         }
 
         /**
@@ -592,12 +658,12 @@ namespace dwhbll::collections {
         const_reference at(std::size_t index) const {
             // compute the index
             index += head;
-            if (index > data.size())
-                index -= data.size();
+            if (index > _M_data.size())
+                index -= _M_data.size();
             // bounds check
             if (index >= tail)
                 throw std::out_of_range("index is out of range.");
-            return data[index];
+            return _M_data[index];
         }
 
         [[nodiscard]] bool empty() const noexcept {
@@ -613,7 +679,7 @@ namespace dwhbll::collections {
             if (empty())
                 throw std::out_of_range("ring buffer is empty.");
 #endif
-            return data[head];
+            return _M_data[head];
         }
 
         const_reference front() const
@@ -625,7 +691,7 @@ namespace dwhbll::collections {
             if (empty())
                 throw std::out_of_range("ring buffer is empty.");
 #endif
-            return data[head];
+            return _M_data[head];
         }
 
         reference back()
@@ -637,7 +703,7 @@ namespace dwhbll::collections {
             if (empty())
                 throw std::out_of_range("ring buffer is empty.");
 #endif
-            return data[tail == 0 ? data.size() - 1 : tail - 1];
+            return _M_data[tail == 0 ? _M_data.size() - 1 : tail - 1];
         }
 
         const_reference back() const
@@ -649,7 +715,7 @@ namespace dwhbll::collections {
             if (empty())
                 throw std::out_of_range("ring buffer is empty.");
 #endif
-            return data[tail == 0 ? data.size() - 1 : tail - 1];
+            return _M_data[tail == 0 ? _M_data.size() - 1 : tail - 1];
         }
 
         constexpr iterator begin() noexcept {
