@@ -12,8 +12,12 @@ endif()
 add_library(dwhbll STATIC
         include/dwhbll/memory/pool.h
         include/dwhbll/collections/ring.h
+        include/dwhbll/network/dns/dns.h
+        include/dwhbll/network/SocketManager.h
         include/dwhbll/console/Logging.h
         src/dwhbll/network/console/Logging.cpp
+        src/dwhbll/network/dns/dns.cpp
+        src/dwhbll/network/SocketManager.cpp
 )
 set_target_properties(dwhbll PROPERTIES LINKER_LANGUAGE CXX)
 target_include_directories(dwhbll PRIVATE include)
