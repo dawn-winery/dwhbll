@@ -16,6 +16,7 @@ add_library(dwhbll STATIC
         src/dwhbll/network/console/Logging.cpp
 )
 set_target_properties(dwhbll PROPERTIES LINKER_LANGUAGE CXX)
+target_include_directories(dwhbll PRIVATE include)
 
 add_executable(dwhbll_test
         tests/test_main.cpp
