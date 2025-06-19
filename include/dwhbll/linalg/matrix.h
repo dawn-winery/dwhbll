@@ -1,6 +1,5 @@
 #pragma once
 
-#include "dwhbll/linalg/policy.h"
 #include <thread>
 #include <type_traits>
 #include <vector>
@@ -12,6 +11,16 @@
 
 
 namespace dwhbll::linalg {
+
+// Computation volume at which point we switch to the GPU
+constexpr uint64_t GPU_VOLUME_THRESHOLD = (uint64_t) LINALG_GPU_THRESHOLD * LINALG_GPU_THRESHOLD * LINALG_GPU_THRESHOLD;
+
+enum class ExecutionPolicy {
+    Auto,
+    CPU,
+    GPU,
+    HIP
+};
 
 
 // These concepts ensure a Matrix element is convertible to any arithmetic type
@@ -51,17 +60,22 @@ class Matrix {
 
         using value_type = T;
 
-        // CONSTRUCTORS
-
         Matrix() : data(Row * Col) {}
+        Matrix(const Matrix& other) = default;
+        Matrix(Matrix&& other) noexcept = default;
 
+        Matrix& operator=(const Matrix& other) = default;
+        Matrix& operator=(Matrix&& other) noexcept = default;
+
+        ~Matrix() = default;
+
+        // Variadic constructor to allow construction from a list of elements
         // Assumes row major order
         template<typename... Args> requires (sizeof...(Args) == Row * Col && (std::convertible_to<Args, T> && ...))
         Matrix(Args&&... d) : data { static_cast<T>(std::forward<Args>(d))... } {}
 
-        Matrix(const Matrix& other) = default;
-        Matrix(Matrix&& other) noexcept = default;
-
+        // Copy and move constructors and assignment operators
+        // For when matrix B has a different type than matrix A
         template <typename T2> requires std::convertible_to<T2, T>
         Matrix(const Matrix<T2, Row, Col>& other) {
             for(size_t i = 0; i < Row * Col; i++) {
@@ -75,12 +89,6 @@ class Matrix {
                 data[i] = static_cast<T>(std::move(other.data[i]));
             }
         }
-
-        ~Matrix() = default;
-
-        // ASSIGNMENTS
-        Matrix& operator=(const Matrix& other) = default;
-        Matrix& operator=(Matrix&& other) noexcept = default;
 
         template <typename T2> requires std::convertible_to<T2, T>
         Matrix& operator=(const Matrix<T2, Row, Col>& other) {
@@ -120,7 +128,10 @@ class Matrix {
             return data[row * Col + col];
         }
 
+        // TODO : +, -, / operators
 
+        // Main matmul function. Responsible for dispatching between the CPU and the GPU
+        // TODO: make custom GPU kernels and a hipBLAS implementation
         template<size_t K, typename T2, ExecutionPolicy Policy = ExecutionPolicy::Auto> 
         requires MatrixElement<T2> && Arithmetic<T, T2>
         Matrix<std::common_type_t<T, T2>, Row, K> matmul(const Matrix<T2, Col, K>& other) {
@@ -140,6 +151,7 @@ class Matrix {
             return res;
         }
 
+        // A * B just calls the default behaviour of matmul, it's just better to read
         template<size_t K, typename T2>
         Matrix<std::common_type_t<T, T2>, Row, K> operator*(const Matrix<T2, Col, K>& other) {
             return matmul<K, T2>(other);
@@ -147,7 +159,7 @@ class Matrix {
     
     private:
         template<size_t K, typename T2>
-        void matmul_cpu(const Matrix<T2, Col, K>& other, Matrix<T2, Col, K>& res) {
+        inline void matmul_cpu(const Matrix<T2, Col, K>& other, Matrix<T2, Col, K>& res) {
 
             auto MatmulWorker = [&] (size_t start_row, size_t end_row) {
                 for(size_t row = start_row; row < end_row; row++) {
