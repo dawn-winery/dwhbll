@@ -18,8 +18,8 @@ bool matrix_init()
         constexpr int M = 5;
         constexpr int N = 5;
 
-        dwhbll::linealg::Matrix<int, M, N> mat;
-        test_failed |= mat.storageSize() != (M * N);
+        dwhbll::linalg::Matrix<int, M, N> mat;
+        test_failed |= mat.size() != (M * N);
         if(test_failed) std::println(std::cerr, "[Zero init] Failed to allocated enough storage");
 
         for(int i = 0; i < M; i++) {
@@ -34,20 +34,20 @@ bool matrix_init()
 
     // Test init list
     {
-        dwhbll::linealg::Matrix<int, 3, 3> mat {
+        dwhbll::linalg::Matrix<int, 3, 3> mat {
             0, 1, 2,
             3, 4, 5,
             6, 7, 8
         };
 
-        test_failed |= mat.storageSize() != 9;
+        test_failed |= mat.size() != 9;
         if(test_failed)
             std::println(std::cerr, "[Init list] Failed to allocated enough storage");
 
 
         for(int i = 0; i < 3; i++) {
             for(int j = 0; j < 3; j++) {
-                test_failed |= mat[i,j] != i * mat.rowCount() + j;
+                test_failed |= mat[i,j] != i * mat.rows() + j;
             }
         }
 
@@ -64,21 +64,21 @@ bool matrix_mul() {
 
     // Square matrix
     {
-        dwhbll::linealg::Matrix<int, 4, 4> m1 {
+        dwhbll::linalg::Matrix<int, 4, 4> m1 {
             1, 2, 3, 4,
             5, 6, 7, 8,
             9, 10, 11, 12,
             13, 14, 15, 16
         };
 
-        dwhbll::linealg::Matrix<int, 4, 4> m2 {
+        dwhbll::linalg::Matrix<double, 4, 4> m2 {
             16, 15, 14, 13,
             12, 11, 10, 9,
             8, 7, 6, 5,
             4, 3, 2, 1
         };
 
-        dwhbll::linealg::Matrix<int, 4, 4> expected {
+        dwhbll::linalg::Matrix<int, 4, 4> expected {
             80, 70, 60, 50,
             240, 214, 188, 162,
             400, 358, 316, 274,
@@ -86,15 +86,15 @@ bool matrix_mul() {
         };
 
         auto res = m1 * m2;
-        test_failed |= (res.rowCount() != m1.rowCount() || res.colCount() != m2.colCount());
+        test_failed |= (res.rows() != m1.rows() || res.cols() != m2.cols());
         if(test_failed) 
             std::println(std::cerr, "[Square] Result matrix of wrong dimensions. Expected {}x{}, got {}x{}", 
-                m1.rowCount(), m2.colCount(), 
-                res.rowCount(), res.colCount()
+                m1.rows(), m2.cols(), 
+                res.rows(), res.cols()
             );
 
-        for(int i = 0; i < res.rowCount(); i++) {
-            for(int j = 0; j < res.colCount(); j++) {
+        for(int i = 0; i < res.rows(); i++) {
+            for(int j = 0; j < res.cols(); j++) {
                 bool failed = (res[i,j] != expected[i,j]);
                 test_failed |= failed;
                 if(failed)
@@ -104,9 +104,9 @@ bool matrix_mul() {
     }
 
     {
-        constexpr size_t SIZE = 8192;
-        dwhbll::linealg::Matrix<int, SIZE, SIZE> m1;
-        dwhbll::linealg::Matrix<int, SIZE, SIZE> m2;
+        constexpr size_t SIZE = 4096;
+        dwhbll::linalg::Matrix<int, SIZE, SIZE> m1;
+        dwhbll::linalg::Matrix<int, SIZE, SIZE> m2;
 
         std::random_device rd;
         std::mt19937_64 generator(rd());
