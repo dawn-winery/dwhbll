@@ -38,7 +38,7 @@ concept Arithmetic = requires (T t, T2 s) {
 };
 
 template <typename T>
-concept MatrixElement = 
+concept MatrixElement =
     std::default_initializable<T> &&
     Arithmetic<T, T> &&
     Arithmetic<T, int> &&
@@ -55,7 +55,7 @@ class Matrix {
 
         // Internal storage of the matrix. Flat storage in row major order.
         std::vector<T> data;
-    
+
     public:
 
         using value_type = T;
@@ -84,14 +84,14 @@ class Matrix {
         }
 
         template <typename T2> requires std::convertible_to<T2, T>
-        Matrix(const Matrix<T2, Row, Col>&& other) {
+        Matrix(const Matrix<T2, Row, Col>&& other) noexcept {
             for(size_t i = 0; i < Row * Col; i++) {
                 data[i] = static_cast<T>(std::move(other.data[i]));
             }
         }
 
         template <typename T2> requires std::convertible_to<T2, T>
-        Matrix& operator=(const Matrix<T2, Row, Col>& other) {
+        Matrix& operator=(Matrix<T2, Row, Col>& other) {
             if(this != &other) {
                 for(size_t i = 0; i < Row * Col; i++) {
                     data[i] = static_cast<T>(other.data[i]);
@@ -102,7 +102,7 @@ class Matrix {
         }
 
         template <typename T2> requires std::convertible_to<T2, T>
-        Matrix& operator=(const Matrix<T2, Row, Col>&& other) {
+        Matrix& operator=(Matrix<T2, Row, Col>&& other) noexcept {
             if(this != &other) {
                 for(size_t i = 0; i < Row * Col; i++) {
                     data[i] = static_cast<T>(std::move(other.data[i]));
@@ -132,34 +132,49 @@ class Matrix {
 
         // Main matmul function. Responsible for dispatching between the CPU and the GPU
         // TODO: make custom GPU kernels and a hipBLAS implementation
-        template<size_t K, typename T2, ExecutionPolicy Policy = ExecutionPolicy::Auto> 
+        template<size_t K, typename T2, ExecutionPolicy Policy = ExecutionPolicy::Auto>
         requires MatrixElement<T2> && Arithmetic<T, T2>
-        Matrix<std::common_type_t<T, T2>, Row, K> matmul(const Matrix<T2, Col, K>& other) {
+        Matrix<std::common_type_t<T, T2>, Row, K> matmul(const Matrix<T2, Col, K>& other) const {
             std::print("{}x{} * {}x{} > ", Row, Col, Col, K);
 
             using ResultType = std::common_type_t<T, T2>;
             Matrix<ResultType, Row, K> res;
 
-            if constexpr (Row * Col * K <= GPU_VOLUME_THRESHOLD) {
+
+            if constexpr (Policy == ExecutionPolicy::CPU) {
                 std::println("CPU");
-                matmul_cpu(other, res);
+                matmul_cpu<K, T2, ResultType>(other, res);
+            }
+            else if constexpr (Policy == ExecutionPolicy::GPU) {
+                std::println("Using dwhbll GPU kernel [TODO]");
+            }
+            else if constexpr (Policy == ExecutionPolicy::HIP) {
+                std::println("Using hipBLAS GPU kernel [TODO]");
             }
             else {
-                std::println("too large for the CPU, dispatching to GPU [TODO]");
+                // ExecutionPolicy::Auto
+                if constexpr (Row * Col * K <= GPU_VOLUME_THRESHOLD) {
+                    std::println("Auto dispatch to CPU");
+                    matmul_cpu<K, T2, ResultType>(other, res);
+                }
+                else {
+                    std::println("Auto dispatch to GPU [TODO]");
+                }
+
             }
-            
+
             return res;
         }
 
         // A * B just calls the default behaviour of matmul, it's just better to read
         template<size_t K, typename T2>
-        Matrix<std::common_type_t<T, T2>, Row, K> operator*(const Matrix<T2, Col, K>& other) {
+        Matrix<std::common_type_t<T, T2>, Row, K> operator*(const Matrix<T2, Col, K>& other) const {
             return matmul<K, T2>(other);
         }
-    
+
     private:
-        template<size_t K, typename T2>
-        inline void matmul_cpu(const Matrix<T2, Col, K>& other, Matrix<T2, Col, K>& res) {
+        template<size_t K, typename T2, typename ResultType>
+        inline void matmul_cpu(const Matrix<T2, Col, K>& other, Matrix<ResultType, Col, K>& res) const {
 
             auto MatmulWorker = [&] (size_t start_row, size_t end_row) {
                 for(size_t row = start_row; row < end_row; row++) {
@@ -172,12 +187,13 @@ class Matrix {
             };
 
             size_t num_threads = std::thread::hardware_concurrency();
+            if(num_threads == 0) num_threads = 1;   // Fallback for safety
             size_t row_per_threads = Row / num_threads;
             size_t remaining_rows  = Row % num_threads;
 
             {
                 std::vector<std::jthread> threads;
-                
+
                 for(int i = 0; i < num_threads; i++) {
                     size_t start_row = i * row_per_threads;
                     size_t end_row = start_row + row_per_threads;
