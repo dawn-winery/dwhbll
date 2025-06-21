@@ -22,7 +22,7 @@ add_library(dwhbll STATIC
         include/dwhbll/network/SocketManager.h
         include/dwhbll/console/Logging.h
         include/dwhbll/linalg/matrix.h
-        src/dwhbll/network/console/Logging.cpp
+        src/dwhbll/console/Logging.cpp
         src/dwhbll/network/dns/dns.cpp
         src/dwhbll/network/SocketManager.cpp
 )
