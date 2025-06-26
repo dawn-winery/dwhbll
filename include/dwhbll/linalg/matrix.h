@@ -2,18 +2,28 @@
 
 #include <thread>
 #include <type_traits>
+#include <utility>
 #include <vector>
 #include <cassert>
 #include <concepts>
 #include <cstddef>
 #include <print>
-// #include <hip/hip_runtime.h>
+
 
 
 namespace dwhbll::linalg {
 
+
+
+#ifdef DWHBLL_GPU_ENABLED
 // Computation volume at which point we switch to the GPU
 constexpr uint64_t GPU_VOLUME_THRESHOLD = (uint64_t) LINALG_GPU_THRESHOLD * LINALG_GPU_THRESHOLD * LINALG_GPU_THRESHOLD;
+
+template <typename ComputeT>
+void matmul_gpu_wrapper(const void *matA, const void *matB, void *res, std::pair<size_t, size_t> dimA, std::pair<size_t, size_t> dimB);
+
+
+#endif
 
 enum class ExecutionPolicy {
     Auto,
@@ -140,13 +150,13 @@ class Matrix {
             using ResultType = std::common_type_t<T, T2>;
             Matrix<ResultType, Row, K> res;
 
-
+#ifdef DWHBLL_GPU_ENABLED
             if constexpr (Policy == ExecutionPolicy::CPU) {
                 std::println("CPU");
                 matmul_cpu<K, T2, ResultType>(other, res);
             }
             else if constexpr (Policy == ExecutionPolicy::GPU) {
-                std::println("Using dwhbll GPU kernel [TODO]");
+                // TODO
             }
             else if constexpr (Policy == ExecutionPolicy::HIP) {
                 std::println("Using hipBLAS GPU kernel [TODO]");
@@ -159,10 +169,13 @@ class Matrix {
                 }
                 else {
                     std::println("Auto dispatch to GPU [TODO]");
+                    matmul_gpu_wrapper<float>(this->data.data(), other.data.data(), res.data.data(), std::make_pair(Row, Col), std::make_pair(Col, K));
                 }
 
             }
-
+#else
+            matmul_cpu<K, T2, ResultType>(other, res);
+#endif
             return res;
         }
 
@@ -207,7 +220,6 @@ class Matrix {
             }
         }
 };
-
 
 
 }
