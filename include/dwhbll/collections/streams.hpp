@@ -3,12 +3,12 @@
 #include <cassert>
 #include <cstdint>
 #include <cstring>
+#include <filesystem>
 #include <memory>
 #include <vector>
 #include <string>
 #include <fstream>
 #include <span>
-#include <stdexcept>
 #include <algorithm>
 
 namespace dwhbll::collections::stream {
@@ -70,7 +70,7 @@ public:
 
     // Reads either dest.size() or remaining() bytes, whichever is smaller
     virtual std::size_t read_raw_bytes(std::span<uint8_t> dest) = 0;
-    virtual std::size_t peek_raw_bytes(std::span<uint8_t> dest, std::size_t offset = 0) const = 0;
+    virtual std::size_t peek_raw_bytes(std::span<uint8_t> dest, std::size_t offset = 0) = 0;
 
     virtual bool seek(std::size_t pos) = 0;
     virtual bool skip(std::size_t count) = 0;
@@ -120,7 +120,7 @@ public:
         return bytes_to_read;
     }
     
-    std::size_t peek_raw_bytes(std::span<uint8_t> dest, std::size_t offset = 0) const override {
+    std::size_t peek_raw_bytes(std::span<uint8_t> dest, std::size_t offset = 0) override {
         if (dest.empty()) {
             set_error(Error::GenericError);
             return 0;
@@ -197,12 +197,16 @@ public:
         : file_(filename, std::ios::binary | std::ios::ate) {
         if (!file_.is_open()) {
             set_error(Error::FileOpenError);
-            return; // Don't throw, just set error state
+            return;
         }
         file_size_ = file_.tellg(); 
         file_.seekg(0, std::ios::beg); 
         pos_ = 0;
         clear_on_success();
+    }
+
+    ~FileBuffer() {
+        file_.close();
     }
 
     std::size_t read_raw_bytes(std::span<uint8_t> dest) override {
@@ -230,7 +234,7 @@ public:
         return bytes_read;
     }
 
-    std::size_t peek_raw_bytes(std::span<uint8_t> dest, std::size_t offset = 0) const override {
+    std::size_t peek_raw_bytes(std::span<uint8_t> dest, std::size_t offset = 0) override {
         if (dest.empty()) {
             set_error(Error::GenericError);
             return 0;
@@ -370,7 +374,6 @@ public:
         if (!source_buffer_) {
             set_error(Error::GenericError); 
         } else {
-            // Propagate any initialization errors from the buffer
             propagate_error(*source_buffer_);
         }
     }
@@ -453,7 +456,6 @@ public:
         if (found_delimiter) {
             clear_on_success();
         }
-        // If we didn't find delimiter, error is already propagated from buffer
         
         return *this;
     }
@@ -491,7 +493,6 @@ public:
         if (found_null) {
             clear_on_success();
         }
-        // If we hit EOF without null terminator, error is already propagated
         
         return *this;
     }
@@ -824,6 +825,264 @@ public:
         read_bytes(data, count);
         pos_ = original_pos;
         return *this;
+    }
+};
+
+class VirtualFilesystemBuffer : public Buffer {
+private:
+    struct FileEntry {
+        std::filesystem::path path;
+        std::size_t offset; // Cumulative offset from start of buffer
+        std::size_t file_size;
+    };
+
+    std::vector<FileEntry> files_;
+    std::size_t pos_ = 0;
+    std::unique_ptr<FileBuffer> cur_file_buffer_;
+    std::size_t cur_file_idx_;
+    std::size_t total_size_ = 0;
+
+    std::size_t get_file_at_offset(std::size_t offset) const {
+        if (files_.empty()) {
+            set_error(Error::EndOfData);
+            return SIZE_MAX;
+        }
+        
+        std::size_t left = 0, right = files_.size();
+        // binary search
+        while (left < right) {
+            std::size_t mid = left + (right - left) / 2;
+            if (offset < files_[mid].offset) {
+                right = mid;
+            } else if (offset >= files_[mid].offset + files_[mid].file_size) {
+                left = mid + 1;
+            } else {
+                return mid;
+            }
+        }
+
+        set_error(Error::EndOfData);
+        return SIZE_MAX;
+    }
+
+    std::size_t pos_to_file_offset(std::size_t global_pos, std::size_t file_idx) const {
+        if (file_idx >= files_.size()) {
+            set_error(Error::GenericError);
+            return 0;
+        }
+        return global_pos - files_[file_idx].offset;
+    }
+    
+    void update_file() {
+        std::size_t target_file = get_file_at_offset(pos_);
+        if (fail() || target_file == SIZE_MAX) {
+            return;
+        }
+        
+        if (target_file == cur_file_idx_ && cur_file_buffer_) {
+            std::size_t file_offset = pos_to_file_offset(pos_, target_file);
+            if (cur_file_buffer_->position() != file_offset) {
+                cur_file_buffer_->seek(file_offset);
+                if (cur_file_buffer_->fail()) {
+                    propagate_error(*cur_file_buffer_);
+                }
+            }
+            return;
+        }
+        
+        // Need to load a new file
+        cur_file_idx_ = target_file;
+        cur_file_buffer_ = std::make_unique<FileBuffer>(files_[target_file].path.string());
+        
+        if (cur_file_buffer_->fail()) {
+            propagate_error(*cur_file_buffer_);
+            return;
+        }
+        
+        // Seek to the correct position within the file
+        std::size_t file_offset = pos_to_file_offset(pos_, target_file);
+        cur_file_buffer_->seek(file_offset);
+        if (cur_file_buffer_->fail()) {
+            propagate_error(*cur_file_buffer_);
+        }
+    }
+
+
+public:
+    explicit VirtualFilesystemBuffer() = default;
+    
+    void add_file(const std::filesystem::path& path) {
+        std::error_code ec;
+        if (!std::filesystem::exists(path, ec) || ec) {
+            set_error(Error::FileOpenError);
+            return;
+        }
+        
+        std::ifstream f(path, std::ios::binary | std::ios::ate);
+        if (!f.is_open()) {
+            set_error(Error::FileOpenError);
+            return;
+        }
+        
+        std::size_t file_size = static_cast<std::size_t>(f.tellg());
+        f.close();
+        
+        files_.push_back({
+            path, 
+            total_size_,
+            file_size
+        });
+        
+        total_size_ += file_size;
+        clear_on_success();
+    }
+    
+    std::size_t read_raw_bytes(std::span<uint8_t> dest) override {
+        if (dest.empty()) {
+            set_error(Error::GenericError);
+            return 0;
+        }
+        
+        std::size_t total_read = 0;
+        std::size_t remaining_to_read = dest.size();
+        
+        while (remaining_to_read > 0 && pos_ < total_size_) {
+            update_file();
+            if (fail()) {
+                break;
+            }
+            
+            std::size_t file_remaining = cur_file_buffer_->remaining();
+            std::size_t to_read = std::min(remaining_to_read, file_remaining);
+            
+            if (to_read == 0) {
+                pos_ = files_[cur_file_idx_].offset + files_[cur_file_idx_].file_size;
+                continue;
+            }
+            
+            auto dest_slice = dest.subspan(total_read, to_read);
+            std::size_t bytes_read = cur_file_buffer_->read_raw_bytes(dest_slice);
+            
+            if (cur_file_buffer_->fail() && !cur_file_buffer_->eof()) {
+                propagate_error(*cur_file_buffer_);
+                break;
+            }
+            
+            total_read += bytes_read;
+            remaining_to_read -= bytes_read;
+            pos_ += bytes_read;
+            
+            if (bytes_read < to_read) {
+                continue;
+            }
+        }
+        
+        if (total_read == dest.size()) {
+            clear_on_success();
+        } else if (total_read == 0 && remaining_to_read > 0) {
+            set_error(Error::EndOfData);
+        }
+        // Partial read is not an error, just return what we got
+        
+        return total_read;
+    }
+    
+    std::size_t peek_raw_bytes(std::span<uint8_t> dest, std::size_t offset = 0) override {
+        if (dest.empty()) {
+            set_error(Error::GenericError);
+            return 0;
+        }
+        
+        std::size_t peek_pos = pos_ + offset;
+        if (peek_pos >= total_size_) {
+            set_error(Error::EndOfData);
+            return 0;
+        }
+        
+        std::size_t original_pos = pos_;
+        pos_ = peek_pos;
+        
+        std::size_t total_peeked = 0;
+        std::size_t remaining_to_peek = dest.size();
+        
+        while (remaining_to_peek > 0 && peek_pos < total_size_) {
+            update_file();
+            if (fail()) {
+                break;
+            }
+            
+            std::size_t file_remaining = cur_file_buffer_->remaining();
+            std::size_t to_peek = std::min(remaining_to_peek, file_remaining);
+            
+            if (to_peek == 0) {
+                peek_pos = files_[cur_file_idx_].offset + files_[cur_file_idx_].file_size;
+                pos_ = peek_pos;
+                continue;
+            }
+            
+            auto dest_slice = dest.subspan(total_peeked, to_peek);
+            std::size_t bytes_peeked = cur_file_buffer_->peek_raw_bytes(dest_slice);
+            
+            if (cur_file_buffer_->fail() && !cur_file_buffer_->eof()) {
+                propagate_error(*cur_file_buffer_);
+                break;
+            }
+            
+            total_peeked += bytes_peeked;
+            remaining_to_peek -= bytes_peeked;
+            peek_pos += bytes_peeked;
+            pos_ = peek_pos;
+            
+            if (bytes_peeked < to_peek) {
+                break;
+            }
+        }
+        
+        pos_ = original_pos;
+        
+        if (total_peeked == dest.size()) {
+            clear_on_success();
+        } else if (total_peeked == 0 && remaining_to_peek > 0) {
+            set_error(Error::EndOfData);
+        }
+        
+        return total_peeked;
+    }
+    
+    bool seek(std::size_t pos) override {
+        if (pos > total_size_) {
+            set_error(Error::EndOfData);
+            return false;
+        }
+        
+        pos_ = pos;
+        clear_on_success();
+        return true;
+    }
+    
+    bool skip(std::size_t count) override {
+        std::size_t new_pos = pos_ + count;
+        if (new_pos > total_size_) {
+            pos_ = total_size_;
+            set_error(Error::EndOfData);
+            return false;
+        }
+        
+        pos_ = new_pos;
+        clear_on_success();
+        return true;
+    }
+    
+    std::size_t position() const override {
+        return pos_;
+    }
+    
+    std::size_t size() const override {
+        return total_size_;
+    }
+    
+    std::size_t remaining() const override {
+        return total_size_ - pos_;
     }
 };
 
