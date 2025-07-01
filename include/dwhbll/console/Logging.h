@@ -1,7 +1,9 @@
 #pragma once
 
 #include <format>
+#include <list>
 #include <string>
+#include <unordered_map>
 
 namespace dwhbll::console {
     enum class Level {
@@ -84,4 +86,39 @@ namespace dwhbll::console {
     void trace(const std::string& msg, Args&&... args) {
         trace(std::vformat(msg, std::make_format_args(args...)));
     }
+
+    /**
+     * Filters a stream, e.g. processes the output data before having it written out.
+     */
+    class log_filter {
+    public:
+        virtual ~log_filter() = default;
+
+        virtual void process(std::string& str) = 0;
+    };
+
+    /**
+     * A simple filter that censors specific strings, helpful for censoring user tokens, and other potentially sensitive
+     * pieces of information.
+     */
+    class censoring_log_filter : public log_filter {
+        std::unordered_map<std::string, std::string> replacements;
+
+    public:
+        censoring_log_filter();
+
+        explicit censoring_log_filter(const std::unordered_map<std::string, std::string> &replacements);
+
+        ~censoring_log_filter() override = default;
+
+        void process(std::string &str) override;
+
+        void addBlacklist(const std::string& str);
+
+        void addBlacklist(const std::string& str, const std::string& replacement);
+    };
+
+    extern std::list<log_filter*> log_filters;
+
+    void addLogFilter(log_filter* filter);
 }

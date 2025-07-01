@@ -14,6 +14,12 @@ endif()
 
 
 set(DWHBLL_SOURCES
+        include/dwhbll/memory/pool.h
+        include/dwhbll/collections/ring.h
+        include/dwhbll/network/dns/dns.h
+        include/dwhbll/network/SocketManager.h
+        include/dwhbll/console/Logging.h
+        include/dwhbll/linalg/matrix.h
         src/dwhbll/console/Logging.cpp
         src/dwhbll/network/dns/dns.cpp
         src/dwhbll/network/SocketManager.cpp
