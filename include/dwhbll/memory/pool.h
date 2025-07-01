@@ -151,6 +151,21 @@ namespace dwhbll::memory {
 			return ObjectWrapper(this, f + index);
 		}
 
+		T* find(const T& value) {
+			std::unique_lock lock(_lock);
+			Obj* current = objects;
+			while (current != nullptr) {
+				for (int i = 0; i < BlockSize; i++) {
+					if (!current->used[i])
+						continue;
+					if (current->object[i] == value) {
+						return current->object + i;
+					}
+				}
+			}
+			return nullptr;
+		}
+
 		void offer(T* object) {
 			if (object != nullptr) {
 				std::unique_lock lock(_lock);

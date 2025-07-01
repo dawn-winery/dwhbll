@@ -5,11 +5,15 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 option(BUILD_HARDEN "enable hardening on the library." OFF)
+option(BUILD_HARDEN_EXPENSIVE "enable expensive hardening features on the library." OFF)
 option(DWHBLL_GPU_ENABLED "Toggle GPU acceleration" ON)
 set(LINALG_GPU_THRESHOLD_VALUE 2048 CACHE STRING "Select the threshold for GPU delegation")
 
 if (BUILD_HARDEN)
         add_compile_definitions(DWHBLL_HARDEN)
+endif()
+if (BUILD_HARDEN_EXPENSIVE)
+        add_compile_definitions(DWHBLL_HARDEN_EXPENSIVE)
 endif()
 
 
@@ -20,9 +24,11 @@ set(DWHBLL_SOURCES
         include/dwhbll/network/SocketManager.h
         include/dwhbll/console/Logging.h
         include/dwhbll/linalg/matrix.h
+        include/dwhbll/collections/cache.h
         src/dwhbll/console/Logging.cpp
         src/dwhbll/network/dns/dns.cpp
         src/dwhbll/network/SocketManager.cpp
+        src/dwhbll/collections/cache.cpp
 )
 
 # Main target
@@ -79,6 +85,7 @@ set(DWHBLL_TEST_CXX_SOURCES
         tests/pool.cpp
         tests/collections/ring.cpp
         tests/matrix.cpp
+        tests/collections/cache.cpp
 )
 
 add_executable(dwhbll_test ${DWHBLL_TEST_CXX_SOURCES})

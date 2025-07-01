@@ -92,5 +92,30 @@ bool pool_test(std::optional<std::string> test_to_run) {
             failed = true;
         }
     }
+
+    {
+        dwhbll::memory::Pool<std::string> testPool;
+
+        auto* k = testPool.acquire("foo").disown();
+        auto* k2 = testPool.find("foo");
+
+        if (k != k2) {
+            std::cerr << "[ERR](Pool<std::string>) failure to correctly find string \"foo\" in pool" << std::endl;
+            return false;
+        }
+    }
+
+    {
+        dwhbll::memory::Pool<int> testPool;
+
+        auto* k = testPool.acquire(5).disown();
+        auto* k2 = testPool.find(5);
+
+        if (k != k2) {
+            std::cerr << "[ERR](Pool<int>) failure to correctly find value \"5\" in pool" << std::endl;
+            return false;
+        }
+    }
+
     return failed;
 }
