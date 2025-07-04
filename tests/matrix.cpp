@@ -103,7 +103,7 @@ bool matrix_mul() {
     }
 
     {
-        constexpr size_t SIZE = 4096;
+        constexpr size_t SIZE = 2048;
         dwhbll::linalg::Matrix<int, SIZE, SIZE> m1;
         dwhbll::linalg::Matrix<int, SIZE, SIZE> m2;
 

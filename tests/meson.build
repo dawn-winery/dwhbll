@@ -1,16 +1,16 @@
 test_sources = [
   'test_main.cpp',
   'pool.cpp',
+  'matrix.cpp',
   'collections/ring.cpp',
-  'matrix.cpp'
+  'collections/cache.cpp',
+  'collections/streams.cpp'
 ]
 
-
 sub_tests = {
-  'matrix': ['init', 'mul']
+  'matrix': ['init', 'mul'],
+  'streams': ['MemoryBuffer', 'FileBuffer', 'StreamReader', 'CachedReader']
 }
-
-
 
 dwhbll_test = executable('dwhbll_test',
   test_sources,
