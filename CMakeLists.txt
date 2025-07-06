@@ -38,6 +38,7 @@ add_library(dwhbll INTERFACE)
 add_library(dwhbll_core STATIC ${DWHBLL_SOURCES})
 set_target_properties(dwhbll_core PROPERTIES LINKER_LANGUAGE CXX)
 target_include_directories(dwhbll_core PUBLIC include)
+target_link_libraries(dwhbll_core PUBLIC stdc++exp)
 
 # Propagates the linker to the core library if targetting the main target
 target_link_libraries(dwhbll INTERFACE dwhbll_core)

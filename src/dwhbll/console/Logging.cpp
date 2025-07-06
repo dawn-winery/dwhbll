@@ -1,8 +1,11 @@
 #include <dwhbll/console/Logging.h>
 
+#include <filesystem>
 #include <iostream>
 #include <sstream>
+#include <stacktrace>
 #include <unordered_map>
+#include <dwhbll/sanify/types.hpp>
 
 namespace dwhbll::console {
     Level defaultLevel = Level::INFO;
@@ -73,6 +76,39 @@ namespace dwhbll::console {
 
     void trace(const std::string &msg) {
         log(msg, Level::TRACE);
+    }
+
+    [[noreturn]] void panic(const std::string& msg, uint32_t skip) {
+        std::cerr << "\n\e[1;91m========= [PANIC] =========\n";
+        std::cerr << msg << "\n\n";
+
+        std::stacktrace trace = std::stacktrace::current(1);
+        for(auto& entry : trace) {
+            const auto function = entry.description().substr(0, entry.description().find("("));
+
+            std::string sourcePosition;
+            if (entry.source_file().size() > 0) {
+                const auto sourcePath = std::filesystem::path(entry.source_file());
+                const auto relativePath = sourcePath.lexically_relative(std::filesystem::current_path());
+                const auto filename = relativePath.string().starts_with("../..") ? sourcePath : relativePath;
+                sourcePosition = std::format(
+                        "{} at {}:{}",
+                        function.data(), filename.c_str(), entry.source_line());
+            } else if (!function.empty()) {
+                sourcePosition = function;
+            } else if (!entry.description().empty()) {
+                sourcePosition = entry.description();
+            } else {
+                sourcePosition = "???";
+            }
+
+            const auto info = std::format(
+                    "[{:#018x}] {}\n",
+                    reinterpret_cast<std::uintptr_t>(entry.native_handle()), sourcePosition.data());
+            std::cerr << (info);
+        }
+
+        exit(1);
     }
 
     // TODO: probably move to separate header

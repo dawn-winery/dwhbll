@@ -87,6 +87,14 @@ namespace dwhbll::console {
         trace(std::vformat(msg, std::make_format_args(args...)));
     }
 
+    [[noreturn]] void panic(const std::string& msg, uint32_t skip = 1);
+
+    template <typename... Args>
+    requires (sizeof...(Args) != 0)
+    void panic(const std::string& msg, Args&&... args) {
+        panic(std::vformat(msg, std::make_format_args(args...)), 2);
+    }
+
     /**
      * Filters a stream, e.g. processes the output data before having it written out.
      */
