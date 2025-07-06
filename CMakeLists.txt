@@ -84,9 +84,10 @@ endif()
 set(DWHBLL_TEST_CXX_SOURCES
     tests/test_main.cpp
     tests/pool.cpp
-    tests/collections/ring.cpp
     tests/matrix.cpp
     tests/collections/cache.cpp
+    tests/collections/ring.cpp
+    tests/collections/streams.cpp
 )
 
 add_executable(dwhbll_test ${DWHBLL_TEST_CXX_SOURCES})
