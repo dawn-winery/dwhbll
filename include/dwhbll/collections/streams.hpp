@@ -342,6 +342,10 @@ public:
         
         if (!result)
             return std::unexpected(result.error());
+
+        if (result.value() == 0) {
+            return std::unexpected(Error::EndOfData);
+        }
         
         buf.resize(result.value());
         return buf;
