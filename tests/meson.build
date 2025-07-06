@@ -9,7 +9,7 @@ test_sources = [
 
 sub_tests = {
   'matrix': ['init', 'mul'],
-  'streams': ['MemoryBuffer', 'FileBuffer', 'StreamReader', 'CachedReader']
+  'collections/streams': ['MemoryBuffer', 'FileBuffer', 'StreamReader', 'CachedReader']
 }
 
 dwhbll_test = executable('dwhbll_test',

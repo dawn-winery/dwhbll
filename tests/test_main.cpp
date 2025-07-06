@@ -8,6 +8,7 @@ extern bool pool_test(std::optional<std::string> test_to_run);
 extern bool matrix_test(std::optional<std::string> test_to_run);
 extern bool ring_test(std::optional<std::string> test_to_run);
 extern bool cache_test(std::optional<std::string> test_to_run);
+extern bool stream_test(std::optional<std::string> test_to_run);
 
 // The optional string argument is for the subtests to run
 using TestFunc = std::function<bool(std::optional<std::string>)>;
@@ -15,8 +16,9 @@ using TestFunc = std::function<bool(std::optional<std::string>)>;
 std::unordered_map<std::string, TestFunc> module_dispatch {
     { "pool", pool_test },
     { "matrix", matrix_test },
-    { "ring", ring_test },
-    {"cache", cache_test},
+    { "collections/ring", ring_test },
+    { "collections/cache", cache_test },
+    { "collections/streams", stream_test },
 };
 
 int main(int argc, char** argv) {
@@ -31,6 +33,9 @@ int main(int argc, char** argv) {
         std::cout << argv[1] << ":" << ret << std::endl;
         return ret;
     }
+    else {
+        std::cout << "Submodule '" << argv[1] << "' not found";
+    }
 
-    return 0;
+    return 1;
 }
