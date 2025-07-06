@@ -1,8 +1,10 @@
 #pragma once
 
+#include "dwhbll/sanify/types.hpp"
 #include <cassert>
 #include <cstdint>
 #include <cstring>
+#include <expected>
 #include <filesystem>
 #include <memory>
 #include <vector>
@@ -10,358 +12,298 @@
 #include <fstream>
 #include <span>
 #include <algorithm>
+#include <format>
 
 namespace dwhbll::collections::stream {
 
+using namespace dwhbll::sanify;
+
 enum class Error {
-    NoError = 0,        
-    GenericError,       
-    Unimplemented,      
-    EndOfData,          
-    DecompressionError, 
-    FileOpenError,      
+    NoError = 0,
+    // Usually means that there was an error in the parameters passed
+    GenericError,
+    EndOfData,
+    InvalidPositionError,
+    DecompressionError,
+    FileOpenError,
+    Unimplemented
 };
 
-// Base class for error state management
-class ErrorState {
-protected:
-    mutable Error last_error_ = Error::NoError; 
-    mutable bool has_error_ = false;            
+template <typename T>
+using Result = std::expected<T, Error>;
 
-public:
-    bool good() const { return !has_error_; }       
-    bool fail() const { return has_error_; }        
-    bool eof() const { return has_error_ && last_error_ == Error::EndOfData; } 
-    Error last_error() const { return last_error_; } 
-
-    void clear_error() const { 
-        has_error_ = false;
-        last_error_ = Error::NoError;
-    }
-
-    explicit operator bool() const { return !has_error_; } 
-
-protected:
-    // Always clears previous error state before setting new one
-    void set_error(Error err) const {
-        last_error_ = err;
-        has_error_ = true;
-    }
-
-    // Clears error state on successful operations
-    void clear_on_success() const {
-        if (has_error_) {
-            has_error_ = false;
-            last_error_ = Error::NoError;
-        }
-    }
-
-    // Propagate error from another ErrorState object
-    void propagate_error(const ErrorState& other) const {
-        if (other.has_error_) {
-            set_error(other.last_error_);
-        }
-    }
-};
-
-class Buffer : public ErrorState {
+class Buffer {
 public:
     virtual ~Buffer() = default; 
 
-    // Reads either dest.size() or remaining() bytes, whichever is smaller
-    virtual std::size_t read_raw_bytes(std::span<uint8_t> dest) = 0;
-    virtual std::size_t peek_raw_bytes(std::span<uint8_t> dest, std::size_t offset = 0) = 0;
+    virtual Result<size_t> read_raw_bytes(std::span<u8> dest) = 0;
+    virtual Result<size_t> peek_raw_bytes(std::span<u8> dest) = 0;
 
-    virtual bool seek(std::size_t pos) = 0;
-    virtual bool skip(std::size_t count) = 0;
+    virtual Result<void> seek(size_t pos) = 0;
+    virtual Result<void> skip(size_t count) = 0;
 
-    virtual std::size_t position() const = 0;
-    virtual std::size_t size() const = 0;
-    virtual std::size_t remaining() const = 0;
+    virtual Result<size_t> position() const = 0;
+    virtual Result<size_t> size() const = 0;
+    virtual Result<size_t> remaining() const = 0;
 };
 
 class MemoryBuffer : public Buffer {
 private:
-    std::vector<uint8_t> data_;  
-    mutable std::size_t pos_ = 0; 
+    std::vector<u8> data_;  
+    size_t pos_ = 0; 
 
 public:
-    explicit MemoryBuffer(std::vector<uint8_t> data)
+    explicit MemoryBuffer(std::vector<u8> data)
         : data_(std::move(data)) {}
     
-    explicit MemoryBuffer(std::span<const uint8_t> data)
+    explicit MemoryBuffer(std::span<const u8> data)
         : data_(data.begin(), data.end()) {}
     
     explicit MemoryBuffer(const std::string& str)
         : data_(str.begin(), str.end()) {}
     
-    std::size_t read_raw_bytes(std::span<uint8_t> dest) override {
+    Result<size_t> read_raw_bytes(std::span<u8> dest) override {
         if (dest.empty()) {
-            set_error(Error::GenericError);
-            return 0;
+            return std::unexpected(Error::GenericError);
         }
+
+        auto rem = remaining();
+        if (!rem)
+            return std::unexpected(rem.error());
         
-        std::size_t bytes_to_read = std::min(dest.size(), remaining());
-        if (bytes_to_read == 0) {
-            set_error(Error::EndOfData);
-            return 0;
-        }
+        size_t bytes_to_read = std::min(dest.size(), rem.value());
         
-        std::memcpy(dest.data(), data_.data() + pos_, bytes_to_read);
+        std::copy(data_.begin() + pos_, data_.begin() + pos_ + bytes_to_read, dest.begin());
         pos_ += bytes_to_read;
-        
-        // Clear error only if we successfully read the requested amount
-        if (bytes_to_read == dest.size()) {
-            clear_on_success();
-        } else {
-            set_error(Error::EndOfData);
-        }
         
         return bytes_to_read;
     }
     
-    std::size_t peek_raw_bytes(std::span<uint8_t> dest, std::size_t offset = 0) override {
+    Result<size_t> peek_raw_bytes(std::span<u8> dest) override {
         if (dest.empty()) {
-            set_error(Error::GenericError);
-            return 0;
+            return std::unexpected(Error::GenericError);
         }
         
-        if (pos_ + offset > data_.size()) { 
-            set_error(Error::EndOfData);
-            return 0;
-        }
+        auto rem = remaining();
+        if (!rem)
+            return std::unexpected(rem.error());
         
-        std::size_t available_bytes = data_.size() - (pos_ + offset);
-        std::size_t bytes_to_peek = std::min(dest.size(), available_bytes);
-        
-        if (bytes_to_peek == 0) {
-            set_error(Error::EndOfData);
-            return 0;
-        }
+        size_t bytes_to_peek = std::min(dest.size(), rem.value());
 
-        std::memcpy(dest.data(), data_.data() + pos_ + offset, bytes_to_peek);
-        
-        // Clear error only if we successfully peeked the requested amount
-        if (bytes_to_peek == dest.size()) {
-            clear_on_success();
-        } else {
-            set_error(Error::EndOfData);
-        }
+        std::copy(data_.begin() + pos_, data_.begin() + pos_ + bytes_to_peek, dest.begin());
         
         return bytes_to_peek;
     }
-    
-    std::size_t position() const override {
+
+    Result<void> seek(size_t pos) override {
+        if (pos > data_.size()) { 
+            return std::unexpected(Error::InvalidPositionError);
+        }
+
+        pos_ = pos;
+        return {};
+    }
+
+    Result<void> skip(size_t count) override {
+        size_t new_pos = pos_ + count;
+        if (new_pos > data_.size()) { 
+            return std::unexpected(Error::InvalidPositionError);
+        }
+
+        pos_ = new_pos;
+        return {};
+    }
+
+    Result<size_t> position() const override {
         return pos_;
     }
     
-    bool seek(std::size_t pos) override {
-        if (pos > data_.size()) { 
-            set_error(Error::EndOfData);
-            return false;
-        }
-        pos_ = pos;
-        clear_on_success();
-        return true;
-    }
-    
-    std::size_t size() const override {
+    Result<size_t> size() const override {
         return data_.size();
     }
     
-    std::size_t remaining() const override {
+    Result<size_t> remaining() const override {
         return data_.size() - pos_;
-    }
-    
-    bool skip(std::size_t count) override {
-        std::size_t new_pos = pos_ + count;
-        if (new_pos > data_.size()) { 
-            pos_ = data_.size();
-            set_error(Error::EndOfData); 
-            return false;
-        }
-        pos_ = new_pos;
-        clear_on_success();
-        return true;
     }
 };
 
 class FileBuffer : public Buffer {
 private:
-    mutable std::ifstream file_;              
-    mutable std::size_t file_size_;           
-    mutable std::size_t pos_ = 0; 
+    std::filesystem::path path_;
+    std::ifstream file_;
+    size_t pos_ = 0;
 
 public:
-    explicit FileBuffer(const std::string& filename) 
-        : file_(filename, std::ios::binary | std::ios::ate) {
+    explicit FileBuffer(const std::filesystem::path& path) 
+        : file_(path, std::ios::binary), 
+          path_(path),
+          pos_(0) {
         if (!file_.is_open()) {
-            set_error(Error::FileOpenError);
-            return;
+            throw std::ios_base::failure(std::format("Failed to open {}", path.string()));
         }
-        file_size_ = file_.tellg(); 
-        file_.seekg(0, std::ios::beg); 
-        pos_ = 0;
-        clear_on_success();
     }
 
     ~FileBuffer() {
-        file_.close();
+        if (file_.is_open()) {
+            file_.close();
+        }
     }
 
-    std::size_t read_raw_bytes(std::span<uint8_t> dest) override {
+    Result<size_t> read_raw_bytes(std::span<u8> dest) override {
         if (dest.empty()) {
-            set_error(Error::GenericError);
-            return 0;
+            return std::unexpected(Error::GenericError);
         }
         
-        std::size_t bytes_to_read = std::min(dest.size(), remaining());
-        if (bytes_to_read == 0) {
-            set_error(Error::EndOfData);
-            return 0;
-        }
+        auto rem = remaining();
+        if (!rem)
+            return std::unexpected(rem.error());
+
+        size_t bytes_to_read = std::min(rem.value(), dest.size());
 
         file_.read(reinterpret_cast<char*>(dest.data()), bytes_to_read);
-        std::size_t bytes_read = file_.gcount(); 
+        size_t bytes_read = file_.gcount(); 
         pos_ += bytes_read;
-
-        if (bytes_read == dest.size()) {
-            clear_on_success();
-        } else {
-            set_error(Error::EndOfData);
-        }
         
         return bytes_read;
     }
 
-    std::size_t peek_raw_bytes(std::span<uint8_t> dest, std::size_t offset = 0) override {
+    Result<size_t> peek_raw_bytes(std::span<u8> dest) override {
         if (dest.empty()) {
-            set_error(Error::GenericError);
-            return 0;
+            return std::unexpected(Error::GenericError);
         }
         
-        auto original_pos = file_.tellg(); 
-        
-        file_.seekg(pos_ + offset);
-        if (file_.fail()) {
-            set_error(Error::EndOfData);
-            file_.seekg(original_pos); 
-            return 0;
-        }
+        assert(pos_ == file_.tellg());
 
-        std::size_t bytes_to_peek = std::min(dest.size(), (file_size_ - (pos_ + offset)));
-        if (bytes_to_peek == 0) { 
-            set_error(Error::EndOfData);
-            file_.seekg(original_pos); 
-            return 0;
-        }
+        auto rem = remaining();
+        if (!rem)
+            return std::unexpected(rem.error());
+
+        size_t bytes_to_peek = std::min(dest.size(), rem.value());
 
         file_.read(reinterpret_cast<char*>(dest.data()), bytes_to_peek);
-        std::size_t bytes_peeked = file_.gcount();
-        file_.seekg(original_pos); 
+        size_t bytes_peeked = static_cast<std::size_t>(file_.gcount());
 
-        if (bytes_peeked == dest.size()) {
-            clear_on_success();
-        } else {
-            set_error(Error::EndOfData);
-        }
+        // Clear EOF and restore position
+        file_.clear();
+        file_.seekg(static_cast<std::streamoff>(pos_));
         
         return bytes_peeked;
     }
 
-    std::size_t position() const override {
+    Result<size_t> position() const override {
         return pos_;
     }
     
-    bool seek(std::size_t pos) override {
-        if (pos > file_size_) { 
-            set_error(Error::EndOfData);
-            return false;
+    Result<void> seek(size_t pos) override {
+        auto sz = size();
+        if (!sz)
+            return std::unexpected(sz.error());
+
+        if (pos > sz.value()) { 
+            return std::unexpected(Error::InvalidPositionError);
         }
         
-        file_.seekg(pos);
+        file_.seekg(static_cast<std::streamoff>(pos));
         if (file_.fail()) { 
-            set_error(Error::GenericError);
-            return false;
+            return std::unexpected(Error::GenericError);
         }
         
         pos_ = pos;
-        clear_on_success();
-        return true;
+        return {};
     }
     
-    std::size_t size() const override {
-        return file_size_;
+    Result<size_t> size() const override {
+        try {
+            return std::filesystem::file_size(path_);
+        }
+        catch(const std::exception& e) {
+            return std::unexpected(Error::GenericError);
+        }
     }
     
-    std::size_t remaining() const override {
-        return file_size_ - pos_;
+    Result<size_t> remaining() const override {
+        auto sz = size();
+        if (!sz) 
+            return std::unexpected(sz.error());
+
+        if (pos_ > sz.value()) 
+            return std::unexpected(Error::InvalidPositionError);
+
+        return sz.value() - pos_;
     }
     
-    bool skip(std::size_t count) override {
-        std::size_t new_pos = pos_ + count;
-        if (new_pos > file_size_) { 
-            pos_ = file_size_;
-            set_error(Error::EndOfData);
-            return false;
+    Result<void> skip(size_t count) override {
+        auto sz = size();
+        if (!sz) 
+            return std::unexpected(sz.error());
+
+        size_t new_pos = pos_ + count;
+        if (new_pos > sz.value()) { 
+            return std::unexpected(Error::InvalidPositionError);
         }
         
         file_.seekg(count, std::ios::cur); 
-        if (file_.fail()) { 
-            set_error(Error::GenericError);
-            return false;
-        }
+        if (!file_)
+            return std::unexpected(Error::GenericError);
         
         pos_ = new_pos;
-        clear_on_success();
-        return true;
+        return {};
     }
 };
 
-class Reader : public ErrorState {
+class Reader {
 public:
     virtual ~Reader() = default;
 
-    virtual Reader& read_byte(uint8_t& byte) = 0;
-    virtual Reader& read_bytes(std::vector<uint8_t>& buf, std::size_t count) = 0;
+    virtual Result<u8> read_byte() = 0;
+    virtual Result<std::vector<u8>> read_bytes(size_t count) = 0;
     
-    // Templates for char/uint8_t compatibility
+    // Templates for char/u8 compatibility
     template <typename T>
-    requires std::is_same_v<T, uint8_t> || std::is_same_v<T, char>
-    Reader& read_bytes(std::vector<T>& buf, std::size_t count) {
-        static_assert(sizeof(T) == sizeof(uint8_t));
-        std::vector<uint8_t> tmp;
-        tmp.reserve(count);
-        auto& r = read_bytes(tmp, count);
-        buf.clear();
-        buf.assign(tmp.begin(), tmp.end()); 
-        return r;
+    requires (sizeof(T) == sizeof(u8))
+    Result<std::vector<T>> read_bytes(size_t count) {
+        auto result = read_bytes(count);
+        if (!result)
+            return std::unexpected(result.error());
+        
+        std::vector<T> converted;
+        converted.reserve(result.value().size());
+        for (auto byte : result.value()) {
+            converted.push_back(static_cast<T>(byte));
+        }
+        return converted;
     }
 
     template <typename T>
-    requires std::is_same_v<T, uint8_t> || std::is_same_v<T, char>
-    Reader& read_until(std::vector<T>& buf, T delimiter, bool consume_delimiter = true) {
-        static_assert(sizeof(T) == sizeof(uint8_t));
-        std::vector<uint8_t> tmp;
-        auto& r = read_until(tmp, static_cast<uint8_t>(delimiter), consume_delimiter);
-        buf.assign(tmp.begin(), tmp.end()); 
-        return r;
+    requires std::is_same_v<T, u8> || std::is_same_v<T, char>
+    Result<std::vector<T>> read_until(T delimiter, bool consume_delimiter = true) {
+        static_assert(sizeof(T) == sizeof(u8));
+        auto result = read_until(static_cast<u8>(delimiter), consume_delimiter);
+        if (!result)
+            return std::unexpected(result.error());
+        
+        std::vector<T> converted;
+        converted.reserve(result.value().size());
+        for (auto byte : result.value()) {
+            converted.push_back(static_cast<T>(byte));
+        }
+        return converted;
     }
     
-    virtual Reader& read_until(std::vector<uint8_t>& data, uint8_t delimiter, bool consume_delimiter = true) = 0;
-    virtual Reader& read_string(std::string& str) = 0;
+    virtual Result<std::vector<u8>> read_until(uint8_t delimiter, bool consume_delimiter = true) = 0;
+    virtual Result<std::string> read_string() = 0;
     
-    virtual Reader& seek(std::size_t pos) = 0;
-    virtual Reader& skip(std::size_t count) = 0;
+    virtual Result<void> seek(size_t pos) = 0;
+    virtual Result<void> skip(size_t count) = 0;
     
-    virtual std::size_t position() const = 0;
-    virtual std::size_t size() const = 0;
-    virtual std::size_t remaining() const = 0;
+    virtual Result<size_t> position() const = 0;
+    virtual Result<size_t> size() const = 0;
+    virtual Result<size_t> remaining() const = 0;
     
-    virtual Reader& read_all(std::vector<uint8_t>& data) = 0;
+    virtual Result<std::vector<u8>> read_all() = 0;
     
-    virtual Reader& peek_byte(uint8_t& byte) = 0;
-    virtual Reader& peek_bytes(std::vector<uint8_t>& data, std::size_t count) = 0;
+    virtual Result<u8> peek_byte() = 0;
+    virtual Result<std::vector<u8>> peek_bytes(size_t count) = 0;
 };
 
 class StreamReader : public Reader {
@@ -372,331 +314,235 @@ public:
     explicit StreamReader(std::unique_ptr<Buffer> buffer)
         : source_buffer_(std::move(buffer)) {
         if (!source_buffer_) {
-            set_error(Error::GenericError); 
-        } else {
-            propagate_error(*source_buffer_);
+            throw std::invalid_argument("Buffer cannot be null");
         }
     }
     
-    Reader& read_byte(uint8_t& byte) override {
-        if (!source_buffer_) {
-            set_error(Error::GenericError);
-            return *this;
+    Result<u8> read_byte() override {
+        std::array<u8, 1> temp_byte_array;
+        auto result = source_buffer_->read_raw_bytes(temp_byte_array);
+        
+        if (!result)
+            return std::unexpected(result.error());
+        
+        if (result.value() == 0) {
+            return std::unexpected(Error::EndOfData);
         }
         
-        std::array<uint8_t, 1> temp_byte_array;
-        std::size_t bytes_read = source_buffer_->read_raw_bytes(temp_byte_array);
-        
-        if (bytes_read == 1) {
-            byte = temp_byte_array[0];
-            clear_on_success();
-        } else {
-            propagate_error(*source_buffer_);
-        }
-        
-        return *this;
+        return temp_byte_array[0];
     }
     
-    Reader& read_bytes(std::vector<uint8_t>& buf, std::size_t count) override {
-        if (!source_buffer_) {
-            set_error(Error::GenericError);
-            buf.clear();
-            return *this;
-        }
-
-        buf.resize(count); 
-        std::size_t bytes_read = source_buffer_->read_raw_bytes(buf);
-        
-        if (bytes_read == count) {
-            clear_on_success();
-        } else {
-            buf.resize(bytes_read); 
-            propagate_error(*source_buffer_);
+    Result<std::vector<u8>> read_bytes(size_t count) override {
+        if (count == 0) {
+            return std::vector<u8>{};
         }
         
-        return *this;
+        std::vector<u8> buf(count);
+        auto result = source_buffer_->read_raw_bytes(buf);
+        
+        if (!result)
+            return std::unexpected(result.error());
+        
+        buf.resize(result.value());
+        return buf;
     }
     
-    Reader& read_until(std::vector<uint8_t>& data, uint8_t delimiter, bool consume_delimiter = true) override {
-        data.clear();
-        
-        if (!source_buffer_) {
-            set_error(Error::GenericError);
-            return *this;
-        }
-
-        uint8_t byte;
-        bool found_delimiter = false;
+    Result<std::vector<u8>> read_until(uint8_t delimiter, bool consume_delimiter = true) override {
+        std::vector<u8> data;
         
         while (true) {
-            std::array<uint8_t, 1> temp_array;
-            std::size_t bytes_read = source_buffer_->read_raw_bytes(temp_array);
-            
-            if (bytes_read == 0) {
-                propagate_error(*source_buffer_);
-                break;
+            auto byte_result = read_byte();
+            if (!byte_result) {
+                if (byte_result.error() == Error::EndOfData && !data.empty()) {
+                    // Found some data before EOF
+                    return data;
+                }
+                return std::unexpected(byte_result.error());
             }
             
-            byte = temp_array[0];
+            u8 byte = byte_result.value();
             
             if (byte == delimiter) {
-                found_delimiter = true;
                 if (!consume_delimiter) {
-                    source_buffer_->seek(source_buffer_->position() - 1);
-                    if (source_buffer_->fail()) {
-                        propagate_error(*source_buffer_);
-                    }
+                    auto pos = source_buffer_->position();
+                    if (!pos)
+                        return std::unexpected(pos.error());
+                    
+                    auto seek_result = source_buffer_->seek(pos.value() - 1);
+                    if (!seek_result)
+                        return std::unexpected(seek_result.error());
                 }
-                break;
+                return data;
             }
             
             data.push_back(byte);
         }
-        
-        if (found_delimiter) {
-            clear_on_success();
-        }
-        
-        return *this;
     }
     
-    Reader& read_string(std::string& str) override {
-        str.clear();
-        
-        if (!source_buffer_) {
-            set_error(Error::GenericError);
-            return *this;
-        }
-
-        uint8_t byte;
-        bool found_null = false;
+    Result<std::string> read_string() override {
+        std::string str;
         
         while (true) {
-            std::array<uint8_t, 1> temp_array;
-            std::size_t bytes_read = source_buffer_->read_raw_bytes(temp_array);
-            
-            if (bytes_read == 0) {
-                propagate_error(*source_buffer_);
-                break;
+            auto byte_result = read_byte();
+            if (!byte_result) {
+                if (byte_result.error() == Error::EndOfData && !str.empty()) {
+                    // Found some data before EOF
+                    return str;
+                }
+                return std::unexpected(byte_result.error());
             }
             
-            byte = temp_array[0];
+            u8 byte = byte_result.value();
             
             if (byte == 0) {
-                found_null = true;
-                break;
+                return str;
             }
             
             str.push_back(static_cast<char>(byte));
         }
-        
-        if (found_null) {
-            clear_on_success();
-        }
-        
-        return *this;
     }
     
-    std::size_t position() const override {
-        if (!source_buffer_) {
-            set_error(Error::GenericError);
-            return 0;
-        }
+    Result<size_t> position() const override {
         return source_buffer_->position();
     }
     
-    Reader& seek(std::size_t pos) override {
-        if (!source_buffer_) {
-            set_error(Error::GenericError);
-            return *this;
-        }
-        
-        bool success = source_buffer_->seek(pos);
-        if (success) {
-            clear_on_success();
-        } else {
-            propagate_error(*source_buffer_);
-        }
-        
-        return *this;
+    Result<void> seek(size_t pos) override {
+        return source_buffer_->seek(pos);
     }
     
-    std::size_t size() const override {
-        if (!source_buffer_) {
-            set_error(Error::GenericError);
-            return 0;
-        }
+    Result<size_t> size() const override {
         return source_buffer_->size();
     }
     
-    std::size_t remaining() const override {
-        if (!source_buffer_) {
-            set_error(Error::GenericError);
-            return 0;
-        }
+    Result<size_t> remaining() const override {
         return source_buffer_->remaining();
     }
 
-    Reader& read_all(std::vector<uint8_t>& data) override {
-        data.clear();
+    Result<std::vector<u8>> read_all() override {
+        auto rem = source_buffer_->remaining();
+        if (!rem)
+            return std::unexpected(rem.error());
         
-        if (!source_buffer_) {
-            set_error(Error::GenericError);
-            return *this;
+        if (rem.value() == 0) {
+            return std::vector<u8>{};
         }
         
-        std::size_t remaining_bytes = source_buffer_->remaining();
-        if (remaining_bytes == 0) {
-            clear_on_success(); // Successfully read 0 bytes
-            return *this;
-        }
-        
-        data.resize(remaining_bytes);
-        std::size_t bytes_read = source_buffer_->read_raw_bytes(data);
-        
-        if (bytes_read == remaining_bytes) {
-            clear_on_success();
-        } else {
-            data.resize(bytes_read);
-            propagate_error(*source_buffer_);
-        }
-        
-        return *this;
+        return read_bytes(rem.value());
     }
 
-    Reader& skip(std::size_t count) override {
-        if (!source_buffer_) {
-            set_error(Error::GenericError);
-            return *this;
-        }
-        
-        bool success = source_buffer_->skip(count);
-        if (success) {
-            clear_on_success();
-        } else {
-            propagate_error(*source_buffer_);
-        }
-        
-        return *this;
+    Result<void> skip(size_t count) override {
+        return source_buffer_->skip(count);
     }
 
-    Reader& peek_byte(uint8_t& byte) override {
-        if (!source_buffer_) {
-            set_error(Error::GenericError);
-            return *this;
+    Result<u8> peek_byte() override {
+        std::array<u8, 1> temp_byte_array;
+        auto result = source_buffer_->peek_raw_bytes(temp_byte_array);
+        
+        if (!result)
+            return std::unexpected(result.error());
+        
+        if (result.value() == 0) {
+            return std::unexpected(Error::EndOfData);
         }
         
-        std::array<uint8_t, 1> temp_byte_array;
-        std::size_t bytes_peeked = source_buffer_->peek_raw_bytes(temp_byte_array);
-        
-        if (bytes_peeked == 1) {
-            byte = temp_byte_array[0];
-            clear_on_success();
-        } else {
-            propagate_error(*source_buffer_);
-        }
-        
-        return *this;
+        return temp_byte_array[0];
     }
     
-    Reader& peek_bytes(std::vector<uint8_t>& data, std::size_t count) override {
-        if (!source_buffer_) {
-            set_error(Error::GenericError);
-            data.clear();
-            return *this;
+    Result<std::vector<u8>> peek_bytes(size_t count) override {
+        if (count == 0) {
+            return std::vector<u8>{};
         }
         
-        data.resize(count);
-        std::size_t bytes_peeked = source_buffer_->peek_raw_bytes(data);
+        std::vector<u8> data(count);
+        auto result = source_buffer_->peek_raw_bytes(data);
         
-        if (bytes_peeked == count) {
-            clear_on_success();
-        } else {
-            data.resize(bytes_peeked);
-            propagate_error(*source_buffer_);
-        }
+        if (!result)
+            return std::unexpected(result.error());
         
-        return *this;
+        data.resize(result.value());
+        return data;
     }
 };
 
 class CachedReader : public Reader {
 private:
     std::unique_ptr<Buffer> source_buffer_;
-    std::vector<uint8_t> cache_;
-    const std::size_t cache_chunk_size_;
-    std::size_t pos_ = 0;
-    std::size_t cache_start_pos_ = 0;
+    std::vector<u8> cache_;
+    const size_t cache_chunk_size_;
+    size_t pos_ = 0;
+    size_t cache_start_pos_ = 0;
 
-    void update_cache() {
-        if(pos_ >= cache_start_pos_ && pos_ < cache_start_pos_ + cache_.size()) {
-            return;
+    Result<void> update_cache() {
+        if (pos_ >= cache_start_pos_ && pos_ < cache_start_pos_ + cache_.size()) {
+            return {};
         }
 
-        source_buffer_->seek(pos_);
-        if(source_buffer_->fail()) {
-            set_error(source_buffer_->last_error());
-            return;
-        }
+        auto seek_result = source_buffer_->seek(pos_);
+        if (!seek_result)
+            return std::unexpected(seek_result.error());
 
         cache_.resize(cache_chunk_size_);
-        size_t bytes_read = source_buffer_->read_raw_bytes(cache_);
-        if(bytes_read == 0) {
-            set_error(source_buffer_->last_error());
-            return;
+        auto read_result = source_buffer_->read_raw_bytes(cache_);
+        if (!read_result)
+            return std::unexpected(read_result.error());
+
+        if (read_result.value() == 0) {
+            return std::unexpected(Error::EndOfData);
         }
 
-        cache_.resize(bytes_read);
+        cache_.resize(read_result.value());
         cache_start_pos_ = pos_;
+        return {};
     }
 
 public:
-    explicit CachedReader(std::unique_ptr<Buffer> source_buffer, std::size_t cache_chunk_size = 4096)
+    explicit CachedReader(std::unique_ptr<Buffer> source_buffer, size_t cache_chunk_size = 4096)
         : source_buffer_(std::move(source_buffer)), cache_chunk_size_(cache_chunk_size) {
         if (!source_buffer_) {
-            set_error(Error::GenericError);
+            throw std::invalid_argument("Buffer cannot be null");
         }
-
-        update_cache();
     }
 
-    Reader& read_byte(uint8_t& byte) override {
-        clear_error();
-        if (!source_buffer_ || source_buffer_->fail()) {
-            set_error(source_buffer_ ? source_buffer_->last_error() : Error::GenericError);
-            return *this;
-        }
-        
-        update_cache();
-        if(fail())
-            return *this;
+    Result<u8> read_byte() override {
+        auto update_result = update_cache();
+        if (!update_result)
+            return std::unexpected(update_result.error());
 
         size_t cache_offset = pos_ - cache_start_pos_;
-        
-        byte = cache_[cache_offset];
-        pos_++;
-        return *this;
-    }
-
-    Reader& read_bytes(std::vector<uint8_t>& buf, std::size_t count) override {
-        clear_error();
-        buf.clear();
-        if (!source_buffer_ || source_buffer_->fail()) {
-            set_error(source_buffer_ ? source_buffer_->last_error() : Error::GenericError);
-            return *this;
+        if (cache_offset >= cache_.size()) {
+            return std::unexpected(Error::EndOfData);
         }
         
+        u8 byte = cache_[cache_offset];
+        pos_++;
+        return byte;
+    }
+
+    Result<std::vector<u8>> read_bytes(size_t count) override {
+        if (count == 0) {
+            return std::vector<u8>{};
+        }
+        
+        std::vector<u8> buf;
         buf.reserve(count);
+        
         while (count > 0) {
-            update_cache();
-            if(fail())
-                break;
+            auto update_result = update_cache();
+            if (!update_result) {
+                if (update_result.error() == Error::EndOfData && !buf.empty()) {
+                    // Return partial data
+                    return buf;
+                }
+                return std::unexpected(update_result.error());
+            }
 
             size_t offset = pos_ - cache_start_pos_;
             size_t available = cache_.size() - offset;
-            if(available == 0) {
-                set_error(Error::EndOfData);
-                break;
+            if (available == 0) {
+                if (!buf.empty()) {
+                    return buf; // Return partial data
+                }
+                return std::unexpected(Error::EndOfData);
             }
 
             size_t to_copy = std::min(available, count);
@@ -706,384 +552,124 @@ public:
             pos_ += to_copy;
             count -= to_copy;
         }
-        
-        if (count > 0) {
-            set_error(Error::EndOfData);
-        }
 
-        return *this;
+        return buf;
     }
 
-    Reader& read_until(std::vector<uint8_t>& data, uint8_t delimiter, bool consume_delimiter = true) override {
-        clear_error();
-        data.clear();
-        if (!source_buffer_) {
-            set_error(Error::GenericError);
-            return *this;
-        }
-
-        uint8_t byte;
-        while(read_byte(byte).good()) {
+    Result<std::vector<u8>> read_until(uint8_t delimiter, bool consume_delimiter = true) override {
+        std::vector<u8> data;
+        
+        while (true) {
+            auto byte_result = read_byte();
+            if (!byte_result) {
+                if (byte_result.error() == Error::EndOfData && !data.empty()) {
+                    return data;
+                }
+                return std::unexpected(byte_result.error());
+            }
+            
+            u8 byte = byte_result.value();
+            
             if (byte == delimiter) {
                 if (!consume_delimiter) {
-                    seek(position() - 1);
+                    pos_--; // Move back one position
                 }
-                return *this;
+                return data;
             }
+            
             data.push_back(byte);
         }
-
-        return *this;
     }
     
-    Reader& read_string(std::string& str) override {
-        clear_error();
-        str.clear();
-        if (!source_buffer_) {
-            set_error(Error::GenericError);
-            return *this;
-        }
-
-        uint8_t byte;
-        while(read_byte(byte).good()) {
-            if (byte == 0) {
-                return *this;
+    Result<std::string> read_string() override {
+        std::string str;
+        
+        while (true) {
+            auto byte_result = read_byte();
+            if (!byte_result) {
+                if (byte_result.error() == Error::EndOfData && !str.empty()) {
+                    return str;
+                }
+                return std::unexpected(byte_result.error());
             }
+            
+            u8 byte = byte_result.value();
+            
+            if (byte == 0) {
+                return str;
+            }
+            
             str.push_back(static_cast<char>(byte));
         }
-
-        return *this;
     }
 
-    Reader& seek(std::size_t pos) override {
-        clear_error();
-        if (!source_buffer_) {
-            set_error(Error::GenericError);
-            return *this;
+    Result<void> seek(size_t pos) override {
+        auto sz = size();
+        if (!sz)
+            return std::unexpected(sz.error());
+        
+        if (pos > sz.value()) {
+            return std::unexpected(Error::InvalidPositionError);
         }
-        if (pos > size()) {
-            set_error(Error::EndOfData);
-            return *this;
-        }
+        
         pos_ = pos;
-        return *this;
+        return {};
     }
 
-    Reader& skip(std::size_t count) override {
-        clear_error();
-        if (!source_buffer_) {
-            set_error(Error::GenericError);
-            return *this;
+    Result<void> skip(size_t count) override {
+        auto sz = size();
+        if (!sz)
+            return std::unexpected(sz.error());
+        
+        if (pos_ + count > sz.value()) {
+            return std::unexpected(Error::InvalidPositionError);
         }
-        if (pos_ + count > size()) {
-            pos_ = size();
-            set_error(Error::EndOfData);
-            return *this;
-        }
+        
         pos_ += count;
-        return *this;
+        return {};
     }
 
-    std::size_t position() const override {
+    Result<size_t> position() const override {
         return pos_;
     }
 
-    std::size_t size() const override {
-        if (!source_buffer_) {
-            set_error(Error::GenericError);
-            return 0;
-        }
+    Result<size_t> size() const override {
         return source_buffer_->size();
     }
 
-    std::size_t remaining() const override {
-        if (!source_buffer_) {
-            set_error(Error::GenericError);
-            return 0;
-        }
-        return size() - position();
+    Result<size_t> remaining() const override {
+        auto sz = size();
+        if (!sz)
+            return std::unexpected(sz.error());
+        
+        return sz.value() - pos_;
     }
 
-    Reader& read_all(std::vector<uint8_t>& data) override {
-        clear_error();
-        seek(0);
-        if(fail()) return *this;
-        return read_bytes(data, remaining());
+    Result<std::vector<u8>> read_all() override {
+        auto seek_result = seek(0);
+        if (!seek_result)
+            return std::unexpected(seek_result.error());
+        
+        auto rem = remaining();
+        if (!rem)
+            return std::unexpected(rem.error());
+        
+        return read_bytes(rem.value());
     }
 
-    Reader& peek_byte(uint8_t& byte) override {
-        clear_error();
-        auto original_pos = position();
-        read_byte(byte);
+    Result<u8> peek_byte() override {
+        size_t original_pos = pos_;
+        auto result = read_byte();
         pos_ = original_pos;
-        return *this;
+        return result;
     }
 
-    Reader& peek_bytes(std::vector<uint8_t>& data, std::size_t count) override {
-        clear_error();
-        auto original_pos = position();
-        read_bytes(data, count);
+    Result<std::vector<u8>> peek_bytes(size_t count) override {
+        size_t original_pos = pos_;
+        auto result = read_bytes(count);
         pos_ = original_pos;
-        return *this;
+        return result;
     }
 };
 
-class VirtualFilesystemBuffer : public Buffer {
-private:
-    struct FileEntry {
-        std::filesystem::path path;
-        std::size_t offset; // Cumulative offset from start of buffer
-        std::size_t file_size;
-    };
-
-    std::vector<FileEntry> files_;
-    std::size_t pos_ = 0;
-    std::unique_ptr<FileBuffer> cur_file_buffer_;
-    std::size_t cur_file_idx_;
-    std::size_t total_size_ = 0;
-
-    std::size_t get_file_at_offset(std::size_t offset) const {
-        if (files_.empty()) {
-            set_error(Error::EndOfData);
-            return SIZE_MAX;
-        }
-        
-        std::size_t left = 0, right = files_.size();
-        // binary search
-        while (left < right) {
-            std::size_t mid = left + (right - left) / 2;
-            if (offset < files_[mid].offset) {
-                right = mid;
-            } else if (offset >= files_[mid].offset + files_[mid].file_size) {
-                left = mid + 1;
-            } else {
-                return mid;
-            }
-        }
-
-        set_error(Error::EndOfData);
-        return SIZE_MAX;
-    }
-
-    std::size_t pos_to_file_offset(std::size_t global_pos, std::size_t file_idx) const {
-        if (file_idx >= files_.size()) {
-            set_error(Error::GenericError);
-            return 0;
-        }
-        return global_pos - files_[file_idx].offset;
-    }
-    
-    void update_file() {
-        std::size_t target_file = get_file_at_offset(pos_);
-        if (fail() || target_file == SIZE_MAX) {
-            return;
-        }
-        
-        if (target_file == cur_file_idx_ && cur_file_buffer_) {
-            std::size_t file_offset = pos_to_file_offset(pos_, target_file);
-            if (cur_file_buffer_->position() != file_offset) {
-                cur_file_buffer_->seek(file_offset);
-                if (cur_file_buffer_->fail()) {
-                    propagate_error(*cur_file_buffer_);
-                }
-            }
-            return;
-        }
-        
-        // Need to load a new file
-        cur_file_idx_ = target_file;
-        cur_file_buffer_ = std::make_unique<FileBuffer>(files_[target_file].path.string());
-        
-        if (cur_file_buffer_->fail()) {
-            propagate_error(*cur_file_buffer_);
-            return;
-        }
-        
-        // Seek to the correct position within the file
-        std::size_t file_offset = pos_to_file_offset(pos_, target_file);
-        cur_file_buffer_->seek(file_offset);
-        if (cur_file_buffer_->fail()) {
-            propagate_error(*cur_file_buffer_);
-        }
-    }
-
-
-public:
-    explicit VirtualFilesystemBuffer() = default;
-    
-    void add_file(const std::filesystem::path& path) {
-        std::error_code ec;
-        if (!std::filesystem::exists(path, ec) || ec) {
-            set_error(Error::FileOpenError);
-            return;
-        }
-        
-        std::ifstream f(path, std::ios::binary | std::ios::ate);
-        if (!f.is_open()) {
-            set_error(Error::FileOpenError);
-            return;
-        }
-        
-        std::size_t file_size = static_cast<std::size_t>(f.tellg());
-        f.close();
-        
-        files_.push_back({
-            path, 
-            total_size_,
-            file_size
-        });
-        
-        total_size_ += file_size;
-        clear_on_success();
-    }
-    
-    std::size_t read_raw_bytes(std::span<uint8_t> dest) override {
-        if (dest.empty()) {
-            set_error(Error::GenericError);
-            return 0;
-        }
-        
-        std::size_t total_read = 0;
-        std::size_t remaining_to_read = dest.size();
-        
-        while (remaining_to_read > 0 && pos_ < total_size_) {
-            update_file();
-            if (fail()) {
-                break;
-            }
-            
-            std::size_t file_remaining = cur_file_buffer_->remaining();
-            std::size_t to_read = std::min(remaining_to_read, file_remaining);
-            
-            if (to_read == 0) {
-                pos_ = files_[cur_file_idx_].offset + files_[cur_file_idx_].file_size;
-                continue;
-            }
-            
-            auto dest_slice = dest.subspan(total_read, to_read);
-            std::size_t bytes_read = cur_file_buffer_->read_raw_bytes(dest_slice);
-            
-            if (cur_file_buffer_->fail() && !cur_file_buffer_->eof()) {
-                propagate_error(*cur_file_buffer_);
-                break;
-            }
-            
-            total_read += bytes_read;
-            remaining_to_read -= bytes_read;
-            pos_ += bytes_read;
-            
-            if (bytes_read < to_read) {
-                continue;
-            }
-        }
-        
-        if (total_read == dest.size()) {
-            clear_on_success();
-        } else if (total_read == 0 && remaining_to_read > 0) {
-            set_error(Error::EndOfData);
-        }
-        // Partial read is not an error, just return what we got
-        
-        return total_read;
-    }
-    
-    std::size_t peek_raw_bytes(std::span<uint8_t> dest, std::size_t offset = 0) override {
-        if (dest.empty()) {
-            set_error(Error::GenericError);
-            return 0;
-        }
-        
-        std::size_t peek_pos = pos_ + offset;
-        if (peek_pos >= total_size_) {
-            set_error(Error::EndOfData);
-            return 0;
-        }
-        
-        std::size_t original_pos = pos_;
-        pos_ = peek_pos;
-        
-        std::size_t total_peeked = 0;
-        std::size_t remaining_to_peek = dest.size();
-        
-        while (remaining_to_peek > 0 && peek_pos < total_size_) {
-            update_file();
-            if (fail()) {
-                break;
-            }
-            
-            std::size_t file_remaining = cur_file_buffer_->remaining();
-            std::size_t to_peek = std::min(remaining_to_peek, file_remaining);
-            
-            if (to_peek == 0) {
-                peek_pos = files_[cur_file_idx_].offset + files_[cur_file_idx_].file_size;
-                pos_ = peek_pos;
-                continue;
-            }
-            
-            auto dest_slice = dest.subspan(total_peeked, to_peek);
-            std::size_t bytes_peeked = cur_file_buffer_->peek_raw_bytes(dest_slice);
-            
-            if (cur_file_buffer_->fail() && !cur_file_buffer_->eof()) {
-                propagate_error(*cur_file_buffer_);
-                break;
-            }
-            
-            total_peeked += bytes_peeked;
-            remaining_to_peek -= bytes_peeked;
-            peek_pos += bytes_peeked;
-            pos_ = peek_pos;
-            
-            if (bytes_peeked < to_peek) {
-                break;
-            }
-        }
-        
-        pos_ = original_pos;
-        
-        if (total_peeked == dest.size()) {
-            clear_on_success();
-        } else if (total_peeked == 0 && remaining_to_peek > 0) {
-            set_error(Error::EndOfData);
-        }
-        
-        return total_peeked;
-    }
-    
-    bool seek(std::size_t pos) override {
-        if (pos > total_size_) {
-            set_error(Error::EndOfData);
-            return false;
-        }
-        
-        pos_ = pos;
-        clear_on_success();
-        return true;
-    }
-    
-    bool skip(std::size_t count) override {
-        std::size_t new_pos = pos_ + count;
-        if (new_pos > total_size_) {
-            pos_ = total_size_;
-            set_error(Error::EndOfData);
-            return false;
-        }
-        
-        pos_ = new_pos;
-        clear_on_success();
-        return true;
-    }
-    
-    std::size_t position() const override {
-        return pos_;
-    }
-    
-    std::size_t size() const override {
-        return total_size_;
-    }
-    
-    std::size_t remaining() const override {
-        return total_size_ - pos_;
-    }
-};
-
-} 
+}
