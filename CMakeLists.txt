@@ -4,6 +4,7 @@ project(dwhbll LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
+option(DWHBLL_TESTS "Build tests" ON)
 option(BUILD_HARDEN "enable hardening on the library." OFF)
 option(BUILD_HARDEN_EXPENSIVE "enable expensive hardening features on the library." OFF)
 option(DWHBLL_GPU_ENABLED "Toggle GPU acceleration" ON)
@@ -82,21 +83,22 @@ endif()
 
 # TODO : IMPROVE INTEGRATION OF GPU COMPUTE FOR USERS 
 
-set(DWHBLL_TEST_CXX_SOURCES
-    tests/test_main.cpp
-    tests/pool.cpp
-    tests/matrix.cpp
-    tests/collections/cache.cpp
-    tests/collections/ring.cpp
-    tests/collections/streams.cpp
-)
+if (DWHBLL_TESTS)
+    set(DWHBLL_TEST_CXX_SOURCES
+        tests/test_main.cpp
+        tests/pool.cpp
+        tests/matrix.cpp
+        tests/collections/cache.cpp
+        tests/collections/ring.cpp
+        tests/collections/streams.cpp
+    )
 
-add_executable(dwhbll_test ${DWHBLL_TEST_CXX_SOURCES})
+    add_executable(dwhbll_test ${DWHBLL_TEST_CXX_SOURCES})
 
 
-target_link_libraries(dwhbll_test PRIVATE dwhbll)
-target_include_directories(dwhbll_test PRIVATE include)
-
+    target_link_libraries(dwhbll_test PRIVATE dwhbll)
+    target_include_directories(dwhbll_test PRIVATE include)
+endif()
 
 
 # TODO : CREATE CMAKE PACKAGE FOR EASY INTEGRATION WITH CMAKE AND MESON
