@@ -38,8 +38,16 @@ add_library(dwhbll INTERFACE)
 # Core library, contains most things
 add_library(dwhbll_core STATIC ${DWHBLL_SOURCES})
 set_target_properties(dwhbll_core PROPERTIES LINKER_LANGUAGE CXX)
-target_include_directories(dwhbll_core PUBLIC include)
+target_include_directories(dwhbll_core
+    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
 target_link_libraries(dwhbll_core PUBLIC stdc++exp)
+
+install(TARGETS dwhbll_core
+    EXPORT dwhbllTargets
+    ARCHIVE DESTINATION lib
+    INCLUDES DESTINATION include
+)
 
 # Propagates the linker to the core library if targetting the main target
 target_link_libraries(dwhbll INTERFACE dwhbll_core)
@@ -72,6 +80,11 @@ if (DWHBLL_GPU_ENABLED)
 
         target_link_libraries(dwhbll_gpu PRIVATE hip::device)
 
+        install(TARGETS dwhbll_gpu
+            EXPORT dwhbllTargets
+            ARCHIVE DESTINATION lib
+            INCLUDES DESTINATION include
+        )
         
         target_link_libraries(dwhbll INTERFACE dwhbll_gpu)
     endif()
@@ -79,7 +92,27 @@ else()
     message(STATUS "Disabling GPU acceleration...")
 endif()
 
+install(DIRECTORY include/ DESTINATION include)
 
+install(EXPORT dwhbllTargets
+    FILE dwhbllTargets.cmake
+    NAMESPACE dwhbll::
+    DESTINATION lib/cmake/dwhbll
+)
+
+# Version file
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/dwhbllConfigVersion.cmake"
+    VERSION 1.0.0
+    COMPATIBILITY AnyNewerVersion
+)
+
+install(FILES
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/dwhbllConfig.cmake" # needed for find_package()
+    "${CMAKE_CURRENT_BINARY_DIR}/dwhbllConfigVersion.cmake"
+    DESTINATION lib/cmake/dwhbll
+)
 
 # TODO : IMPROVE INTEGRATION OF GPU COMPUTE FOR USERS 
 
@@ -99,6 +132,3 @@ if (DWHBLL_TESTS)
     target_link_libraries(dwhbll_test PRIVATE dwhbll)
     target_include_directories(dwhbll_test PRIVATE include)
 endif()
-
-
-# TODO : CREATE CMAKE PACKAGE FOR EASY INTEGRATION WITH CMAKE AND MESON
