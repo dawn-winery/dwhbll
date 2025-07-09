@@ -1,4 +1,5 @@
 #include <chrono>
+#include <cstdlib>
 #include <dwhbll/linalg/matrix.h>
 #include <functional>
 #include <iostream>
@@ -103,7 +104,7 @@ bool matrix_mul() {
     }
 
     {
-        constexpr size_t SIZE = 2048;
+        constexpr size_t SIZE = 4096*4;
         dwhbll::linalg::Matrix<int, SIZE, SIZE> m1;
         dwhbll::linalg::Matrix<int, SIZE, SIZE> m2;
 
@@ -122,6 +123,32 @@ bool matrix_mul() {
         auto res = m1 * m2;
         auto t2 = std::chrono::high_resolution_clock::now();
         std::println(std::cout, "Mat mul of matrices {}x{} took {}", SIZE, SIZE, std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1));
+
+        std::cout << "Performing CPU verification..." << std::endl;
+        auto start_cpu = std::chrono::high_resolution_clock::now();
+        auto res2 = m1.matmul<SIZE, int, dwhbll::linalg::ExecutionPolicy::CPU>(m2);
+        auto end_cpu = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> duration_cpu = end_cpu - start_cpu;
+        std::cout << "CPU computation time: " << duration_cpu.count() << " seconds" << std::endl;
+
+        bool correct = true;
+        float tolerance = 1e-5;
+
+        for(int i = 0; i < SIZE; i++) {
+            for(int j = 0; j < SIZE; j++) {
+                bool diff = std::abs(res[i,j] - res2[i,j]) > tolerance;
+                if(diff) {
+                    std::println(std::cerr, "Mismatch @ [{},{}]: GPU={}, CPU={}", i,j, res[i,j], res2[i,j]);
+                    correct = false;
+                }
+            }
+        }
+
+        if (correct) {
+            std::cout << "Result verification: SUCCESS!" << std::endl;
+        } else {
+            std::cout << "Result verification: FAILED!" << std::endl;
+        }
     }
 
     return test_failed;

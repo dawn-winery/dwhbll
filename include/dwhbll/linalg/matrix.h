@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <thread>
 #include <type_traits>
 #include <utility>
@@ -20,7 +21,8 @@ namespace dwhbll::linalg {
 constexpr uint64_t GPU_VOLUME_THRESHOLD = (uint64_t) LINALG_GPU_THRESHOLD * LINALG_GPU_THRESHOLD * LINALG_GPU_THRESHOLD;
 
 template <typename ComputeT>
-void matmul_gpu_wrapper(const void *matA, const void *matB, void *res, std::pair<size_t, size_t> dimA, std::pair<size_t, size_t> dimB);
+std::vector<ComputeT> matmul_gpu_wrapper(const std::vector<ComputeT>& A, const std::vector<ComputeT>& B, 
+                                         std::pair<size_t, size_t> dimA, std::pair<size_t, size_t> dimB);
 
 
 #endif
@@ -89,7 +91,7 @@ class Matrix {
         template <typename T2> requires std::convertible_to<T2, T>
         Matrix(const Matrix<T2, Row, Col>& other) {
             for(size_t i = 0; i < Row * Col; i++) {
-                data[i] = static_cast<T>(other.data[i]);
+                data[i] = static_cast<T>(other.raw_handle()[i]);
             }
         }
 
@@ -104,7 +106,7 @@ class Matrix {
         Matrix& operator=(Matrix<T2, Row, Col>& other) {
             if(this != &other) {
                 for(size_t i = 0; i < Row * Col; i++) {
-                    data[i] = static_cast<T>(other.data[i]);
+                    data[i] = static_cast<T>(other.raw_handle()[i]);
                 }
             }
 
@@ -122,11 +124,20 @@ class Matrix {
             return *this;
         }
 
+        template <typename T2> requires std::convertible_to<T2, T>
+        Matrix& operator=(T2* other) noexcept {
+            for(size_t i = 0; i < Row * Col; i++) {
+                data[i] = static_cast<T>(std::move(other[i]));
+            }
+            return *this;
+        }
+
         ///////////////////////////////////////////////////////
 
         constexpr size_t rows() const { return Row; }
         constexpr size_t cols() const { return Col; }
         constexpr size_t size() const { return data.size(); }
+        const T* raw_handle() const { return data.data(); }
 
         T& operator[](size_t row, size_t col) {
             assert(row < Row && col < Col);
@@ -168,8 +179,14 @@ class Matrix {
                     matmul_cpu<K, T2, ResultType>(other, res);
                 }
                 else {
-                    std::println("Auto dispatch to GPU [TODO]");
-                    matmul_gpu_wrapper<float>(this->data.data(), other.data.data(), res.data.data(), std::make_pair(Row, Col), std::make_pair(Col, K));
+                    std::println("Auto dispatch to GPU");
+
+                    std::vector<double> A(this->size()), B(other.size());
+                    std::ranges::transform(this->data, A.begin(), [] (int i) { return static_cast<double>(i); });
+                    std::ranges::transform(other.data, B.begin(), [] (int i) { return static_cast<double>(i); });
+
+                    auto bleh = matmul_gpu_wrapper<double>(A, B, std::make_pair(Row, Col), std::make_pair(Col, K));
+                    res = std::move(bleh.data());
                 }
 
             }
