@@ -49,6 +49,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/console/Logging.h
     include/dwhbll/linalg/matrix.h
     include/dwhbll/collections/cache.h
+    include/dwhbll/utils/utils.hpp
     src/dwhbll/console/Logging.cpp
     src/dwhbll/network/dns/dns.cpp
     src/dwhbll/network/SocketManager.cpp
@@ -76,6 +77,8 @@ if (DWHBLL_REFLECTION_ENABLED)
     endif()
 
     message(STATUS "Building with reflection support")
+
+    target_compile_definitions(dwhbll_core PUBLIC DWHBLL_REFLECTION)
 
     target_compile_options(dwhbll_core PUBLIC
         -freflection-latest
