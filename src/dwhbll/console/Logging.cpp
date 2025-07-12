@@ -1,11 +1,15 @@
 #include <dwhbll/console/Logging.h>
 
-#include <filesystem>
 #include <iostream>
 #include <sstream>
-#include <stacktrace>
 #include <unordered_map>
 #include <dwhbll/sanify/types.hpp>
+#include <dwhbll/utils/stacktrace.hpp>
+
+#ifndef DWHBLL_LIBCPP
+#include <stacktrace>
+#include <filesystem>
+#endif
 
 namespace dwhbll::console {
     Level defaultLevel = Level::INFO;
@@ -82,7 +86,34 @@ namespace dwhbll::console {
         std::cerr << "\n\e[1;91m========= [PANIC] =========\n";
         std::cerr << msg << "\n\n";
 
-        std::stacktrace trace = std::stacktrace::current(1);
+        #ifdef DWHBLL_LIBCPP
+        using namespace dwhbll::stacktrace;
+        std::vector<Entry> trace = current(skip);
+        for(auto& entry : trace) {
+            const auto function = entry.symbol_name.has_value() ? entry.symbol_name.value() : "???";
+
+            std::string sourcePosition;
+            if (entry.path.has_value()) {
+                if(entry.line.has_value()) {
+                    sourcePosition = std::format(
+                        "{} at {}:{}",
+                        function, entry.path.value(), entry.line.value());
+                }
+                else {
+                    sourcePosition = std::format(
+                        "{} at {}", function.data(), entry.path.value());
+                }
+            } else {
+                sourcePosition = function;
+            }
+
+            const auto info = std::format(
+                    "[{:#018x}] {}\n",
+                    reinterpret_cast<std::uintptr_t>(entry.address), sourcePosition.data());
+            std::cerr << (info);
+        }
+        #else
+        std::stacktrace trace = std::stacktrace::current(skip);
         for(auto& entry : trace) {
             const auto function = entry.description().substr(0, entry.description().find("("));
 
@@ -107,6 +138,7 @@ namespace dwhbll::console {
                     reinterpret_cast<std::uintptr_t>(entry.native_handle()), sourcePosition.data());
             std::cerr << (info);
         }
+        #endif
 
         exit(1);
     }

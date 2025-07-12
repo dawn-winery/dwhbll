@@ -1,11 +1,9 @@
 #include <dwhbll/network/dns/dns.h>
 
+#include <exception>
 #include <format>
 #include <iostream>
 #include <numeric>
-#include <random>
-#include <ranges>
-#include <utility>
 
 #include <dwhbll/console/Logging.h>
 
@@ -551,27 +549,28 @@ namespace dwhbll::network::dns {
         result += header.to_string();
 
         result += "QUESTIONS: {\n";
-        for (const auto [i, entry] : questions | std::views::enumerate) {
-            result += std::format("[{}]: {},\n", i, entry.to_string());
+        for (std::size_t i = 0; i < questions.size(); ++i) {
+            result += std::format("[{}]: {},\n", i, questions[i].to_string());
         }
         result += "},\n";
 
         result += "ANSWERS: {\n";
-        for (const auto [i, entry] : answers | std::views::enumerate) {
-            result += std::format("[{}]: {},\n", i, entry.to_string());
+        for (std::size_t i = 0; i < answers.size(); ++i) {
+            result += std::format("[{}]: {},\n", i, answers[i].to_string());
         }
         result += "},\n";
 
         result += "AUTHORITIES: {\n";
-        for (const auto [i, entry] : authorities | std::views::enumerate) {
-            result += std::format("[{}]: {},\n", i, entry.to_string());
+        for (std::size_t i = 0; i < authorities.size(); ++i) {
+            result += std::format("[{}]: {},\n", i, authorities[i].to_string());
         }
         result += "},\n";
 
         result += "ADDITIONALS: {\n";
-        for (const auto [i, entry] : additionals | std::views::enumerate) {
-            result += std::format("[{}]: {},\n", i, entry.to_string());
+        for (std::size_t i = 0; i < additionals.size(); ++i) {
+            result += std::format("[{}]: {},\n", i, additionals[i].to_string());
         }
+
         result += "},\n}";
 
         return result;

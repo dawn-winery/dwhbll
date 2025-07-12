@@ -1,5 +1,4 @@
 #include <iostream>
-#include <bits/ostream.tcc>
 #include <dwhbll/collections/ring.h>
 
 bool ring_test(std::optional<std::string> test_to_run) {

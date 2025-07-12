@@ -6,8 +6,8 @@
 #include <arpa/inet.h>
 #include <poll.h>
 #include <sys/socket.h>
+#include <thread>
 #include <unistd.h>
-#include <bits/this_thread_sleep.h>
 
 namespace dwhbll::network {
     Socket::~Socket() {

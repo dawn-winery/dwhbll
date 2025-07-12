@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.31)
 project(dwhbll LANGUAGES C CXX)
 
-set(CMAKE_CXX_STANDARD 23)
+include(CheckCXXSymbolExists)
+
+find_package(PkgConfig REQUIRED)
+
+set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 option(DWHBLL_TESTS "Build tests" ON)
@@ -9,6 +13,20 @@ option(BUILD_HARDEN "enable hardening on the library." OFF)
 option(BUILD_HARDEN_EXPENSIVE "enable expensive hardening features on the library." OFF)
 option(DWHBLL_GPU_ENABLED "Toggle GPU acceleration" ON)
 set(LINALG_GPU_THRESHOLD_VALUE 2048 CACHE STRING "Select the threshold for GPU delegation")
+
+
+if(NOT USE_LIBCPP STREQUAL "ON" AND NOT USE_LIBCPP STREQUAL "OFF" AND NOT USE_LIBCPP STREQUAL "")
+    message(FATAL_ERROR "USE_LIBCPP must be 'ON', 'OFF', or empty")
+endif()
+
+check_cxx_symbol_exists(_LIBCPP_VERSION version DEFAULT_LIBCPP)
+if(USE_LIBCPP STREQUAL "")
+    if(DEFAULT_LIBCPP)
+        set(USE_LIBCPP "ON")
+    else()
+        set(USE_LIBCPP "OFF")
+    endif()
+endif()
 
 if (BUILD_HARDEN)
     add_compile_definitions(DWHBLL_HARDEN)
@@ -41,7 +59,35 @@ set_target_properties(dwhbll_core PROPERTIES LINKER_LANGUAGE CXX)
 target_include_directories(dwhbll_core
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
-target_link_libraries(dwhbll_core PUBLIC stdc++exp)
+
+if(USE_LIBCPP STREQUAL "OFF")
+    message(STATUS "Using libstdc++")
+
+    target_link_options(dwhbll_core PUBLIC "-stdlib=libstdc++")
+    target_link_libraries(dwhbll_core PUBLIC stdc++exp)
+
+else()
+    message(STATUS "Using libc++")
+
+    target_compile_options(dwhbll_core PUBLIC "-stdlib=libc++")
+    target_link_options(dwhbll_core PUBLIC "-stdlib=libc++")
+
+    pkg_check_modules(LIBDW REQUIRED libdw)
+    pkg_check_modules(LIBELF REQUIRED libelf)
+
+    target_include_directories(dwhbll_core PUBLIC
+        ${LIBDW_INCLUDE_DIRS}
+        ${LIBELF_INCLUDE_DIRS}
+    )
+
+    target_link_libraries(dwhbll_core PUBLIC
+        ${LIBDW_LIBRARIES}
+        ${LIBELF_LIBRARIES}
+        dl
+    )
+
+    target_compile_definitions(dwhbll_core PUBLIC DWHBLL_LIBCPP)
+endif()
 
 install(TARGETS dwhbll_core
     EXPORT dwhbllTargets
@@ -59,9 +105,7 @@ target_link_libraries(dwhbll INTERFACE dwhbll_core)
 if (DWHBLL_GPU_ENABLED)
     message(STATUS "GPU acceleration requested. Searching for HIP...")
     find_package(HIP QUIET)
-    if (NOT HIP_FOUND)
-        message("HIP not found. GPU support disabled.")
-    else()
+    if (HIP_FOUND)
         message(STATUS "HIP found at ${ROCM_PATH}")
 
         enable_language(HIP)
@@ -87,6 +131,8 @@ if (DWHBLL_GPU_ENABLED)
         )
         
         target_link_libraries(dwhbll INTERFACE dwhbll_gpu)
+    else()
+        message(WARNING "HIP not found. GPU support disabled.")
     endif()
 else()
     message(STATUS "Disabling GPU acceleration...")
