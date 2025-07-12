@@ -12,8 +12,9 @@ option(DWHBLL_TESTS "Build tests" ON)
 option(BUILD_HARDEN "enable hardening on the library." OFF)
 option(BUILD_HARDEN_EXPENSIVE "enable expensive hardening features on the library." OFF)
 option(DWHBLL_GPU_ENABLED "Toggle GPU acceleration" ON)
+option(DWHBLL_REFLECTION_ENABLED "Enable reflection and use custom Clang with libc++" OFF)
+set(USE_LIBCPP "" CACHE STRING "Use libc++ or libstdc++ [\"ON\", \"OFF\", or \"\" to use default]")
 set(LINALG_GPU_THRESHOLD_VALUE 2048 CACHE STRING "Select the threshold for GPU delegation")
-
 
 if(NOT USE_LIBCPP STREQUAL "ON" AND NOT USE_LIBCPP STREQUAL "OFF" AND NOT USE_LIBCPP STREQUAL "")
     message(FATAL_ERROR "USE_LIBCPP must be 'ON', 'OFF', or empty")
@@ -26,6 +27,10 @@ if(USE_LIBCPP STREQUAL "")
     else()
         set(USE_LIBCPP "OFF")
     endif()
+endif()
+
+if(USE_LIBCPP STREQUAL "OFF" AND DWHBLL_REFLECTION_ENABLED)
+    message(FATAL_ERROR "Reflection can't be used with libstdc++")
 endif()
 
 if (BUILD_HARDEN)
@@ -60,16 +65,43 @@ target_include_directories(dwhbll_core
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
+# If reflection is enabled, try to find a clang-p2996 install dir and use that to build
+if (DWHBLL_REFLECTION_ENABLED)
+    if(NOT DEFINED LLVM_ROOT)
+        message(FATAL_ERROR "LLVM_ROOT must be defined when building with reflection support. Use the dwhbll-reflection-toolchain.cmake.")
+    endif()
+
+    if (NOT EXISTS "${CMAKE_CXX_COMPILER}")
+        message(FATAL_ERROR "Custom Clang++ not found at ${CMAKE_CXX_COMPILER}")
+    endif()
+
+    message(STATUS "Building with reflection support")
+
+    target_compile_options(dwhbll_core PUBLIC
+        -freflection-latest
+        -fexpansion-statements
+    )
+
+    target_include_directories(dwhbll_core PUBLIC
+        ${LLVM_ROOT}/include/c++/v1
+        ${LLVM_ROOT}/include/x86_64-unknown-linux-gnu/c++/v1
+    )
+
+    target_link_options(dwhbll_core PUBLIC
+        -L${LLVM_ROOT}/lib
+        -Wl,-rpath,${LLVM_ROOT}/lib
+    )
+endif()
+
+
 if(USE_LIBCPP STREQUAL "OFF")
     message(STATUS "Using libstdc++")
 
     target_link_options(dwhbll_core PUBLIC "-stdlib=libstdc++")
     target_link_libraries(dwhbll_core PUBLIC stdc++exp)
-
 else()
     message(STATUS "Using libc++")
 
-    target_compile_options(dwhbll_core PUBLIC "-stdlib=libc++")
     target_link_options(dwhbll_core PUBLIC "-stdlib=libc++")
 
     pkg_check_modules(LIBDW REQUIRED libdw)
@@ -156,6 +188,7 @@ write_basic_package_version_file(
 
 install(FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/dwhbllConfig.cmake" # needed for find_package()
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/dwhbll-reflection-toolchain.cmake"
     "${CMAKE_CURRENT_BINARY_DIR}/dwhbllConfigVersion.cmake"
     DESTINATION lib/cmake/dwhbll
 )

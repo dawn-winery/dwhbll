@@ -82,7 +82,7 @@ namespace dwhbll::console {
         log(msg, Level::TRACE);
     }
 
-    [[noreturn]] void panic(const std::string& msg, uint32_t skip) {
+    [[noreturn]] void panic(const std::string_view& msg, uint32_t skip) {
         std::cerr << "\n\e[1;91m========= [PANIC] =========\n";
         std::cerr << msg << "\n\n";
 

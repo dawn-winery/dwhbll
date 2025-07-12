@@ -87,11 +87,11 @@ namespace dwhbll::console {
         trace(std::vformat(msg, std::make_format_args(args...)));
     }
 
-    [[noreturn]] void panic(const std::string& msg, uint32_t skip = 1);
+    [[noreturn]] void panic(const std::string_view& msg, uint32_t skip = 1);
 
     template <typename... Args>
     requires (sizeof...(Args) != 0)
-    void panic(const std::string& msg, Args&&... args) {
+    void panic(const std::string_view& msg, Args&&... args) {
         panic(std::vformat(msg, std::make_format_args(args...)), 2);
     }
 
