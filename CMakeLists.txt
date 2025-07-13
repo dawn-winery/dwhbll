@@ -54,6 +54,8 @@ set(DWHBLL_SOURCES
     src/dwhbll/network/dns/dns.cpp
     src/dwhbll/network/SocketManager.cpp
     src/dwhbll/collections/cache.cpp
+    src/dwhbll/utils/json.cpp
+    src/dwhbll/utils/utils.cpp
 )
 
 # Main target
