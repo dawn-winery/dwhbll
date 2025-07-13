@@ -30,6 +30,8 @@ public:
 private:
     value_t value;
 
+    std::string format_internal(int indentation, int cur_indentation) const;
+
 public:
     json() : value(json_object()) {}
     json(nullptr_t) : value(nullptr) {}
@@ -70,6 +72,7 @@ public:
     const json& operator[](const std::string& key) const;
 
     std::string dump() const;
+    std::string format(int indentation = 2) const;
 };
 
 }

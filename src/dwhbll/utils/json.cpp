@@ -86,4 +86,57 @@ std::string json::dump() const {
     return ss.str();
 }
 
+std::string json::format_internal(int indentation, int cur_indentation) const {
+    if(!is_object() && !is_array())
+        return dump();
+
+    std::string base_ind(cur_indentation, ' ');
+    cur_indentation += indentation;
+
+    std::ostringstream ss;
+    std::string ind(cur_indentation, ' ');
+    if(is_object()) {
+        json_object members = as_object();
+        ss << "{";
+        if(!members.empty())
+            ss << "\n";
+
+        auto it = members.begin();
+        while(it != members.end()) {
+            ss << ind << "\"" << escape_string(it->first) << "\"" 
+                << ": " << it->second.format_internal(indentation, cur_indentation);
+
+            ++it;
+            if(it != members.end())
+                ss << ",\n";
+        }
+
+        if(!members.empty())
+            ss << "\n" << base_ind;
+        ss << "}";
+    }
+    else if(is_array()) {
+        json_array elements = as_array();
+        ss << "[";
+        if(!elements.empty())
+            ss << "\n";
+
+        for(size_t i = 0; i < elements.size(); i++) {
+            ss << ind << elements[i].format_internal(indentation, cur_indentation);
+            if(i != elements.size() - 1)
+                ss << ",\n";
+        }
+
+        if(!elements.empty())
+            ss << "\n" << base_ind;
+        ss << "]";
+    }
+    return ss.str();
+   
+}
+
+std::string json::format(int indentation) const {
+    return format_internal(indentation, 0);
+}
+
 }
