@@ -3,6 +3,12 @@
 #include <iostream>
 #include <fstream>
 #include <regex>
+#include <version>
+
+#ifdef __cpp_lib_stacktrace
+#include <stacktrace>
+#include <filesystem>
+#endif
 
 namespace dwhbll::debug {
 
@@ -10,7 +16,7 @@ namespace dwhbll::debug {
     std::cerr << "\n\e[1;91m============ [PANIC] ============\n";
     std::cerr << msg << "\n\n";
 
-    #ifdef DWHBLL_LIBCPP
+    #ifndef __cpp_lib_stacktrace
     using namespace dwhbll::stacktrace;
     std::vector<Entry> trace = current(1);
     for(auto& entry : trace) {
@@ -37,7 +43,7 @@ namespace dwhbll::debug {
         std::cerr << (info);
     }
     #else
-    std::stacktrace trace = std::stacktrace::current(skip);
+    std::stacktrace trace = std::stacktrace::current();
     for(auto& entry : trace) {
         const auto function = entry.description().substr(0, entry.description().find("("));
 
@@ -69,12 +75,12 @@ namespace dwhbll::debug {
 
 bool is_being_debugged() {
     std::ifstream f("/proc/self/status");
-    static std::regex re("^TracerPid:\\s(?!0\\n)");
     std::string line;
     while(std::getline(f, line)) {
-        if(!line.starts_with("TracerPid"))
-            continue;
-        return std::regex_search(line, re);
+        if (line.starts_with("TracerPid:")) {
+            int tracer_pid = std::stoi(line.substr(10));
+            return tracer_pid != 0;
+        }
     }
 
     return false;

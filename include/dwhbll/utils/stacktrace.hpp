@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef DWHBLL_LIBCPP
+#ifndef __cpp_lib_stacktrace
 
 #include <dwhbll/sanify/types.hpp>
 #include <optional>

@@ -6,11 +6,18 @@
 #ifdef NDEBUG
     #define ASSERT(cond, ...) ((void)0)
 #else
-    #define ASSERT(cond, ...) \
-        ((cond) ? (void)0 : ::dwhbll::debug::assert_internal(#cond, ##__VA_ARGS__))
+    #define ASSERT(cond, ...)                                                   \
+        do {                                                                    \
+            if(!(cond)) {                                                         \
+                if(::dwhbll::debug::is_being_debugged())                        \
+                    BREAKPOINT();                                               \
+                else                                                            \
+                    ::dwhbll::debug::assert_internal(#cond, ##__VA_ARGS__);     \
+            }                                                                   \
+        } while(0)
 #endif
 
-#define BREAKPOINT() asm("int3");
+#define BREAKPOINT() asm("int3")
 
 namespace dwhbll::debug {
 
@@ -30,14 +37,10 @@ template <typename... Args>
 [[noreturn]] inline void assert_internal(std::string_view cond, std::string_view fmt, Args... args) {
     auto formatted_msg = std::vformat(fmt, std::make_format_args(std::forward<Args>(args)...));
     panic("Assertion Failed: {}\nCondition: {}", formatted_msg, cond);
-    if(is_being_debugged())
-        BREAKPOINT();
 }
 
 [[noreturn]] inline void assert_internal(std::string_view cond) {
     panic("Assertion Failed\nCondition: {}", cond);
-    if(is_being_debugged())
-        BREAKPOINT();
 }
 
 } // namespace dwhbll::debug

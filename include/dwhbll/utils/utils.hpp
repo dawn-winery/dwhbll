@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 #ifdef DWHBLL_REFLECTION
 #include <experimental/meta>
 #endif

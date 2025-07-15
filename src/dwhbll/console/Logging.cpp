@@ -6,11 +6,6 @@
 #include <dwhbll/sanify/types.hpp>
 #include <dwhbll/utils/stacktrace.hpp>
 
-#ifndef DWHBLL_LIBCPP
-#include <stacktrace>
-#include <filesystem>
-#endif
-
 namespace dwhbll::console {
     Level defaultLevel = Level::INFO;
     Level cerrLevel = Level::ERROR;

@@ -123,9 +123,8 @@ else()
         ${LIBELF_LIBRARIES}
         dl
     )
-
-    target_compile_definitions(dwhbll_core PUBLIC DWHBLL_LIBCPP)
 endif()
+
 
 install(TARGETS dwhbll_core
     EXPORT dwhbllTargets
