@@ -38,6 +38,8 @@ inline std::string demangle(const char* name) {
 }
 
 inline std::vector<Entry> current(u32 skip = 0) {
+    skip++;
+
     // Will only build on glibc, but who cares
     void *buffer[MAX_STACK_SIZE];
     int n = backtrace(buffer, MAX_STACK_SIZE);

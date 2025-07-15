@@ -56,6 +56,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/collections/cache.cpp
     src/dwhbll/utils/json.cpp
     src/dwhbll/utils/utils.cpp
+    src/dwhbll/utils/debug.cpp
 )
 
 # Main target
