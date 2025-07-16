@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <algorithm>
 
 #ifdef DWHBLL_REFLECTION
 #include <experimental/meta>
@@ -33,7 +34,26 @@ consteval std::string_view enum_to_string(E value) {
         }
     }
 
-  return "<unnamed>";
+    return "<unnamed>";
+}
+
+template <typename E, bool Enumerable = std::meta::is_enumerable_type(^^E)>
+requires std::is_enum_v<E>
+constexpr std::optional<E> string_to_enum(std::string name, bool case_sensitive = true) {
+    if(!case_sensitive)
+        std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+    if constexpr (Enumerable) {
+        template for (constexpr auto e :
+                     std::define_static_array(std::meta::enumerators_of(^^E))) {
+            std::string id = std::string(std::meta::identifier_of(e));
+            if(!case_sensitive)
+                std::transform(id.begin(), id.end(), id.begin(), ::tolower);
+            if (name == id)
+                return [:e:];
+        }
+    }
+
+    return std::nullopt;
 }
 #endif
 
