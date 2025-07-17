@@ -1,4 +1,4 @@
-#include <dwhbll/utils/debug.hpp>
+#include <dwhbll/console/debug.hpp>
 #include <dwhbll/utils/stacktrace.hpp>
 #include <iostream>
 #include <fstream>

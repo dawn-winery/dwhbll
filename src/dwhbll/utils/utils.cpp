@@ -4,11 +4,16 @@
 
 namespace dwhbll::utils {
 
-std::string replace_all(const std::string_view& str, const std::string_view& from, const std::string_view& to) {
+constexpr std::string replace_all(std::string_view str, std::string_view from, std::string_view to) {
     return str
         | std::views::split(from) 
         | std::views::join_with(to) 
         | std::ranges::to<std::string>();
+}
+
+std::string escape_string(std::string_view str) {
+    std::string s = utils::replace_all(str, "\"", "\\\"");
+    return utils::replace_all(s, "\\", "\\\\");
 }
 
 } // namespace dwhbll::utils

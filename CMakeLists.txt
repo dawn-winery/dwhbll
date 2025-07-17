@@ -51,12 +51,12 @@ set(DWHBLL_SOURCES
     include/dwhbll/collections/cache.h
     include/dwhbll/utils/utils.hpp
     src/dwhbll/console/Logging.cpp
+    src/dwhbll/console/debug.cpp
     src/dwhbll/network/dns/dns.cpp
     src/dwhbll/network/SocketManager.cpp
     src/dwhbll/collections/cache.cpp
     src/dwhbll/utils/json.cpp
     src/dwhbll/utils/utils.cpp
-    src/dwhbll/utils/debug.cpp
 )
 
 # Main target

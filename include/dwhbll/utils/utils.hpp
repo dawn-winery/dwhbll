@@ -9,7 +9,8 @@
 
 namespace dwhbll::utils {
 
-std::string replace_all(const std::string_view& str, const std::string_view& from, const std::string_view& to);
+constexpr std::string replace_all(std::string_view str, std::string_view from, std::string_view to);
+std::string escape_string(std::string_view str);
 
 #ifdef DWHBLL_REFLECTION
 consteval bool has_annotation(std::meta::info r, std::meta::info type) {
