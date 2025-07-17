@@ -21,16 +21,17 @@ const json& json::operator[](size_t index) const {
 }
 
 // Object key access
-json& json::operator[](const std::string& key) {
+json& json::operator[](std::string_view key) {
     assert(is_object());
     return std::get<json_object>(value)[key];
 }
 
-const json& json::operator[](const std::string& key) const {
+const json& json::operator[](std::string_view key) const {
     assert(is_object());
     auto& obj = std::get<json_object>(value);
     auto it = obj.find(key);
-    if (it == obj.end()) throw std::out_of_range("Key not found: " + key);
+    if (it == obj.end())
+        throw std::out_of_range("Key not found: " + std::string(key));
     return it->second;
 }
 

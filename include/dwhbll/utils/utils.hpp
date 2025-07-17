@@ -12,11 +12,9 @@ namespace dwhbll::utils {
 std::string replace_all(const std::string_view& str, const std::string_view& from, const std::string_view& to);
 
 #ifdef DWHBLL_REFLECTION
-template <typename T>
-consteval bool has_annotation(std::meta::info r, T const& value) {
-    auto expected = reflect_value(value);
-    for (std::meta::info a : annotations_of(r)) {
-        if (constant_of(a) == expected) {
+consteval bool has_annotation(std::meta::info r, std::meta::info type) {
+    for (auto a : annotations_of(r)) {
+        if(std::meta::dealias(std::meta::type_of(a)) == type) {
             return true;
         }
     }
@@ -39,7 +37,7 @@ consteval std::string_view enum_to_string(E value) {
 
 template <typename E, bool Enumerable = std::meta::is_enumerable_type(^^E)>
 requires std::is_enum_v<E>
-constexpr std::optional<E> string_to_enum(std::string name, bool case_sensitive = true) {
+consteval std::optional<E> string_to_enum(std::string name, bool case_sensitive = true) {
     if(!case_sensitive)
         std::transform(name.begin(), name.end(), name.begin(), ::tolower);
     if constexpr (Enumerable) {

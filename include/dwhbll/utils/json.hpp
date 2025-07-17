@@ -13,7 +13,7 @@ namespace dwhbll::json {
 class json {
 
 public:
-    using json_object = std::map<std::string, json>;
+    using json_object = std::map<std::string_view, json>;
     using json_array = std::vector<json>;
 
     // Just casually wasting 31 bytes when you want to store a bool
@@ -68,8 +68,8 @@ public:
     json& operator[](size_t index);
     const json& operator[](size_t index) const;
 
-    json& operator[](const std::string& key);
-    const json& operator[](const std::string& key) const;
+    json& operator[](std::string_view key);
+    const json& operator[](std::string_view key) const;
 
     std::string dump() const;
     std::string format(int indentation = 2) const;
