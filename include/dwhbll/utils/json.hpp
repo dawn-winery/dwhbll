@@ -72,6 +72,7 @@ public:
     std::string format(int indentation = 2) const;
 
     static json parse(std::string_view s);
+    static json parse(std::istream& s);
 };
 
 class json_parser {

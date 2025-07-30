@@ -24,7 +24,7 @@ consteval bool has_annotation(std::meta::info r, std::meta::info type) {
 
 template<typename E, bool Enumerable = std::meta::is_enumerable_type(^^E)>
 requires std::is_enum_v<E>
-consteval std::string_view enum_to_string(E value) {
+constexpr std::string_view enum_to_string(E value) {
     if constexpr (Enumerable) {
         template for (constexpr auto e :
                       std::define_static_array(std::meta::enumerators_of(^^E))) {
@@ -38,7 +38,7 @@ consteval std::string_view enum_to_string(E value) {
 
 template <typename E, bool Enumerable = std::meta::is_enumerable_type(^^E)>
 requires std::is_enum_v<E>
-consteval std::optional<E> string_to_enum(std::string name, bool case_sensitive = true) {
+constexpr std::optional<E> string_to_enum(std::string name, bool case_sensitive = true) {
     if(!case_sensitive)
         std::transform(name.begin(), name.end(), name.begin(), ::tolower);
     if constexpr (Enumerable) {

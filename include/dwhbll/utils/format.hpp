@@ -35,7 +35,7 @@ constexpr json::json debugfmt_internal(T val) {
 
 template <typename T>
 requires std::is_class_v<T>
-std::string debugfmt(T val) {
+constexpr std::string debugfmt(T val) {
     if constexpr (!utils::has_annotation(^^T, ^^DebugFmt)) {
         throw "Missing annotation";
     }

@@ -123,6 +123,12 @@ json json::parse(std::string_view s) {
     return parser.parse();
 }
 
+json json::parse(std::istream& stream) {
+    std::string s(std::istreambuf_iterator<char>(stream), {});
+    auto parser = json_parser(s);
+    return parser.parse();
+}
+
 void json_parser::ws() {
     if(idx >= data.size())
         return;

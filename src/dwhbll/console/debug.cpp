@@ -2,7 +2,6 @@
 #include <dwhbll/utils/stacktrace.hpp>
 #include <iostream>
 #include <fstream>
-#include <regex>
 #include <version>
 
 #ifdef __cpp_lib_stacktrace
