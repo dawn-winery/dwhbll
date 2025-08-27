@@ -2,10 +2,6 @@
 
 #include <format>
 
-#ifdef DWHBLL_REFLECTION
-#include <experimental/meta>
-#endif
-
 #ifdef NDEBUG
     #define ASSERT(cond, ...) ((void)0)
 #else

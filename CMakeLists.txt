@@ -177,6 +177,10 @@ endif()
 
 install(DIRECTORY include/ DESTINATION include)
 
+install(TARGETS dwhbll
+    EXPORT dwhbllTargets
+)
+
 install(EXPORT dwhbllTargets
     FILE dwhbllTargets.cmake
     NAMESPACE dwhbll::
