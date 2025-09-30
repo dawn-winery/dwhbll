@@ -1,5 +1,7 @@
 #pragma once
 
+#include <version>
+
 #ifndef __cpp_lib_stacktrace
 
 #include <dwhbll/sanify/types.hpp>
@@ -37,7 +39,7 @@ inline std::string demangle(const char* name) {
     return (status == 0) ? res.get() : name;
 }
 
-inline std::vector<Entry> current(u32 skip = 0) {
+inline std::vector<Entry> current_nodemangle(u32 skip = 0) {
     skip++;
 
     // Will only build on glibc, but who cares
@@ -49,6 +51,10 @@ inline std::vector<Entry> current(u32 skip = 0) {
         entries[i] = Entry { .address = buffer[i + skip] };
     }
 
+    return entries;
+}
+
+inline void demangle(std::vector<Entry>& entries) {
     Dwfl_Callbacks callbacks = {
         .find_elf = dwfl_linux_proc_find_elf,
         .find_debuginfo = dwfl_standard_find_debuginfo,
@@ -78,13 +84,22 @@ inline std::vector<Entry> current(u32 skip = 0) {
             if(filename[0])
                 entries[i - skip].path = filename;
             entries[i - skip].line = lineno;
-        } 
+        }
     }
 
-end:
-    dwfl_end(dwfl);
-    return entries;
+    end:
+        dwfl_end(dwfl);
 }
+
+inline std::vector<Entry> current(u32 skip = 0) {
+    auto result = current_nodemangle(skip);
+
+    demangle(result);
+
+    return result;
+}
+
+using trace = std::vector<Entry>;
 
 }
 
