@@ -57,6 +57,8 @@ set(DWHBLL_SOURCES
     src/dwhbll/collections/cache.cpp
     src/dwhbll/utils/json.cpp
     src/dwhbll/utils/utils.cpp
+    include/dwhbll/subprocess/pipe_wrapper.h
+    src/dwhbll/subprocess/pipe_wrapper.cpp
 )
 
 # Main target
