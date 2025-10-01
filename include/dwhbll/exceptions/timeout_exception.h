@@ -1,10 +1,10 @@
 #pragma once
 
-#include <stdexcept>
+#include <dwhbll/exceptions/rt_exception_base.h>
 
 namespace dwhbll::exceptions {
-    class timeout_exception : public std::runtime_error {
+    class timeout_exception : public rt_exception_base {
     public:
-        using std::runtime_error::runtime_error;
+        using rt_exception_base::rt_exception_base;
     };
 }
