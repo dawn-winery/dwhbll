@@ -2,6 +2,20 @@
 
 #include <version>
 
+#include <cxxabi.h>
+#include <memory>
+
+namespace dwhbll::stacktrace {
+    inline std::string demangle(const char* name) {
+        int status = 0;
+        std::unique_ptr<char, void(*)(void*)> res {
+            abi::__cxa_demangle(name, nullptr, nullptr, &status),
+            std::free
+        };
+        return (status == 0) ? res.get() : name;
+    }
+}
+
 #ifndef __cpp_lib_stacktrace
 
 #include <dwhbll/sanify/types.hpp>
@@ -9,7 +23,6 @@
 #include <execinfo.h>
 #include <elfutils/libdwfl.h>
 #include <unistd.h>
-#include <cxxabi.h>
 
 /*
  * Everything here is temporary until libc++ adds <stacktrace>
@@ -29,15 +42,6 @@ struct Entry {
     std::optional<std::string> path;
     std::optional<u32> line;
 };
-
-inline std::string demangle(const char* name) {
-    int status = 0;
-    std::unique_ptr<char, void(*)(void*)> res {
-        abi::__cxa_demangle(name, nullptr, nullptr, &status),
-        std::free
-    };
-    return (status == 0) ? res.get() : name;
-}
 
 inline std::vector<Entry> current_nodemangle(u32 skip = 0) {
     skip++;
