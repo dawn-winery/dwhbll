@@ -61,9 +61,10 @@ set(DWHBLL_SOURCES
     src/dwhbll/subprocess/process.cpp
     include/dwhbll/subprocess/pipe_wrapper.h
     src/dwhbll/subprocess/pipe_wrapper.cpp
-        include/dwhbll/exceptions/timeout_exception.h
-        src/dwhbll/exceptions/rt_exception_base.cpp
-        include/dwhbll/exceptions/rt_exception_base.h
+    include/dwhbll/exceptions/timeout_exception.h
+    src/dwhbll/exceptions/rt_exception_base.cpp
+    include/dwhbll/exceptions/rt_exception_base.h
+    include/dwhbll/exceptions/sys_error.h
 )
 
 # Main target
