@@ -14,6 +14,7 @@ namespace dwhbll::debug {
 [[noreturn]] void panic(const std::string& msg) {
     std::cerr << "\n\e[1;91m============ [PANIC] ============\n";
     std::cerr << msg << "\n\n";
+    std::cerr << "Traceback (most recent call first):" << "\n";
 
     #ifndef __cpp_lib_stacktrace
     using namespace dwhbll::stacktrace;
