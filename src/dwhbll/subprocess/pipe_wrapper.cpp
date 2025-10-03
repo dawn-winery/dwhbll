@@ -1,3 +1,7 @@
+#include <cstring>
+#include <iostream>
+#include <dwhbll/exceptions/sys_error.h>
+
 #ifdef __linux__
 #include <fcntl.h>
 #else
@@ -7,6 +11,7 @@
 #include <dwhbll/subprocess/pipe_wrapper.h>
 
 namespace dwhbll::subprocess {
+    std::optional<int> pipe_wrapper::devnull;
     pipe_wrapper::pipe_wrapper(const int fd) : fd(fd) {
 #ifdef __linux__
         if (devnull.has_value())
@@ -32,8 +37,10 @@ namespace dwhbll::subprocess {
 
         while (remaining != 0) {
             const auto result = ::read(fd, buffer.data() + head, count);
+            if (result < 0 && errno == EAGAIN)
+                continue; // keep busy waiting until we have data.
             if (result < 0)
-                throw std::system_error(errno, std::system_category());
+                throw exceptions::sys_error(strerror(errno));
 
             remaining -= result;
             head += result;
@@ -66,12 +73,40 @@ namespace dwhbll::subprocess {
         size_t remaining = data.size_bytes();
         size_t head = 0;
         while (remaining != 0) {
-            const auto result = ::write(fd, data.data() + head, data.size_bytes());
+            const auto result = ::write(fd, data.data() + head, remaining);
             if (result < 0)
-                throw std::system_error(errno, std::system_category());
+                throw exceptions::sys_error(strerror(errno));
 
             remaining -= result;
             head += result;
         }
+    }
+
+    std::expected<std::vector<char>, bool> pipe_wrapper::ll_read(size_t count) const {
+        std::vector<char> buffer(count);
+        const auto result = ::read(fd, buffer.data(), count);
+
+        if (result < 0 && errno == EAGAIN)
+            // no available data
+            return {};
+
+        if (result == 0)
+            return std::unexpected(true); // pipe EOF.
+
+        if (result < 0)
+            throw exceptions::sys_error(strerror(errno));
+
+        buffer.resize(result);
+
+        return buffer;
+    }
+
+    size_t pipe_wrapper::ll_write(const std::span<char> &data) const {
+        const auto result = ::write(fd, data.data(), data.size_bytes());
+
+        if (result < 0)
+            throw exceptions::sys_error(strerror(errno));
+
+        return result;
     }
 }
