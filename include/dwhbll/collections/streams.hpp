@@ -134,9 +134,9 @@ private:
     size_t pos_ = 0;
 
 public:
-    explicit FileBuffer(const std::filesystem::path& path) 
-        : file_(path, std::ios::binary), 
-          path_(path),
+    explicit FileBuffer(const std::filesystem::path& path)
+        : path_(path),
+          file_(path, std::ios::binary),
           pos_(0) {
         if (!file_.is_open()) {
             throw std::ios_base::failure(std::format("Failed to open {}", path.string()));
