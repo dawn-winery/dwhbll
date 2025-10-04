@@ -7,6 +7,7 @@ dwhbll_sources = [
   'src' / 'dwhbll' / 'console' / 'debug.cpp',
   'src' / 'dwhbll' / 'console' / 'Logging.cpp',
   'src' / 'dwhbll' / 'exceptions' / 'rt_exception_base.cpp',
+  'src' / 'dwhbll' / 'graphics' / 'bitmap.cpp',
   'src' / 'dwhbll' / 'network' / 'dns' / 'dns.cpp',
   'src' / 'dwhbll' / 'network' / 'SocketManager.cpp',
   'src' / 'dwhbll' / 'subprocess' / 'pipe_wrapper.cpp',

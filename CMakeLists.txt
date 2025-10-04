@@ -42,15 +42,17 @@ endif()
 
 
 set(DWHBLL_SOURCES
+    src/dwhbll/collections/cache.cpp
     src/dwhbll/console/Logging.cpp
     src/dwhbll/console/debug.cpp
+    src/dwhbll/exceptions/rt_exception_base.cpp
+    src/dwhbll/graphics/bitmap/bitmap.cpp
     src/dwhbll/network/dns/dns.cpp
     src/dwhbll/network/SocketManager.cpp
-    src/dwhbll/utils/json.cpp
-    src/dwhbll/utils/utils.cpp
     src/dwhbll/subprocess/process.cpp
     src/dwhbll/subprocess/pipe_wrapper.cpp
-    src/dwhbll/exceptions/rt_exception_base.cpp
+    src/dwhbll/utils/json.cpp
+    src/dwhbll/utils/utils.cpp
 
     include/dwhbll/collections/cache.h
     include/dwhbll/collections/ring.h
@@ -60,6 +62,9 @@ set(DWHBLL_SOURCES
     include/dwhbll/exceptions/rt_exception_base.h
     include/dwhbll/exceptions/sys_error.h
     include/dwhbll/exceptions/timeout_exception.h
+    include/dwhbll/graphics/bitmap/bitmap.h
+    include/dwhbll/graphics/bitmap/file_header.h
+    include/dwhbll/graphics/bitmap/info_header.h
     include/dwhbll/graphics/pixel.h
     include/dwhbll/linalg/matrix.h
     include/dwhbll/math/pad_box.h
