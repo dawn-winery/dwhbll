@@ -65,6 +65,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/exceptions/rt_exception_base.cpp
     include/dwhbll/exceptions/rt_exception_base.h
     include/dwhbll/exceptions/sys_error.h
+        include/dwhbll/math/rect.h
 )
 
 # Main target
