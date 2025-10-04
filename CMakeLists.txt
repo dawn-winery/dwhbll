@@ -67,6 +67,9 @@ set(DWHBLL_SOURCES
     include/dwhbll/exceptions/sys_error.h
         include/dwhbll/math/rect.h
         include/dwhbll/math/pad_box.h
+    include/dwhbll/math/rect.h
+    include/dwhbll/math/pad_box.h
+    include/dwhbll/graphics/pixel.h
 )
 
 # Main target
