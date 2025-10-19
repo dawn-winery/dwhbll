@@ -46,7 +46,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/console/Logging.cpp
     src/dwhbll/console/debug.cpp
     src/dwhbll/exceptions/rt_exception_base.cpp
-    src/dwhbll/graphics/bitmap/bitmap.cpp
+    src/dwhbll/graphics/bitmap.cpp
     src/dwhbll/network/dns/dns.cpp
     src/dwhbll/network/SocketManager.cpp
     src/dwhbll/subprocess/process.cpp
