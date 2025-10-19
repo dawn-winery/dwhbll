@@ -8,7 +8,7 @@ find_package(PkgConfig REQUIRED)
 set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
-option(DWHBLL_TESTS "Build tests" ON)
+option(DWHBLL_TESTS "Build tests" OFF)
 option(BUILD_HARDEN "enable hardening on the library." OFF)
 option(BUILD_HARDEN_EXPENSIVE "enable expensive hardening features on the library." OFF)
 option(DWHBLL_GPU_ENABLED "Toggle GPU acceleration" ON)
