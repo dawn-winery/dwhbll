@@ -14,7 +14,7 @@ namespace dwhbll::subprocess {
     std::optional<int> pipe_wrapper::devnull;
     pipe_wrapper::pipe_wrapper(const int fd) : fd(fd) {
 #ifdef __linux__
-        if (devnull.has_value())
+        if (!devnull.has_value())
             devnull = open("/dev/null", O_WRONLY);
 #endif
     }
