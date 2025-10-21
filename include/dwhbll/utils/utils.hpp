@@ -2,6 +2,7 @@
 
 #include <string>
 #include <algorithm>
+#include <vector>
 
 #ifdef DWHBLL_REFLECTION
 #include <experimental/meta>
@@ -10,6 +11,7 @@
 namespace dwhbll::utils {
 
 constexpr std::string replace_all(std::string_view str, std::string_view from, std::string_view to);
+constexpr std::vector<std::string> split(std::string_view str, std::string_view sep);
 std::string escape_string(std::string_view str);
 
 #ifdef DWHBLL_REFLECTION
