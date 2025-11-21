@@ -71,6 +71,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/utils/json.hpp
     include/dwhbll/utils/stacktrace.hpp
     include/dwhbll/utils/utils.hpp
+    include/dwhbll/exceptions/concurrency_exception.h
 )
 
 # Main target

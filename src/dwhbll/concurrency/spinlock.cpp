@@ -10,7 +10,7 @@ namespace dwhbll::concurrency {
     spinlock::~spinlock() {
 #ifdef DWHBLL_HARDEN_EXPENSIVE
         if (_lock.test()) {
-            throw dwhbll::exceptions::concurrency_exception
+            throw dwhbll::exceptions::concurrency_exception("Spinlock was destroyed with lock still held!");
         }
 #elifdef DWHBLL_HARDEN
         if (_lock.test()) {
