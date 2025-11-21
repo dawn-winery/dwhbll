@@ -6,6 +6,8 @@
 #include <stdexcept>
 #include <unordered_map>
 
+#include <dwhbll/concurrency/spinlock.h>
+
 namespace dwhbll::memory {
 	/**
 	 * Thread safe memory pool
@@ -25,7 +27,7 @@ namespace dwhbll::memory {
 
 		Obj* objects, *objectsBack;
 		std::size_t available = 0, size = 0;
-		std::mutex _lock;
+		concurrency::spinlock _lock;
 		std::unordered_map<T*, std::pair<Obj*, std::size_t>> returning;
 
 		Obj* makeNew() {
@@ -115,7 +117,7 @@ namespace dwhbll::memory {
 		 */
 		template <typename... Args>
 		ObjectWrapper acquire(Args&&... args) {
-			std::unique_lock lock(_lock);
+			auto _dfd = _lock.lock();
 			std::size_t index;
 			Obj* obj = nullptr;
 			if (available == 0) {
@@ -152,7 +154,7 @@ namespace dwhbll::memory {
 		}
 
 		T* find(const T& value) {
-			std::unique_lock lock(_lock);
+			auto _dfd = _lock.lock();
 			Obj* current = objects;
 			while (current != nullptr) {
 				for (int i = 0; i < BlockSize; i++) {
@@ -168,7 +170,7 @@ namespace dwhbll::memory {
 
 		void offer(T* object) {
 			if (object != nullptr) {
-				std::unique_lock lock(_lock);
+				auto _dfd = _lock.lock();
 				if (returning.contains(object)) {
 					auto& [obj, index] = returning[object];
 					obj->used[index] = false;
