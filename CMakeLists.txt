@@ -36,6 +36,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/graphics/bitmap.cpp
     src/dwhbll/network/dns/dns.cpp
     src/dwhbll/network/SocketManager.cpp
+    src/dwhbll/sanify/deferred.cpp
     src/dwhbll/subprocess/process.cpp
     src/dwhbll/subprocess/pipe_wrapper.cpp
     src/dwhbll/utils/json.cpp
@@ -60,6 +61,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/network/dns/dns.h
     include/dwhbll/network/SocketManager.h
     include/dwhbll/sanify/coroutines.hpp
+    include/dwhbll/sanify/deferred.h
     include/dwhbll/sanify/types.hpp
     include/dwhbll/subprocess/pipe_wrapper.h
     include/dwhbll/subprocess/process.h
