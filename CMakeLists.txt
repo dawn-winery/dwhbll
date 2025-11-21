@@ -30,6 +30,7 @@ endif()
 
 set(DWHBLL_SOURCES
     src/dwhbll/collections/cache.cpp
+    src/dwhbll/concurrency/spinlock.cpp
     src/dwhbll/console/Logging.cpp
     src/dwhbll/console/debug.cpp
     src/dwhbll/exceptions/rt_exception_base.cpp
@@ -45,6 +46,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/collections/cache.h
     include/dwhbll/collections/ring.h
     include/dwhbll/collections/streams.hpp
+    include/dwhbll/concurrency/spinlock.h
     include/dwhbll/console/debug.hpp
     include/dwhbll/console/Logging.h
     include/dwhbll/exceptions/rt_exception_base.h
