@@ -134,9 +134,9 @@ class Matrix {
 
         ///////////////////////////////////////////////////////
 
-        constexpr size_t rows() const { return Row; }
-        constexpr size_t cols() const { return Col; }
-        constexpr size_t size() const { return data.size(); }
+        [[nodiscard]] constexpr size_t rows() const { return Row; }
+        [[nodiscard]] constexpr size_t cols() const { return Col; }
+        [[nodiscard]] constexpr size_t size() const { return data.size(); }
         const T* raw_handle() const { return data.data(); }
 
         T& operator[](size_t row, size_t col) {
@@ -195,6 +195,8 @@ class Matrix {
 #endif
             return res;
         }
+
+
 
         // A * B just calls the default behaviour of matmul, it's just better to read
         template<size_t K, typename T2>
