@@ -16,14 +16,14 @@ namespace dwhbll::memory {
 	template <typename T, size_t BlockSize = std::max(1024/sizeof(T), 1ul)>
 	requires std::default_initializable<T>
 	class Pool {
-#pragma pack(push, 1)
+// #pragma pack(push, 1)
 		struct Obj {
 			std::size_t blockAvailable = BlockSize;
 			bool used[BlockSize] = {};
 			T object[BlockSize];
 			Obj* next{nullptr};
 		};
-#pragma pack(pop)
+// #pragma pack(pop)
 
 		Obj* objects, *objectsBack;
 		std::size_t available = 0, size = 0;
