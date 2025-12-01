@@ -3,6 +3,7 @@
 #include <dwhbll/console/debug.hpp>
 #include <dwhbll/console/Logging.h>
 #include <dwhbll/utils/utils.hpp>
+#include <dwhbll/utils/string.h>
 
 #include <sstream>
 #include <string>

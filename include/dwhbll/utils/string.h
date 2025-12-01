@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 namespace dwhbll::utils {
     std::string escape_non_printable(const std::string& string);
