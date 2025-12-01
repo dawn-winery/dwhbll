@@ -11,10 +11,6 @@
 
 namespace dwhbll::utils {
 
-constexpr std::string replace_all(std::string_view str, std::string_view from, std::string_view to);
-constexpr std::vector<std::string> split(std::string_view str, std::string_view sep);
-std::string escape_string(std::string_view str);
-
 #if __cpp_impl_reflection >= 202506L 
 consteval bool has_annotation(std::meta::info r, std::meta::info type) {
     for (auto a : annotations_of(r)) {

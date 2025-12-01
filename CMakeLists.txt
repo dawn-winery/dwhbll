@@ -41,6 +41,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/subprocess/process.cpp
     src/dwhbll/subprocess/pipe_wrapper.cpp
     src/dwhbll/utils/json.cpp
+    src/dwhbll/utils/string.cpp
     src/dwhbll/utils/utils.cpp
 
     include/dwhbll/collections/cache.h
@@ -70,8 +71,8 @@ set(DWHBLL_SOURCES
     include/dwhbll/utils/format.hpp
     include/dwhbll/utils/json.hpp
     include/dwhbll/utils/stacktrace.hpp
+    include/dwhbll/utils/string.h
     include/dwhbll/utils/utils.hpp
-    include/dwhbll/exceptions/concurrency_exception.h
 )
 
 # Main target
