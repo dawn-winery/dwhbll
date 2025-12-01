@@ -37,6 +37,12 @@ namespace dwhbll::exceptions {
             populate_trace();
         }
 
+        template <typename... Args>
+        rt_exception_base(const std::string& fmt, Args&&... args) :
+            std::runtime_error(std::vformat(fmt, std::make_format_args(args...))) {
+            populate_trace();
+        }
+
         [[nodiscard]] std::string get_prettyprint_trace() const;
 
         void trace_to_stderr() const;
