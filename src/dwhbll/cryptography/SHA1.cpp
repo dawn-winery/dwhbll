@@ -45,6 +45,12 @@ namespace dwhbll::cryptography {
 
         // wipe the message schedule before returning
         explicit_bzero(w, sizeof(w));
+        explicit_bzero(block, sizeof(block));
+        explicit_bzero(&a, sizeof(a));
+        explicit_bzero(&b, sizeof(b));
+        explicit_bzero(&c, sizeof(c));
+        explicit_bzero(&d, sizeof(d));
+        explicit_bzero(&e, sizeof(e));
     }
 
     SHA1::SHA1() {
