@@ -35,6 +35,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/console/Logging.cpp
     src/dwhbll/console/debug.cpp
     src/dwhbll/exceptions/rt_exception_base.cpp
+    src/dwhbll/files/parse_utils.cpp
     src/dwhbll/graphics/bitmap.cpp
     src/dwhbll/network/buffered_socket.cpp
     src/dwhbll/network/dns/dns.cpp
@@ -57,6 +58,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/exceptions/rt_exception_base.h
     include/dwhbll/exceptions/sys_error.h
     include/dwhbll/exceptions/timeout_exception.h
+    include/dwhbll/files/parse_utils.h
     include/dwhbll/graphics/bitmap/bitmap.h
     include/dwhbll/graphics/bitmap/file_header.h
     include/dwhbll/graphics/bitmap/info_header.h
