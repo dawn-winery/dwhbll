@@ -52,6 +52,7 @@ namespace dwhbll::memory {
 			}
 		}
 
+		// TODO: switch to a unique ptr.
 		class ObjectWrapper {
 			T* object;
 			Pool* parent;
@@ -66,7 +67,9 @@ namespace dwhbll::memory {
 
 			ObjectWrapper(ObjectWrapper &&other) noexcept
 				: object(other.object),
-				  parent(other.parent) {
+			      parent(other.parent) {
+				other.object = nullptr;
+				other.parent = nullptr;
 			}
 
 			ObjectWrapper & operator=(const ObjectWrapper &other) = delete;
@@ -76,6 +79,10 @@ namespace dwhbll::memory {
 					return *this;
 				object = other.object;
 				parent = other.parent;
+
+				other.object = nullptr;
+				other.parent = nullptr;
+
 				return *this;
 			}
 
