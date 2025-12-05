@@ -45,11 +45,15 @@ namespace dwhbll::network::dns {
 
         std::uint32_t get_uint32();
 
+        std::vector<std::uint8_t> get_array(std::size_t length);
+
         void write_uint8(std::uint8_t value);
 
         void write_uint16(std::uint16_t value);
 
         void write_uint32(std::uint32_t value);
+
+        void write_array(const std::span<std::uint8_t>& data);
     };
 
     // TODO: move domain parsing to a separate header or library.

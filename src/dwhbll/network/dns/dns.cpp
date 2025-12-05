@@ -10,6 +10,10 @@
 namespace dwhbll::network::dns {
     Resolver default_resolver;
 
+    std::optional<in_addr> query_dns(const std::string &domain) {
+        return default_resolver.query_dns(domain);
+    }
+
     std::uint8_t MemoryStream::get_uint8() {
         return data[current_head++];
     }
@@ -92,6 +96,9 @@ namespace dwhbll::network::dns {
                 return a + "." + b;
             }) + ".");
         }
+
+        if (!domain.ends_with('.'))
+            result.labels.emplace_back("");
 
         return result;
     }
@@ -671,14 +678,19 @@ namespace dwhbll::network::dns {
 
         msg.pack(stream);
 
+        std::uint16_t size = stream.data.size();
+        stream.data.push_front(size & 0xFF);
+        stream.data.push_front((size >> 0x8) & 0xFF);
+        stream.data.make_cont();
+        stream.data.data().resize(stream.data.size());
+
         Message result;
         if (stream.data.size() <= 512) {
             // will use UDP
-            Socket* socket = socketMGR.getIPv4UDPSocket(in_addr{addr}, 53);
-            stream.data.make_cont();
-            stream.data.data().resize(stream.data.size());
+            auto socket = socketMGR.getIPv4UDPSocket(in_addr{addr}, 53);
 
-            socket->send(stream.data.data());
+            // UDP doesn't have the tcp length header
+            socket->send(std::span{stream.data.data().data() + 2, stream.data.size() - 2});
 
             socket->wait();
 
@@ -689,8 +701,6 @@ namespace dwhbll::network::dns {
 
             result.unpack(recvStream);
 
-            socketMGR.offer(socket);
-
             if (result.header.tc) {
                 console::trace("Result got truncated. Trying with TCP.");
             }
@@ -698,12 +708,7 @@ namespace dwhbll::network::dns {
 
         if (stream.data.size() > 512 || result.header.tc) {
             // must use TCP
-            Socket* socket = socketMGR.getIPv4TCPSocket(in_addr{addr}, 53);
-            std::uint16_t size = stream.data.size();
-            stream.data.push_front(size & 0xFF);
-            stream.data.push_front((size >> 0x8) & 0xFF);
-            stream.data.make_cont();
-            stream.data.data().resize(stream.data.size());
+            auto socket = socketMGR.getIPv4TCPSocket(in_addr{addr}, 53);
 
             socket->send(stream.data.data());
 
@@ -719,8 +724,6 @@ namespace dwhbll::network::dns {
             socket->recv(recvStream.data.data()); // get the rest of the buffer
 
             result.unpack(recvStream);
-
-            socketMGR.offer(socket);
         }
 
         if (result.header.aa) {
@@ -742,7 +745,7 @@ namespace dwhbll::network::dns {
                         if (additional.type == QTYPE::A && target.name == additional.name) {
                             has = true;
                             console::trace("querying the next NS: {}", additional.name.to_string());
-                            resultAddr = query_dns({htonl(std::get<ResourceRecordInner::A>(additional.rdata).address)}, domain);
+                            resultAddr = query_dns(htonl(std::get<ResourceRecordInner::A>(additional.rdata).address), domain);
                             if (resultAddr.has_value())
                                 return resultAddr;
                         }
@@ -777,8 +780,10 @@ namespace dwhbll::network::dns {
         for (std::uint32_t target : root_servers) {
             console::trace("sending a dns query to {} for {}", addr_to_string(target), domain);
             result = query_dns(target, domain);
-            if (result.has_value())
+            if (result.has_value()) {
+                console::trace("resolved {} to {}", domain, addr_to_string(result.value().s_addr));
                 return result;
+            }
         }
         return std::nullopt;
     }
