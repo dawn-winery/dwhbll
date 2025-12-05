@@ -52,6 +52,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/concurrency/spinlock.h
     include/dwhbll/console/debug.hpp
     include/dwhbll/console/Logging.h
+    include/dwhbll/exceptions/concurrency_exception.h
     include/dwhbll/exceptions/rt_exception_base.h
     include/dwhbll/exceptions/sys_error.h
     include/dwhbll/exceptions/timeout_exception.h
