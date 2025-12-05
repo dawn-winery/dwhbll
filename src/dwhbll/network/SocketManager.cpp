@@ -55,8 +55,12 @@ namespace dwhbll::network {
         }
     }
 
-    size_t Socket::send(const std::vector<char> &data) const {
+    size_t Socket::send(const std::span<char> &data) const {
         return ::send(fd, data.data(), data.size(), MSG_NOSIGNAL);
+    }
+
+    size_t Socket::recv(std::span<char> &data) const {
+        return ::recv(fd, data.data(), data.size(), 0);
     }
 
     size_t Socket::recv(std::vector<char> &data) const {
@@ -71,75 +75,28 @@ namespace dwhbll::network {
         return ::recv(fd, data.data(), data.size(), 0);
     }
 
-    Socket* SocketManager::getIPv4TCPSocket(in_addr addr, unsigned short port) {
-        // TODO: DON'T BUSY WAIT!!!
-        auto& byAddr = ipv4_sockets[addr.s_addr];
-        auto& byPort = byAddr[port];
-        auto& [tcp, udp] = byPort;
-        if (tcp != nullptr) {
-            while (tcp->held) {
-                using namespace std::chrono_literals;
-                std::this_thread::sleep_for(1ms);
-            }
-            pollfd req = {};
-            req.fd = tcp->getNativeHandle();
-            req.events = 0;
-            if (tcp->mode != Socket::NONE) {
-                poll(&req, 1, 0);
-                if (req.revents & POLLIN != 0)
-                    tcp->mode = Socket::NONE;
-            }
-            if (tcp->mode == Socket::NONE) {
-                pool.offer(tcp);
-                tcp = pool.acquire(::socket(AF_INET, SOCK_STREAM, 0), Socket::CONNECT).disown();
-                tcp->connect(addr, port);
-            }
-        } else {
-            tcp = pool.acquire(::socket(AF_INET, SOCK_STREAM, 0), Socket::CONNECT).disown();
-            tcp->connect(addr, port);
-        }
-        return tcp;
+    memory::Pool<Socket>::ObjectWrapper SocketManager::getIPv4TCPSocket(in_addr addr, unsigned short port) {
+        auto tcp = pool.acquire(::socket(AF_INET, SOCK_STREAM, 0), Socket::CONNECT);
+        tcp->connect(addr, port);
+        return std::move(tcp);
     }
 
-    Socket* SocketManager::getIPv4UDPSocket(in_addr addr, unsigned short port) {
-        // TODO: DON'T BUSY WAIT!!!
-        // TODO: implement ungetting and allow multiple users of the socket at once
-        auto& byAddr = ipv4_sockets[addr.s_addr];
-        auto& byPort = byAddr[port];
-        auto& [tcp, udp] = byPort;
-        if (udp != nullptr) {
-            while (udp->held) {
-                using namespace std::chrono_literals;
-                std::this_thread::sleep_for(1ms);
-            }
-            pollfd req = {};
-            req.fd = udp->getNativeHandle();
-            req.events = 0;
-            if (udp->mode != Socket::NONE) {
-                poll(&req, 1, 0);
-                if (req.revents & POLLIN != 0)
-                    udp->mode = Socket::NONE;
-            }
-            if (udp->mode == Socket::NONE) {
-                pool.offer(udp);
-                udp = pool.acquire(::socket(AF_INET, SOCK_DGRAM, 0), Socket::CONNECT).disown();
-                udp->connect(addr, port);
-            }
-        } else {
-            auto i = ::socket(AF_INET, SOCK_DGRAM, 0);
-            auto test = pool.acquire(i, Socket::CONNECT);
-            udp = test.disown();
-            udp->connect(addr, port);
-        }
-        return udp;
+    memory::Pool<Socket>::ObjectWrapper SocketManager::getIPv4UDPSocket(in_addr addr, unsigned short port) {
+        auto i = ::socket(AF_INET, SOCK_DGRAM, 0);
+        auto udp = pool.acquire(i, Socket::CONNECT);
+        udp->connect(addr, port);
+        return std::move(udp);
     }
 
     void SocketManager::offer(Socket *s) {
         // force the socket to be closed
         if (s->mode != Socket::NONE) {
+            shutdown(s->fd, SHUT_RDWR);
             close(s->getNativeHandle());
             s->mode = Socket::NONE;
         }
         s->held = false;
+
+        pool.offer(s);
     }
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <span>
 #include <unordered_map>
 #include <vector>
 
@@ -28,6 +29,9 @@ namespace dwhbll::network {
         Socket(Socket &&other) noexcept
             : fd(other.fd),
               mode(other.mode) {
+
+            other.fd = -1;
+            other.mode = NONE;
         }
 
         Socket & operator=(const Socket &other) = delete;
@@ -37,6 +41,10 @@ namespace dwhbll::network {
                 return *this;
             fd = other.fd;
             mode = other.mode;
+
+            other.fd = -1;
+            other.mode = NONE;
+
             return *this;
         }
 
@@ -61,7 +69,14 @@ namespace dwhbll::network {
          * @param data the buffer of data to send
          * @return sent size
          */
-        size_t send(const std::vector<char>& data) const;
+        size_t send(const std::span<char>& data) const;
+
+        /**
+         * @brief receive a set amount of data
+        * @param data the buffer to put the data into, the receivable amount is data.size()
+         * @return received size
+         */
+        size_t recv(std::span<char>& data) const;
 
         /**
          * @brief receive a set amount of data
@@ -89,12 +104,11 @@ namespace dwhbll::network {
     // TODO: this class could give the same socket to multiple concurrent users!!!
     class SocketManager {
         memory::Pool<Socket> pool;
-        std::unordered_map<uint32_t, std::unordered_map<unsigned short, std::pair<Socket*, Socket*>>> ipv4_sockets{{}};
 
     public:
-        Socket* getIPv4TCPSocket(in_addr addr, unsigned short port);
+        memory::Pool<Socket>::ObjectWrapper getIPv4TCPSocket(in_addr addr, unsigned short port);
 
-        Socket* getIPv4UDPSocket(in_addr addr, unsigned short port);
+        memory::Pool<Socket>::ObjectWrapper getIPv4UDPSocket(in_addr addr, unsigned short port);
 
         /**
          * @brief Return the socket back to the manager
