@@ -34,6 +34,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/concurrency/spinlock.cpp
     src/dwhbll/console/Logging.cpp
     src/dwhbll/console/debug.cpp
+    src/dwhbll/cryptography/SHA1.cpp
     src/dwhbll/exceptions/rt_exception_base.cpp
     src/dwhbll/files/parse_utils.cpp
     src/dwhbll/graphics/bitmap.cpp
@@ -55,6 +56,8 @@ set(DWHBLL_SOURCES
     include/dwhbll/concurrency/spinlock.h
     include/dwhbll/console/debug.hpp
     include/dwhbll/console/Logging.h
+    include/dwhbll/cryptography/banner.h
+    include/dwhbll/cryptography/SHA1.h
     include/dwhbll/exceptions/concurrency_exception.h
     include/dwhbll/exceptions/rt_exception_base.h
     include/dwhbll/exceptions/sys_error.h
