@@ -137,6 +137,9 @@ namespace dwhbll::collections {
          * Rebuild the buffer such that the data inside is now continuous
          */
         void make_cont() {
+            if (tail >= head && head == 0)
+                return;
+
             std::vector<T> newData;
             newData.resize(_M_data.size());
 
@@ -152,6 +155,15 @@ namespace dwhbll::collections {
             _M_data = std::move(newData);
             head = 0;
             tail = sz;
+        }
+
+        template <typename IterType>
+        void assign(IterType start, IterType end) {
+            sz = end - start;
+            _M_data.resize(sz);
+            std::copy(start, end, _M_data.begin());
+            head = 0;
+            tail = end - start;
         }
 
         void resize(std::size_t target) {
