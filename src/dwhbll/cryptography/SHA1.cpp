@@ -37,15 +37,16 @@ namespace dwhbll::cryptography {
             a = temp;
         }
 
+        // wipe the message schedule before returning
+        explicit_bzero(w, sizeof(w));
+        explicit_bzero(block, sizeof(block));
+
         h[0] += a;
         h[1] += b;
         h[2] += c;
         h[3] += d;
         h[4] += e;
 
-        // wipe the message schedule before returning
-        explicit_bzero(w, sizeof(w));
-        explicit_bzero(block, sizeof(block));
         explicit_bzero(&a, sizeof(a));
         explicit_bzero(&b, sizeof(b));
         explicit_bzero(&c, sizeof(c));
