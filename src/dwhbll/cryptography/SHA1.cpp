@@ -91,7 +91,7 @@ namespace dwhbll::cryptography {
         block_head = 0;
         digest_chunk(); // process the chunk
 
-        while (length > 64) {
+        while (length >= 64) {
             std::memcpy(block, data, 64);
             length -= 64;
             data += 64;
