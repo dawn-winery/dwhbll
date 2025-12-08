@@ -37,6 +37,10 @@ namespace dwhbll::console {
 
     const std::string colorReset = "\033[0m";
 
+    void setLevel(Level level) {
+        defaultLevel = level;
+    }
+
     void log(const std::string &msg, const Level level) {
         if (level < defaultLevel)
             return;
