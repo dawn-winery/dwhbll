@@ -58,6 +58,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/collections/streams.hpp
     include/dwhbll/concurrency/coroutine/reactor.h
     include/dwhbll/concurrency/coroutine/sleep_task.h
+    include/dwhbll/concurrency/coroutine/task.h
     include/dwhbll/concurrency/spinlock.h
     include/dwhbll/console/debug.hpp
     include/dwhbll/console/Logging.h
