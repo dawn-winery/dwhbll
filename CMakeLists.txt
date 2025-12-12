@@ -32,6 +32,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/collections/cache.cpp
     src/dwhbll/collections/memory_buffer.cpp
     src/dwhbll/concurrency/coroutine/reactor.cpp
+    src/dwhbll/concurrency/coroutine/sleep_task.cpp
     src/dwhbll/concurrency/spinlock.cpp
     src/dwhbll/console/Logging.cpp
     src/dwhbll/console/debug.cpp
@@ -56,6 +57,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/collections/sorted_linked_list.h
     include/dwhbll/collections/streams.hpp
     include/dwhbll/concurrency/coroutine/reactor.h
+    include/dwhbll/concurrency/coroutine/sleep_task.h
     include/dwhbll/concurrency/spinlock.h
     include/dwhbll/console/debug.hpp
     include/dwhbll/console/Logging.h
