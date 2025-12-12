@@ -1,10 +1,14 @@
 #pragma once
 
 #include <coroutine>
-#include <dwhbll/concurrency/coroutine/reactor.h>
 #include <optional>
+#include <dwhbll/exceptions/concurrency_exception.h>
 
 namespace dwhbll::concurrency::coroutine {
+    namespace detail {
+        void reactor_enqueue(std::coroutine_handle<> h);
+    }
+
     template <typename T = void>
     class task {
     public:
@@ -65,10 +69,10 @@ namespace dwhbll::concurrency::coroutine {
                 return !h || h.done();
             }
 
-            auto await_suspend(handle_t parent) const noexcept {
+            auto await_suspend(std::coroutine_handle<> parent) const noexcept {
                 h.promise().continuation = parent;
 
-                reactor::get_thread_reactor()->enqueue(h);
+                detail::reactor_enqueue(h);
             }
 
             T await_resume() {
@@ -87,7 +91,7 @@ namespace dwhbll::concurrency::coroutine {
             }
             void await_suspend(handle_t h) noexcept {
                 if (h.promise().continuation)
-                    reactor::get_thread_reactor()->enqueue(h.promise().continuation);
+                    detail::reactor_enqueue(h.promise().continuation);
             }
             void await_resume() noexcept {}
         };
@@ -176,7 +180,7 @@ namespace dwhbll::concurrency::coroutine {
                 return *this;
             if (coroutine)
                 coroutine.destroy();
-            coroutine = std::move(other.coroutine);
+            coroutine = other.coroutine;
             other.coroutine = {};
             return *this;
         }
@@ -188,10 +192,10 @@ namespace dwhbll::concurrency::coroutine {
                 return !h || h.done();
             }
 
-            auto await_suspend(handle_t parent) const noexcept {
+            auto await_suspend(std::coroutine_handle<> parent) const noexcept {
                 h.promise().continuation = parent;
 
-                reactor::get_thread_reactor()->enqueue(h);
+                detail::reactor_enqueue(h);
             }
 
             void await_resume() {
@@ -200,25 +204,27 @@ namespace dwhbll::concurrency::coroutine {
         };
 
         struct finalize_awaiter {
+            bool reactor_owned;
+
             bool await_ready() noexcept {
                 return false;
             }
 
             void await_suspend(handle_t h) noexcept {
                 if (h.promise().continuation)
-                    reactor::get_thread_reactor()->enqueue(h.promise().continuation);
+                    detail::reactor_enqueue(h.promise().continuation);
             }
 
             void await_resume() noexcept {}
         };
 
         auto operator co_await() {
-            auto coro = std::move(coroutine);
+            auto coro = coroutine;
             coroutine = {};
             return continuation_awaiter{coro};
         }
 
-        handle_t get_handle() const noexcept {
+        [[nodiscard]] handle_t get_handle() const noexcept {
             return coroutine;
         }
     };

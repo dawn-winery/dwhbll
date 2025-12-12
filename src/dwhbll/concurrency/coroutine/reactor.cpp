@@ -7,6 +7,10 @@
 namespace dwhbll::concurrency::coroutine {
     namespace detail {
         thread_local reactor* live_reactor;
+
+        void reactor_enqueue(std::coroutine_handle<> h) {
+            reactor::get_thread_reactor()->enqueue(h);
+        }
     }
 
     void reactor::set_thread_live_reactor(reactor *reactor) {

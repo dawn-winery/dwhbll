@@ -4,6 +4,7 @@
 #include <coroutine>
 #include <dwhbll/collections/ring.h>
 #include <dwhbll/collections/sorted_linked_list.h>
+#include <dwhbll/concurrency/coroutine/task.h>
 
 namespace dwhbll::concurrency::coroutine {
     class reactor;
