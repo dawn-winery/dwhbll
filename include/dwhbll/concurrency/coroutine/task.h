@@ -34,12 +34,28 @@ namespace dwhbll::concurrency::coroutine {
 
         task(const task&) = delete;
 
-        task(task&& other) noexcept : coroutine(other.coroutine) {
+        task(task&& other) noexcept {
+            if (coroutine)
+                coroutine.destroy();
+            coroutine = other.coroutine;
             other.coroutine = {};
         }
 
         ~task() {
-            if (coroutine) coroutine.destroy();
+            if (coroutine)
+                coroutine.destroy();
+        }
+
+        task & operator=(const task &other) = delete;
+
+        task & operator=(task &&other) noexcept {
+            if (this == &other)
+                return *this;
+            if (coroutine)
+                coroutine.destroy();
+            coroutine = std::move(other.coroutine);
+            other.coroutine = {};
+            return *this;
         }
 
         struct continuation_awaiter {
@@ -56,7 +72,12 @@ namespace dwhbll::concurrency::coroutine {
             }
 
             T await_resume() {
-                return std::move(h.promise().value.value());
+                T value = std::move(h.promise().value.value());
+
+                if (h)
+                    h.destroy();
+
+                return std::move(value);
             }
         };
 
@@ -72,7 +93,9 @@ namespace dwhbll::concurrency::coroutine {
         };
 
         auto operator co_await() {
-            return continuation_awaiter{coroutine};
+            auto coro = std::move(coroutine);
+            coroutine = {};
+            return continuation_awaiter{coro};
         }
 
         handle_t get_handle() const noexcept {
@@ -130,10 +153,33 @@ namespace dwhbll::concurrency::coroutine {
         handle_t coroutine;
 
     public:
-        task(handle_t h) : coroutine(h) {}
+        explicit task(handle_t h) : coroutine(h) {}
+
         task(const task&) = delete;
-        task(task&& other) noexcept : coroutine(other.coroutine) { other.coroutine = {}; }
-        ~task() { if (coroutine) coroutine.destroy(); }
+
+        task(task&& other) noexcept {
+            if (coroutine)
+                coroutine.destroy();
+            coroutine = other.coroutine;
+            other.coroutine = {};
+        }
+
+        ~task() {
+            if (coroutine)
+                coroutine.destroy();
+        }
+
+        task & operator=(const task &other) = delete;
+
+        task & operator=(task &&other) noexcept {
+            if (this == &other)
+                return *this;
+            if (coroutine)
+                coroutine.destroy();
+            coroutine = std::move(other.coroutine);
+            other.coroutine = {};
+            return *this;
+        }
 
         struct continuation_awaiter {
             handle_t h;
@@ -148,7 +194,9 @@ namespace dwhbll::concurrency::coroutine {
                 reactor::get_thread_reactor()->enqueue(h);
             }
 
-            void await_resume() {}
+            void await_resume() {
+                h.destroy();
+            }
         };
 
         struct finalize_awaiter {
@@ -165,7 +213,9 @@ namespace dwhbll::concurrency::coroutine {
         };
 
         auto operator co_await() {
-            return continuation_awaiter{coroutine};
+            auto coro = std::move(coroutine);
+            coroutine = {};
+            return continuation_awaiter{coro};
         }
 
         handle_t get_handle() const noexcept {
