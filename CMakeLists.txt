@@ -52,6 +52,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/collections/cache.h
     include/dwhbll/collections/memory_buffer.h
     include/dwhbll/collections/ring.h
+    include/dwhbll/collections/sorted_linked_list.h
     include/dwhbll/collections/streams.hpp
     include/dwhbll/concurrency/spinlock.h
     include/dwhbll/console/debug.hpp
