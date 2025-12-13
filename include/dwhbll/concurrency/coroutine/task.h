@@ -1,7 +1,8 @@
 #pragma once
 
 #include <coroutine>
-#include <optional>
+#include <expected>
+#include <dwhbll/console/debug.hpp>
 #include <dwhbll/exceptions/concurrency_exception.h>
 
 namespace dwhbll::concurrency::coroutine {
@@ -13,7 +14,7 @@ namespace dwhbll::concurrency::coroutine {
     class task {
     public:
         struct promise {
-            std::optional<T> value;
+            std::optional<std::expected<T, std::exception_ptr>> value;
             std::coroutine_handle<> continuation;
 
             task get_return_object();
@@ -76,7 +77,20 @@ namespace dwhbll::concurrency::coroutine {
             }
 
             T await_resume() {
-                T value = std::move(h.promise().value.value());
+                if (!h.promise().value.has_value()) {
+                    debug::panic("no value stored in promise");
+                }
+
+                if (!h.promise().value.value().has_value()) {
+                    std::exception_ptr eptr = h.promise().value.value().error();
+
+                    if (h)
+                        h.destroy();
+
+                    std::rethrow_exception(eptr);
+                }
+
+                T value = std::move(h.promise().value.value().value());
 
                 if (h)
                     h.destroy();
@@ -124,19 +138,19 @@ namespace dwhbll::concurrency::coroutine {
 
     template<typename T>
     void task<T>::promise::return_value(T v) noexcept {
-        value = std::move(v);
+        value = std::expected<T, std::exception_ptr>(std::move(v));
     }
 
     template<typename T>
     void task<T>::promise::unhandled_exception() noexcept {
-        // TODO!
-        std::terminate();
+        value = std::unexpected(std::current_exception());
     }
 
     template<>
     class task<void> {
     public:
         struct promise {
+            std::optional<std::exception_ptr> eptr;
             std::coroutine_handle<> continuation;
 
             task get_return_object();
@@ -199,7 +213,17 @@ namespace dwhbll::concurrency::coroutine {
             }
 
             void await_resume() {
-                h.destroy();
+                if (!h.promise().eptr.has_value()) {
+                    std::exception_ptr eptr = h.promise().eptr.value();
+
+                    if (h)
+                        h.destroy();
+
+                    std::rethrow_exception(eptr);
+                }
+
+                if (h)
+                    h.destroy();
             }
         };
 
@@ -244,7 +268,6 @@ namespace dwhbll::concurrency::coroutine {
     inline void task<void>::promise::return_void() noexcept {}
 
     inline void task<>::promise::unhandled_exception() noexcept {
-        // TODO!
-        std::terminate();
+        eptr = std::current_exception();
     }
 }
