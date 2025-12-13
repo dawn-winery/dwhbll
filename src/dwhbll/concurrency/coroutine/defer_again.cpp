@@ -12,6 +12,6 @@ namespace dwhbll::concurrency::coroutine {
     void defer_again_t::await_resume() const noexcept {}
 
     defer_again_t coro::defer() {
-
+        return defer_again_t{};
     }
 }
