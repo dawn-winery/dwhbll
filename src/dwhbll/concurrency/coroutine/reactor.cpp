@@ -3,6 +3,9 @@
 #include <dwhbll/exceptions/rt_exception_base.h>
 #include <dwhbll/sanify/deferred.h>
 #include <thread>
+#include <liburing.h>
+#include <dwhbll/concurrency/coroutine/uring_promise.h>
+#include <dwhbll/console/debug.hpp>
 
 namespace dwhbll::concurrency::coroutine {
     namespace detail {
@@ -36,8 +39,23 @@ namespace dwhbll::concurrency::coroutine {
         return time_tasks.front().time;
     }
 
+    __kernel_timespec reactor::to_ktimespec(std::chrono::steady_clock::time_point tp) {
+        auto diff = tp - std::chrono::steady_clock::now();
+
+        auto secs = std::chrono::duration_cast<std::chrono::seconds>(diff);
+        diff -= secs;
+
+        return __kernel_timespec{secs.count(), diff.count()};
+    }
+
+    reactor::reactor(std::uint32_t size) : ring() {
+        auto r = io_uring_queue_init(size, &ring, IORING_SETUP_SQPOLL);
+        if (r < 0)
+            debug::panic("failed to setup uring queue! ({})", strerror(errno));
+    }
+
     bool reactor::empty() const {
-        return ready_queue.empty() && time_tasks.empty();
+        return ready_queue.empty() && time_tasks.empty() && sqe_waiters.empty() && live_uring_tasks == 0;
     }
 
     void reactor::enqueue(std::coroutine_handle<> handle) {
@@ -59,21 +77,85 @@ namespace dwhbll::concurrency::coroutine {
 
         while (!empty()) {
             auto first_expire = get_first_time_expire();
-            if (first_expire.has_value())
-                std::this_thread::sleep_until(first_expire.value());
+
+            io_uring_cqe *cqe;
+
+            // only if ready_queue is not empty
+            if (ready_queue.empty()) {
+                int available;
+                if (first_expire.has_value()) {
+                    __kernel_timespec ts = to_ktimespec(first_expire.value());
+                    available = io_uring_wait_cqe_timeout(&ring, &cqe, &ts);
+                } else {
+                    available = io_uring_wait_cqe(&ring, &cqe);
+                }
+
+                if (available == 0)
+                    process_cqe(cqe);
+            }
+
+            // process all the remaining CQEs (if there's any at all)
+            while (io_uring_peek_cqe(&ring, &cqe) == 0)
+                process_cqe(cqe);
+
+            // it's probably a good idea to drain all of this before we keep going,
             update_timer_tasks();
             while (!ready_queue.empty()) {
                 auto front = ready_queue.front();
                 ready_queue.pop_front();
                 front.resume();
             }
-        }
 
+            while (!sqe_waiters.empty() &&
+                io_uring_sq_space_left(&ring) > 0) {
+
+                auto h = sqe_waiters.front();
+                sqe_waiters.pop_front();
+                h.resume();
+           }
+        }
     }
 
     reactor * reactor::get_thread_reactor() {
         if (!detail::live_reactor)
             throw exceptions::rt_exception_base("There is no currently running reactor on this thread!");
         return detail::live_reactor;
+    }
+
+    io_uring_sqe *reactor::get_sqe(uring_promise& h) {
+        io_uring_sqe* sqe = io_uring_get_sqe(&ring);
+
+        if (!sqe)
+            return nullptr;
+
+        io_uring_sqe_set_data(sqe, &h);
+
+        live_uring_tasks++;
+
+        return sqe;
+    }
+
+    void reactor::submit() {
+        io_uring_submit(&ring);
+    }
+
+    void reactor::process_cqe(io_uring_cqe *cqe) {
+        live_uring_tasks--;
+
+        auto promise = static_cast<uring_promise *>(io_uring_cqe_get_data(cqe));
+
+        promise->cqe = cqe;
+
+        promise->waiter.resume(); // resume the coroutine
+
+        io_uring_cqe_seen(&ring, cqe);
+    }
+
+    void reactor::enqueue_sqe_waiter(std::coroutine_handle<> handle) {
+        sqe_waiters.push_back(handle);
+    }
+
+    io_uring * reactor::get_uring_ptr() {
+        return &ring;
     }
 }

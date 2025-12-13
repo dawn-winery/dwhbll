@@ -34,6 +34,8 @@ set(DWHBLL_SOURCES
     src/dwhbll/concurrency/coroutine/defer_again.cpp
     src/dwhbll/concurrency/coroutine/reactor.cpp
     src/dwhbll/concurrency/coroutine/sleep_task.cpp
+    src/dwhbll/concurrency/coroutine/uring_promise.cpp
+    src/dwhbll/concurrency/coroutine/uring_sqe_awaitable.cpp
     src/dwhbll/concurrency/spinlock.cpp
     src/dwhbll/console/Logging.cpp
     src/dwhbll/console/debug.cpp
@@ -61,6 +63,8 @@ set(DWHBLL_SOURCES
     include/dwhbll/concurrency/coroutine/reactor.h
     include/dwhbll/concurrency/coroutine/sleep_task.h
     include/dwhbll/concurrency/coroutine/task.h
+    include/dwhbll/concurrency/coroutine/uring_promise.h
+    include/dwhbll/concurrency/coroutine/uring_sqe_awaitable.h
     include/dwhbll/concurrency/spinlock.h
     include/dwhbll/console/debug.hpp
     include/dwhbll/console/Logging.h
@@ -112,6 +116,11 @@ install(TARGETS dwhbll_core
     ARCHIVE DESTINATION lib
     INCLUDES DESTINATION include
 )
+
+# find liburing
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(uring REQUIRED IMPORTED_TARGET liburing)
+target_link_libraries(dwhbll_core PRIVATE PkgConfig::uring)
 
 # Propagates the linker to the core library if targetting the main target
 target_link_libraries(dwhbll INTERFACE dwhbll_core)
