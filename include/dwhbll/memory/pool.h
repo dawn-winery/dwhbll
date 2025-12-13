@@ -57,11 +57,11 @@ namespace dwhbll::memory {
 			T* object;
 			Pool* parent;
 
-			ObjectWrapper(Pool* parent, T* inner) : object(inner), parent(parent) {}
-
 			friend class Pool;
 
 		public:
+			ObjectWrapper(Pool* parent, T* inner) : object(inner), parent(parent) {}
+
 			// no copying, allow moving
 			ObjectWrapper(const ObjectWrapper &other) = delete;
 
