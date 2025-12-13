@@ -46,5 +46,7 @@ namespace dwhbll::exceptions {
         [[nodiscard]] std::string get_prettyprint_trace() const;
 
         void trace_to_stderr() const;
+
+        static void traceback_terminate_handler();
     };
 }

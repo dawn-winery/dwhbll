@@ -127,10 +127,11 @@ namespace dwhbll::concurrency::coroutine {
             try {
                 co_await fut;
             } catch (const exceptions::rt_exception_base& e) {
-                e.trace_to_stderr();
-                debug::panic("uncaught exception through future");
+                exceptions::rt_exception_base::traceback_terminate_handler();
+                debug::panic("uncaught exception unwound through future");
             } catch (const std::runtime_error& e) {
-                debug::panic("uncaught exception {}", e.what());
+                exceptions::rt_exception_base::traceback_terminate_handler();
+                debug::panic("uncaught exception unwound through future.");
             } catch (...) {
                 auto eptr = std::current_exception();
                 auto tname = eptr.__cxa_exception_type()->name();

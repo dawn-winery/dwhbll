@@ -36,25 +36,8 @@ namespace dwhbll::exceptions {
         }
     }
 
-    void traceback_terminate_handler() {
-        if (auto ptr = std::current_exception(); ptr != nullptr) {
-            // we are exiting with an exception.
-            std::stringstream ss;
-            ss << "Terminating with an uncaught exception!" << std::endl;
-            try {
-                std::rethrow_exception(ptr);
-            } catch (const rt_exception_base& base) {
-                prettyprint_rtexcept(ss, base);
-            } catch (const std::exception& e) {
-                prettyprint_stdexcept(ss, e);
-            }
-
-            std::cerr << ss.str() << std::endl;
-        }
-    }
-
     const bool autotraceprint_initd = [] {
-        std::set_terminate(traceback_terminate_handler);
+        std::set_terminate(rt_exception_base::traceback_terminate_handler);
         return true;
     }();
 
@@ -127,5 +110,22 @@ namespace dwhbll::exceptions {
 
     void rt_exception_base::trace_to_stderr() const {
         std::cerr << get_prettyprint_trace() << std::endl;
+    }
+
+    void rt_exception_base::traceback_terminate_handler() {
+        if (auto ptr = std::current_exception(); ptr != nullptr) {
+            // we are exiting with an exception.
+            std::stringstream ss;
+            ss << "Terminating with an uncaught exception!" << std::endl;
+            try {
+                std::rethrow_exception(ptr);
+            } catch (const rt_exception_base& base) {
+                prettyprint_rtexcept(ss, base);
+            } catch (const std::exception& e) {
+                prettyprint_stdexcept(ss, e);
+            }
+
+            std::cerr << ss.str() << std::endl;
+        }
     }
 }
