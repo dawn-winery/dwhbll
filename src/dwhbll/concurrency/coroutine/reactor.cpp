@@ -4,6 +4,7 @@
 #include <dwhbll/sanify/deferred.h>
 #include <thread>
 #include <liburing.h>
+#include <dwhbll/concurrency/coroutine/detached_task.h>
 #include <dwhbll/concurrency/coroutine/uring_promise.h>
 #include <dwhbll/console/debug.hpp>
 
@@ -17,6 +18,8 @@ namespace dwhbll::concurrency::coroutine {
     }
 
     void reactor::set_thread_live_reactor(reactor *reactor) {
+        if (detail::live_reactor)
+            debug::panic("there is already a live reactor on this thread!");
         detail::live_reactor = reactor;
     }
 
@@ -52,6 +55,14 @@ namespace dwhbll::concurrency::coroutine {
         auto r = io_uring_queue_init(size, &ring, IORING_SETUP_SQPOLL);
         if (r < 0)
             debug::panic("failed to setup uring queue! ({})", strerror(errno));
+
+        set_thread_live_reactor(this);
+    }
+
+    reactor::~reactor() {
+        io_uring_queue_exit(&ring);
+
+        clear_thread_live_reactor();
     }
 
     bool reactor::empty() const {
@@ -70,11 +81,6 @@ namespace dwhbll::concurrency::coroutine {
     }
 
     void reactor::run() {
-        set_thread_live_reactor(this);
-        sanify::deferred task([] {
-            clear_thread_live_reactor();
-        });
-
         while (!empty()) {
             auto first_expire = get_first_time_expire();
 
@@ -98,7 +104,7 @@ namespace dwhbll::concurrency::coroutine {
             while (io_uring_peek_cqe(&ring, &cqe) == 0)
                 process_cqe(cqe);
 
-            // it's probably a good idea to drain all of this before we keep going,
+            // it's probably a good idea to drain all of this before we keep going
             update_timer_tasks();
             while (!ready_queue.empty()) {
                 auto front = ready_queue.front();
@@ -114,6 +120,25 @@ namespace dwhbll::concurrency::coroutine {
                 h.resume();
            }
         }
+    }
+
+    void reactor::spawn(task<> future) {
+        auto f = [fut = std::move(future)]() mutable -> DetachedTask {
+            try {
+                co_await fut;
+            } catch (const exceptions::rt_exception_base& e) {
+                e.trace_to_stderr();
+                debug::panic("uncaught exception through future");
+            } catch (const std::runtime_error& e) {
+                debug::panic("uncaught exception {}", e.what());
+            } catch (...) {
+                auto eptr = std::current_exception();
+                auto tname = eptr.__cxa_exception_type()->name();
+                debug::panic("unknown uncaught exception (type: {})", tname);
+            }
+        };
+
+        f();
     }
 
     reactor * reactor::get_thread_reactor() {

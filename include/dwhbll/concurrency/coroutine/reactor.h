@@ -56,6 +56,8 @@ namespace dwhbll::concurrency::coroutine {
          */
         reactor(std::uint32_t size = 128);
 
+        ~reactor();
+
         [[nodiscard]] bool empty() const;
 
         void enqueue(std::coroutine_handle<> handle);
@@ -63,6 +65,8 @@ namespace dwhbll::concurrency::coroutine {
         void add_sleep_task(std::chrono::steady_clock::time_point resume, std::coroutine_handle<> h);
 
         void run();
+
+        void spawn(task<> future);
 
         static reactor* get_thread_reactor();
 
