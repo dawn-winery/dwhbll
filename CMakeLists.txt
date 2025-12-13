@@ -31,6 +31,7 @@ endif()
 set(DWHBLL_SOURCES
     src/dwhbll/collections/cache.cpp
     src/dwhbll/collections/memory_buffer.cpp
+    src/dwhbll/concurrency/coroutine/defer_again.cpp
     src/dwhbll/concurrency/coroutine/reactor.cpp
     src/dwhbll/concurrency/coroutine/sleep_task.cpp
     src/dwhbll/concurrency/spinlock.cpp
@@ -56,6 +57,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/collections/ring.h
     include/dwhbll/collections/sorted_linked_list.h
     include/dwhbll/collections/streams.hpp
+    include/dwhbll/concurrency/coroutine/defer_again.h
     include/dwhbll/concurrency/coroutine/reactor.h
     include/dwhbll/concurrency/coroutine/sleep_task.h
     include/dwhbll/concurrency/coroutine/task.h
