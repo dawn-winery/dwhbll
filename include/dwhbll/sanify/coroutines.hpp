@@ -1,11 +1,12 @@
 #pragma once
 
-#include <dwhbll/concurrency/coroutine/task.h>
-#include <dwhbll/concurrency/coroutine/sleep_task.h>
-#include <dwhbll/concurrency/coroutine/reactor.h>
+namespace dwhbll::concurrency::coroutine {
+    namespace wrappers {}
+}
 
 #define yield co_yield
 #define await co_await
 #define finish co_return
 
 using namespace dwhbll::concurrency::coroutine;
+using namespace dwhbll::concurrency::coroutine::wrappers;
