@@ -14,6 +14,21 @@ namespace dwhbll::collections {
 
     MemBuf::MemBuf(std::size_t reserved_size) : buffer(reserved_size) {}
 
+    MemBuf::MemBuf(MemBuf &&other) noexcept: buffer(std::move(other.buffer)),
+                                             _lock(std::move(other._lock)),
+                                             big_endian(other.big_endian) {
+        other.buffer.clear();
+    }
+
+    MemBuf & MemBuf::operator=(MemBuf &&other) noexcept {
+        if (this == &other)
+            return *this;
+        buffer = std::move(other.buffer);
+        _lock = std::move(other._lock);
+        big_endian = other.big_endian;
+        return *this;
+    }
+
     MemBuf::MemBuf() : buffer(1024) {}
 
     void MemBuf::set_big_endian(bool endian) {
@@ -57,6 +72,11 @@ namespace dwhbll::collections {
         return result;
     }
 
+    void MemBuf::skip(std::size_t count) {
+        for (std::size_t i = 0; i < count; ++i)
+            buffer.pop_front();
+    }
+
     sanify::u8 MemBuf::peek_u8(std::size_t index) {
         return buffer[index];
     }
@@ -70,14 +90,14 @@ namespace dwhbll::collections {
 
     sanify::u32 MemBuf::peek_u32(std::size_t index) {
         sanify::u32 a = static_cast<sanify::u32>(peek_u16(index)) & 0xFFFF;
-        sanify::u32 b = static_cast<sanify::u32>(peek_u16(index + 1)) & 0xFFFF;
+        sanify::u32 b = static_cast<sanify::u32>(peek_u16(index + 2)) & 0xFFFF;
 
         return big_endian ? a << 16 | b : b << 16 | a;
     }
 
     sanify::u64 MemBuf::peek_u64(std::size_t index) {
         sanify::u64 a = static_cast<sanify::u64>(peek_u32(index)) & 0xFFFFFFFF;
-        sanify::u64 b = static_cast<sanify::u64>(peek_u32(index + 1)) & 0xFFFFFFFF;
+        sanify::u64 b = static_cast<sanify::u64>(peek_u32(index + 4)) & 0xFFFFFFFF;
 
         return big_endian ? a << 32 | b : b << 32 | a;
     }
@@ -149,10 +169,14 @@ namespace dwhbll::collections {
     }
 
     sanify::deferred MemBuf::lock() {
-        return std::move(_lock.lock());
+        return std::move(_lock->lock());
     }
 
     void MemBuf::refill_buffer() {
         throw exceptions::rt_exception_base("MemoryBuffer::refill_buffer is not implemented by default!");
+    }
+
+    Ring<sanify::u8> & MemBuf::get_raw_buffer() {
+        return buffer;
     }
 }

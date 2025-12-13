@@ -14,7 +14,7 @@ namespace dwhbll::collections {
     protected:
         Ring<sanify::u8> buffer;
 
-        concurrency::spinlock _lock;
+        std::unique_ptr<concurrency::spinlock> _lock;
 
         bool big_endian = false;
 
@@ -26,6 +26,14 @@ namespace dwhbll::collections {
         explicit MemBuf(std::span<const sanify::u8> buffer);
 
         explicit MemBuf(std::size_t reserved_size);
+
+        MemBuf(const MemBuf &other) = delete;
+
+        MemBuf(MemBuf &&other) noexcept;
+
+        MemBuf & operator=(const MemBuf &other) = delete;
+
+        MemBuf & operator=(MemBuf &&other) noexcept;
 
         /**
          * @brief if no data is given, the buffer is set to a size of 1024 by default.
@@ -53,6 +61,8 @@ namespace dwhbll::collections {
         sanify::u64 read_u64();
 
         std::vector<sanify::u8> read_vector(std::size_t size);
+
+        void skip(std::size_t count);
 
         sanify::u8 peek_u8(std::size_t index = 0);
 
@@ -85,5 +95,7 @@ namespace dwhbll::collections {
         [[nodiscard]] sanify::deferred lock();
 
         virtual void refill_buffer();
+
+        Ring<sanify::u8>& get_raw_buffer();
     };
 }
