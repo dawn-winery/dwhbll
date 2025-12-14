@@ -176,6 +176,10 @@ namespace dwhbll::collections {
         throw exceptions::rt_exception_base("MemoryBuffer::refill_buffer is not implemented by default!");
     }
 
+    concurrency::coroutine::task<> MemBuf::refill_buffer_async() {
+        throw exceptions::rt_exception_base("MemoryBuffer::refill_buffer is not implemented by default!");
+    }
+
     Ring<sanify::u8> & MemBuf::get_raw_buffer() {
         return buffer;
     }

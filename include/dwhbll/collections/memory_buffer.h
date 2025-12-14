@@ -4,6 +4,7 @@
 
 #include <dwhbll/collections/ring.h>
 #include <dwhbll/concurrency/spinlock.h>
+#include <dwhbll/concurrency/coroutine/task.h>
 #include <dwhbll/sanify/types.hpp>
 
 namespace dwhbll::collections {
@@ -95,6 +96,8 @@ namespace dwhbll::collections {
         [[nodiscard]] sanify::deferred lock();
 
         virtual void refill_buffer();
+
+        virtual concurrency::coroutine::task<> refill_buffer_async();
 
         Ring<sanify::u8>& get_raw_buffer();
     };
