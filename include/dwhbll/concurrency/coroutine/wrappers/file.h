@@ -61,6 +61,8 @@ namespace dwhbll::concurrency::coroutine::wrappers {
 
         task<> drain();
 
+        void seekg(off_t head);
+
         bool is_eof() const;
     };
 }

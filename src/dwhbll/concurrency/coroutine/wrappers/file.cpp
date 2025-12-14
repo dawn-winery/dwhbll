@@ -224,6 +224,10 @@ namespace dwhbll::concurrency::coroutine::wrappers {
         }
     }
 
+    void file::seekg(off_t head) {
+        read_head = head;
+    }
+
     bool file::is_eof() const {
         return eof_;
     }
