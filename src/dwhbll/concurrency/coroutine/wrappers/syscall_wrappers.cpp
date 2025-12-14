@@ -4,6 +4,8 @@
 #include <dwhbll/concurrency/coroutine/reactor.h>
 #include <dwhbll/concurrency/coroutine/uring_sqe_awaitable.h>
 
+#include <sys/socket.h>
+
 #define MAKE_PROMISE \
 uring_promise promise; \
 co_await wait_for_sqe(); \
@@ -59,9 +61,6 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
 
         auto result = co_await promise;
 
-        if (result->res < 0)
-            throw exceptions::rt_exception_base("reading fd {} failed ({}, {:#x} with {} at file off {})!", fd, strerror(-result->res), (std::uintptr_t)buf, count, offset);
-
         co_return result->res;
     }
 
@@ -73,9 +72,6 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
         SUBMIT
 
         auto result = co_await promise;
-
-        if (result->res < 0)
-            throw exceptions::rt_exception_base("writing fd {} failed ({})!", fd, strerror(-result->res));
 
         co_return result->res;
     }
@@ -91,6 +87,67 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
 
         if (result->res < 0)
             throw exceptions::rt_exception_base("polling fd {} failed ({})!", fd, strerror(-result->res));
+
+        co_return result->res;
+    }
+
+    task<> connect(int fd, ::sockaddr * addr, socklen_t addrlen) {
+        MAKE_PROMISE
+
+        io_uring_prep_connect(sqe, fd, addr, addrlen);
+
+        SUBMIT
+
+        auto result = co_await promise;
+
+        if (result->res < 0)
+            throw exceptions::rt_exception_base("connect fd {} failed({})!", fd, strerror(-result->res));
+    }
+
+    task<ssize_t> send(int fd, const void *buf, size_t len, int flags) {
+        MAKE_PROMISE
+
+        io_uring_prep_send(sqe, fd, buf, len, flags);
+
+        SUBMIT
+
+        auto result = co_await promise;
+
+        co_return result->res;
+    }
+
+    task<ssize_t> recv(int fd, void *buf, size_t len, int flags) {
+        MAKE_PROMISE
+
+        io_uring_prep_recv(sqe, fd, buf, len, flags);
+
+        SUBMIT
+
+        auto result = co_await promise;
+
+        co_return result->res;
+    }
+
+    task<int> statx(int dirfd, const char *path, int flags, int mask, struct ::statx *statxbuf) {
+        MAKE_PROMISE
+
+        io_uring_prep_statx(sqe, dirfd, path, flags, mask, statxbuf);
+
+        SUBMIT
+
+        auto result = co_await promise;
+        
+        co_return result->res;
+    }
+
+    task<int> accept(int fd, sockaddr *addr, socklen_t *addrlen, int flags) {
+        MAKE_PROMISE
+
+        io_uring_prep_accept(sqe, fd, addr, addrlen, flags);
+
+        SUBMIT
+
+        auto result = co_await promise;
 
         co_return result->res;
     }
