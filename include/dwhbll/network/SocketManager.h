@@ -1,10 +1,10 @@
 #pragma once
 
 #include <span>
-#include <unordered_map>
 #include <vector>
 
 #include <arpa/inet.h>
+#include <dwhbll/concurrency/coroutine/task.h>
 
 #include "../memory/pool.h"
 
@@ -57,47 +57,70 @@ namespace dwhbll::network {
 
         void connect(in_addr addr, unsigned short port) const;
 
-        // TODO: bind, listen, accept wrappers
+        concurrency::coroutine::task<> connect_async(in_addr addr, unsigned short port) const;
 
         /**
          * @brief wait for reading or writing to be available
          */
         void wait() const;
 
-        /**
-         * @brief send a set amount of data
-         * @param data the buffer of data to send
-         * @return sent size
-         */
-        size_t send(const std::span<char>& data) const;
-
-        /**
-         * @brief receive a set amount of data
-        * @param data the buffer to put the data into, the receivable amount is data.size()
-         * @return received size
-         */
-        size_t recv(std::span<char>& data) const;
-
-        /**
-         * @brief receive a set amount of data
-        * @param data the buffer to put the data into, the receivable amount is data.size()
-         * @return received size
-         */
-        size_t recv(std::vector<char>& data) const;
+        concurrency::coroutine::task<> wait_async() const;
 
         /**
          * @brief send a set amount of data
          * @param data the buffer of data to send
          * @return sent size
          */
-        size_t send(const std::string& data) const;
+        ssize_t send(const std::span<char>& data) const;
+
+        concurrency::coroutine::task<ssize_t> send_async(const std::span<char>& data) const;
+
+        /**
+         * @brief receive a set amount of data
+        * @param data the buffer to put the data into, the receivable amount is data.size()
+         * @return received size
+         */
+        ssize_t recv(std::span<char>& data) const;
+
+        concurrency::coroutine::task<ssize_t> recv_async(std::span<char>& data) const;
+
+        /**
+         * @brief receive a set amount of data
+        * @param data the buffer to put the data into, the receivable amount is data.size()
+         * @return received size
+         */
+        ssize_t recv(std::vector<char>& data) const;
+
+        concurrency::coroutine::task<ssize_t> recv_async(std::vector<char>& data) const;
+
+        /**
+         * @brief read a set amount of data
+        * @param data the buffer to put the data into, the receivable amount is data.size()
+         * @return received size
+         */
+        ssize_t read(std::vector<char>& data) const;
+
+        concurrency::coroutine::task<ssize_t> read_async(std::vector<char>& data) const;
+
+        /**
+         * @brief send a set amount of data
+         * @param data the buffer of data to send
+         * @return sent size
+         */
+        ssize_t send(const std::string& data) const;
+
+        concurrency::coroutine::task<ssize_t> send_async(const std::string& data) const;
 
         /**
          * @brief receive a set amount of data
          * @param data the buffer to put the data into, the receivable amount is data.size()
          * @return received size
          */
-        size_t recv(std::string& data) const;
+        ssize_t recv(std::string& data) const;
+
+        concurrency::coroutine::task<ssize_t> recv_async(std::string& data) const;
+
+        concurrency::coroutine::task<Socket> accept() const;
     };
 
     // TODO: this class is not multithread safe
@@ -106,9 +129,17 @@ namespace dwhbll::network {
         memory::Pool<Socket> pool;
 
     public:
-        memory::Pool<Socket>::ObjectWrapper getIPv4TCPSocket(in_addr addr, unsigned short port);
+        using socket_t = memory::Pool<Socket>::ObjectWrapper;
 
-        memory::Pool<Socket>::ObjectWrapper getIPv4UDPSocket(in_addr addr, unsigned short port);
+        socket_t getIPv4TCPSocket(in_addr addr, unsigned short port);
+
+        concurrency::coroutine::task<socket_t> getIPv4TCPSocket_async(in_addr addr, unsigned short port);
+
+        socket_t getIPv4UDPSocket(in_addr addr, unsigned short port);
+
+        concurrency::coroutine::task<socket_t> getIPv4UDPSocket_async(in_addr addr, unsigned short port);
+
+        socket_t listenTCP(in_addr_t addr, unsigned short port);
 
         /**
          * @brief Return the socket back to the manager
