@@ -105,6 +105,14 @@ namespace dwhbll::collections {
             sz++;
         }
 
+        void move_back(T&& data) {
+            if (needsResize)
+                resize();
+            this->_M_data[tail] = std::move(data);
+            inc_tail();
+            sz++;
+        }
+
         void pop_back() {
             if (sz == 0)
                 throw std::out_of_range("size is already zero.");
