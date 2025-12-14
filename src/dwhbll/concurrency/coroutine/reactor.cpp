@@ -1,12 +1,12 @@
 #include <dwhbll/concurrency/coroutine/reactor.h>
 
 #include <dwhbll/exceptions/rt_exception_base.h>
-#include <dwhbll/sanify/deferred.h>
 #include <thread>
 #include <liburing.h>
 #include <dwhbll/concurrency/coroutine/detached_task.h>
 #include <dwhbll/concurrency/coroutine/uring_promise.h>
 #include <dwhbll/console/debug.hpp>
+#include <dwhbll/console/Logging.h>
 
 namespace dwhbll::concurrency::coroutine {
     namespace detail {
@@ -49,6 +49,17 @@ namespace dwhbll::concurrency::coroutine {
         diff -= secs;
 
         return __kernel_timespec{secs.count(), diff.count()};
+    }
+
+    void reactor::resume_stall_check(std::coroutine_handle<> h) {
+        auto begin = std::chrono::steady_clock::now();
+
+        h.resume();
+
+        auto total_time = std::chrono::steady_clock::now() - begin;
+
+        if (total_time > std::chrono::milliseconds(5))
+            console::warn("reactor stall detected! reactor stalled for {}", total_time);
     }
 
     reactor::reactor(std::uint32_t size) : ring() {
@@ -109,7 +120,7 @@ namespace dwhbll::concurrency::coroutine {
             while (!ready_queue.empty()) {
                 auto front = ready_queue.front();
                 ready_queue.pop_front();
-                front.resume();
+                resume_stall_check(front);
             }
 
             while (!sqe_waiters.empty() &&
@@ -117,7 +128,7 @@ namespace dwhbll::concurrency::coroutine {
 
                 auto h = sqe_waiters.front();
                 sqe_waiters.pop_front();
-                h.resume();
+                resume_stall_check(h);
            }
         }
     }
@@ -140,6 +151,24 @@ namespace dwhbll::concurrency::coroutine {
         };
 
         f();
+    }
+
+    std::future<void> reactor::spawn_with_future(task<> future) {
+        std::promise<void> promise;
+        auto fut = promise.get_future();
+        auto f = [fut = std::move(future), promise=std::move(promise)]() mutable -> DetachedTask {
+            try {
+                co_await fut;
+                promise.set_value();
+            } catch (...) {
+                auto eptr = std::current_exception();
+                promise.set_exception(eptr);
+            }
+        };
+
+        f();
+
+        return fut;
     }
 
     reactor * reactor::get_thread_reactor() {
@@ -172,7 +201,7 @@ namespace dwhbll::concurrency::coroutine {
 
         promise->cqe = cqe;
 
-        promise->waiter.resume(); // resume the coroutine
+        resume_stall_check(promise->waiter); // resume the coroutine
 
         io_uring_cqe_seen(&ring, cqe);
     }

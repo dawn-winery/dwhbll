@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <coroutine>
+#include <future>
 #include <dwhbll/collections/ring.h>
 #include <dwhbll/collections/sorted_linked_list.h>
 #include <dwhbll/concurrency/coroutine/task.h>
@@ -49,6 +50,8 @@ namespace dwhbll::concurrency::coroutine {
 
         static __kernel_timespec to_ktimespec(std::chrono::steady_clock::time_point tp);
 
+        void resume_stall_check(std::coroutine_handle<> h);
+
     public:
         /**
          * @brief initializes a new reactor with an ioring buffer size of 128 entries
@@ -67,6 +70,8 @@ namespace dwhbll::concurrency::coroutine {
         void run();
 
         void spawn(task<> future);
+
+        [[nodiscard]] std::future<void> spawn_with_future(task<> future);
 
         static reactor* get_thread_reactor();
 
