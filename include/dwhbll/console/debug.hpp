@@ -30,6 +30,14 @@ requires (sizeof...(Args) != 0)
     panic(std::vformat(msg, std::make_format_args(args...)));
 }
 
+template <typename... Args>
+void panic(bool condition, const std::string& msg, Args&&... args) {
+    if (!condition)
+        panic(std::vformat(msg, std::make_format_args(args...)));
+}
+
+void panic(bool condition);
+
 bool is_being_debugged();
 
 template <typename... Args>

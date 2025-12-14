@@ -73,6 +73,11 @@ namespace dwhbll::debug {
     exit(1);
 }
 
+void panic(bool condition) {
+    if (!condition)
+        panic("");
+}
+
 bool is_being_debugged() {
     std::ifstream f("/proc/self/status");
     std::string line;
