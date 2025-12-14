@@ -213,7 +213,7 @@ namespace dwhbll::concurrency::coroutine {
             }
 
             void await_resume() {
-                if (!h.promise().eptr.has_value()) {
+                if (h.promise().eptr.has_value()) {
                     std::exception_ptr eptr = h.promise().eptr.value();
 
                     if (h)
@@ -265,7 +265,7 @@ namespace dwhbll::concurrency::coroutine {
         return finalize_awaiter{};
     }
 
-    inline void task<void>::promise::return_void() noexcept {}
+    inline void task<>::promise::return_void() noexcept {}
 
     inline void task<>::promise::unhandled_exception() noexcept {
         eptr = std::current_exception();
