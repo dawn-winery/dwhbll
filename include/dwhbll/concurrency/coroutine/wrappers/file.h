@@ -27,6 +27,8 @@ namespace dwhbll::concurrency::coroutine::wrappers {
         task<bool> try_flush_wrbuf();
 
     public:
+        file();
+
         file(const file &other) = delete;
 
         file(file &&other) noexcept;
@@ -63,6 +65,10 @@ namespace dwhbll::concurrency::coroutine::wrappers {
 
         void seekg(off_t head);
 
+        void seekp(off_t head);
+
         bool is_eof() const;
+
+        [[nodiscard]] bool is_open() const;
     };
 }

@@ -43,6 +43,8 @@ namespace dwhbll::concurrency::coroutine::wrappers {
         co_return wrbuf.empty();
     }
 
+    file::file() = default;
+
     file::file(file &&other) noexcept: fd(other.fd),
                                        read_head(other.read_head),
                                        write_head(other.write_head),
@@ -228,8 +230,16 @@ namespace dwhbll::concurrency::coroutine::wrappers {
         read_head = head;
     }
 
+    void file::seekp(off_t head) {
+        write_head = head;
+    }
+
     bool file::is_eof() const {
         return eof_;
+    }
+
+    bool file::is_open() const {
+        return fd >= 0;
     }
 
     task<file> file::open(const std::string &path, std::ios::openmode mode) {
