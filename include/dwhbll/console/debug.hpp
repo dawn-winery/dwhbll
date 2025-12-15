@@ -31,12 +31,12 @@ requires (sizeof...(Args) != 0)
 }
 
 template <typename... Args>
-void panic(bool condition, const std::string& msg, Args&&... args) {
+void cond_assert(bool condition, const std::string& msg, Args&&... args) {
     if (!condition)
         panic(std::vformat(msg, std::make_format_args(args...)));
 }
 
-void panic(bool condition);
+void cond_assert(bool condition);
 
 bool is_being_debugged();
 
