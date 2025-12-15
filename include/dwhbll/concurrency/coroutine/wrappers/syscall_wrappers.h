@@ -1,6 +1,7 @@
 #pragma once
 
 #include <dwhbll/concurrency/coroutine/task.h>
+#include <linux/stat.h>
 #include <sys/socket.h>
 
 namespace dwhbll::concurrency::coroutine::wrappers::calls {
@@ -22,7 +23,7 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
 
     task<ssize_t> recv(int fd, void* buf, size_t len, int flags);
 
-    task<int> statx(int dirfd, const char* path, int flags, int mask, struct ::statx* statxbuf);
+    task<int> statx(int dirfd, const char* path, int flags, int mask, statx* statxbuf);
 
     task<int> accept(int fd, sockaddr* addr, socklen_t* addrlen, int flags);
 }
