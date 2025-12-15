@@ -210,6 +210,7 @@ if (DWHBLL_TESTS)
         tests/collections/cache.cpp
         tests/collections/ring.cpp
         tests/collections/streams.cpp
+        tests/graphics/bitmap.cpp
     )
 
     add_executable(dwhbll_test ${DWHBLL_TEST_CXX_SOURCES})
