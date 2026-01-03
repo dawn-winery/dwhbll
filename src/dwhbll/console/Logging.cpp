@@ -5,6 +5,8 @@
 #include <unordered_map>
 #include <dwhbll/sanify/types.hpp>
 #include <dwhbll/utils/stacktrace.hpp>
+#include <dwhbll/utils/string.h>
+#include <dwhbll/utils/utils.hpp>
 
 namespace dwhbll::console {
     Level defaultLevel = Level::INFO;
@@ -81,23 +83,13 @@ namespace dwhbll::console {
         log(msg, Level::TRACE);
     }
 
-
-    // TODO: probably move to separate header
-    void replaceAll(std::string& str, const std::string& from, const std::string& to) {
-        size_t start_pos = 0;
-        while((start_pos = str.find(from, start_pos)) != std::string::npos) {
-            str.replace(start_pos, from.length(), to);
-            start_pos += to.length(); // Handles case where 'to' is a substring of 'from'
-        }
-    }
-
     censoring_log_filter::censoring_log_filter() {}
 
     censoring_log_filter::censoring_log_filter(const std::unordered_map<std::string, std::string> &replacements) : replacements(replacements) {}
 
     void censoring_log_filter::process(std::string &str) {
         for (const auto& [from, to] : replacements)
-            replaceAll(str, from, to);
+            utils::replace_all(str, from, to);
     }
 
     void censoring_log_filter::addBlacklist(const std::string &str) {
