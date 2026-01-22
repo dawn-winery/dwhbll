@@ -56,7 +56,6 @@ set(DWHBLL_SOURCES
     src/dwhbll/subprocess/pipe_wrapper.cpp
     src/dwhbll/utils/json.cpp
     src/dwhbll/utils/string.cpp
-    src/dwhbll/utils/utils.cpp
 
     include/dwhbll/collections/cache.h
     include/dwhbll/collections/memory_buffer.h
