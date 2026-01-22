@@ -5,13 +5,13 @@
 #include <vector>
 #include <version>
 
-#if __cpp_impl_reflection >= 202506L 
+#if __cpp_impl_reflection >= 202506L && 0
 #include <meta>
 #endif
 
 namespace dwhbll::utils {
 
-#if __cpp_impl_reflection >= 202506L 
+#if __cpp_impl_reflection >= 202506L && 0
 consteval bool has_annotation(std::meta::info r, std::meta::info type) {
     for (auto a : annotations_of(r)) {
         if(std::meta::dealias(std::meta::type_of(a)) == type) {

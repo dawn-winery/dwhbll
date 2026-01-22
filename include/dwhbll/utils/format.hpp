@@ -2,7 +2,7 @@
 
 #include <version>
 
-#if __cpp_impl_reflection >= 202506L 
+#if __cpp_impl_reflection >= 202506L && 0
 
 #include <dwhbll/utils/utils.hpp>
 #include <dwhbll/utils/json.hpp>
