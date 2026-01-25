@@ -42,10 +42,6 @@ namespace dwhbll::memory {
 		~Pool() {
 			Obj* current = objects;
 			while (current != nullptr) {
-				for (int i = 0; i < BlockSize; i++) {
-					if (current->used[i])
-						current->object[i].~T();
-				}
 				Obj* last = current;
 				current = current->next;
 				delete last;
