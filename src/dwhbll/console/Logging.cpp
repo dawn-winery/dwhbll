@@ -10,8 +10,8 @@
 
 namespace dwhbll::console {
     namespace detail {
-        auto defaultLevel = Level::INFO;
-        auto cerrLevel = Level::ERROR;
+        Level defaultLevel = Level::INFO;
+        Level cerrLevel = Level::ERROR;
         bool colors = true;
     }
 
