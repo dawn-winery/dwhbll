@@ -695,7 +695,7 @@ namespace dwhbll::collections {
             noexcept
 #endif
         {
-#ifndef DWHBLL_HARDEN
+#ifdef DWHBLL_HARDEN
             if (empty())
                 throw std::out_of_range("ring buffer is empty.");
 #endif
@@ -707,7 +707,7 @@ namespace dwhbll::collections {
             noexcept
 #endif
         {
-#ifndef DWHBLL_HARDEN
+#ifdef DWHBLL_HARDEN
             if (empty())
                 throw std::out_of_range("ring buffer is empty.");
 #endif
@@ -719,7 +719,7 @@ namespace dwhbll::collections {
             noexcept
 #endif
         {
-#ifndef DWHBLL_HARDEN
+#ifdef DWHBLL_HARDEN
             if (empty())
                 throw std::out_of_range("ring buffer is empty.");
 #endif
@@ -731,7 +731,7 @@ namespace dwhbll::collections {
             noexcept
 #endif
         {
-#ifndef DWHBLL_HARDEN
+#ifdef DWHBLL_HARDEN
             if (empty())
                 throw std::out_of_range("ring buffer is empty.");
 #endif
