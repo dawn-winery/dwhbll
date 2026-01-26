@@ -34,4 +34,4 @@ namespace dwhbll::utils {
  * }
  * ```
  */
-#define timeit(stage) ::dwhbll::utils::time __dwhbll_scope_timer__(stage)
+#define timeit(stage) if (::dwhbll::utils::time __dwhbll_scope_timer__(stage); true)
