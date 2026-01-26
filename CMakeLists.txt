@@ -104,6 +104,8 @@ set(DWHBLL_SOURCES
     include/dwhbll/utils/stacktrace.hpp
     include/dwhbll/utils/string.h
     include/dwhbll/utils/utils.hpp
+    include/dwhbll/utils/perf.h
+    src/dwhbll/utils/perf.cpp
 )
 
 # Main target
