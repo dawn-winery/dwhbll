@@ -19,18 +19,24 @@ namespace dwhbll::console {
         NONE
     };
 
-    extern Level defaultLevel;
-    extern Level cerrLevel; ///< Level at which logs more important than this will be sent to stderr instead of stdout
-    extern bool colors;
+    namespace detail {
+        extern Level defaultLevel;
+        extern Level cerrLevel; ///< Level at which logs more important than this will be sent to stderr instead of stdout
+        extern bool colors;
+    }
 
     void setLevel(Level level);
+
+    void setCerrLevel(Level level);
+
+    void setWantColors(bool colors);
 
     void log(const std::string& msg, Level level);
 
     template <typename... Args>
     requires (sizeof...(Args) != 0)
     void log(const std::string& msg, const Level level, Args&&... args) {
-        if (level < defaultLevel)
+        if (level < detail::defaultLevel)
             return;
         log(std::vformat(msg, std::make_format_args(args...)), level);
     }
@@ -52,7 +58,7 @@ namespace dwhbll::console {
     template <typename... Args>
     requires (sizeof...(Args) != 0)
     void fatal(const std::string& msg, Args&&... args) {
-        if (Level::FATAL < defaultLevel)
+        if (Level::FATAL < detail::defaultLevel)
             return;
         fatal(std::vformat(msg, std::make_format_args(args...)));
     }
@@ -60,7 +66,7 @@ namespace dwhbll::console {
     template <typename... Args>
     requires (sizeof...(Args) != 0)
     void critical(const std::string& msg, Args&&... args) {
-        if (Level::CRITICAL < defaultLevel)
+        if (Level::CRITICAL < detail::defaultLevel)
             return;
         critical(std::vformat(msg, std::make_format_args(args...)));
     }
@@ -68,7 +74,7 @@ namespace dwhbll::console {
     template <typename... Args>
     requires (sizeof...(Args) != 0)
     void error(const std::string& msg, Args&&... args) {
-        if (Level::ERROR < defaultLevel)
+        if (Level::ERROR < detail::defaultLevel)
             return;
         error(std::vformat(msg, std::make_format_args(args...)));
     }
@@ -76,7 +82,7 @@ namespace dwhbll::console {
     template <typename... Args>
     requires (sizeof...(Args) != 0)
     void warn(const std::string& msg, Args&&... args) {
-        if (Level::WARN < defaultLevel)
+        if (Level::WARN < detail::defaultLevel)
             return;
         warn(std::vformat(msg, std::make_format_args(args...)));
     }
@@ -84,7 +90,7 @@ namespace dwhbll::console {
     template <typename... Args>
     requires (sizeof...(Args) != 0)
     void info(const std::string& msg, Args&&... args) {
-        if (Level::INFO < defaultLevel)
+        if (Level::INFO < detail::defaultLevel)
             return;
         info(std::vformat(msg, std::make_format_args(args...)));
     }
@@ -92,7 +98,7 @@ namespace dwhbll::console {
     template <typename... Args>
     requires (sizeof...(Args) != 0)
     void debug(const std::string& msg, Args&&... args) {
-        if (Level::DEBUG < defaultLevel)
+        if (Level::DEBUG < detail::defaultLevel)
             return;
         debug(std::vformat(msg, std::make_format_args(args...)));
     }
@@ -100,7 +106,7 @@ namespace dwhbll::console {
     template <typename... Args>
     requires (sizeof...(Args) != 0)
     void trace(const std::string& msg, Args&&... args) {
-        if (Level::TRACE < defaultLevel)
+        if (Level::TRACE < detail::defaultLevel)
             return;
         trace(std::vformat(msg, std::make_format_args(args...)));
     }

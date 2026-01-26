@@ -9,9 +9,11 @@
 #include <dwhbll/utils/utils.hpp>
 
 namespace dwhbll::console {
-    Level defaultLevel = Level::INFO;
-    Level cerrLevel = Level::ERROR;
-    bool colors = true;
+    namespace detail {
+        auto defaultLevel = Level::INFO;
+        auto cerrLevel = Level::ERROR;
+        bool colors = true;
+    }
 
     std::list<log_filter*> log_filters;
 
@@ -40,19 +42,27 @@ namespace dwhbll::console {
     const std::string colorReset = "\033[0m";
 
     void setLevel(Level level) {
-        defaultLevel = level;
+        detail::defaultLevel = level;
+    }
+
+    void setCerrLevel(Level level) {
+        detail::cerrLevel = level;
+    }
+
+    void setWantColors(bool colors) {
+        detail::colors = colors;
     }
 
     void log(const std::string &msg, const Level level) {
-        if (level < defaultLevel)
+        if (level < detail::defaultLevel)
             return;
         std::stringstream ss;
-        ss << (colors ? tagColors[level] : "") << "[" << levelsToString[level] << "]" << msg << colorReset;
+        ss << (detail::colors ? tagColors[level] : "") << "[" << levelsToString[level] << "]" << msg << colorReset;
         std::string s = ss.str();
         for (auto* filter : log_filters)
             filter->process(s);
         // TODO: don't newline and flush stream every time!
-        (level >= cerrLevel ? std::cerr : std::cout) << s << std::endl;
+        (level >= detail::cerrLevel ? std::cerr : std::cout) << s << std::endl;
     }
 
     void fatal(const std::string &msg) {
@@ -89,7 +99,7 @@ namespace dwhbll::console {
 
     void censoring_log_filter::process(std::string &str) {
         for (const auto& [from, to] : replacements)
-            utils::replace_all(str, from, to);
+            str = utils::replace_all(str, from, to);
     }
 
     void censoring_log_filter::addBlacklist(const std::string &str) {
