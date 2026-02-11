@@ -50,4 +50,12 @@ template <typename... Args>
     panic("Assertion Failed\nCondition: {}", cond);
 }
 
+[[noreturn]] inline void unreachable() {
+#ifdef NDEBUG
+    std::unreachable();
+#else
+    panic("Reached unreachable statement");
+#endif
+}
+
 } // namespace dwhbll::debug
