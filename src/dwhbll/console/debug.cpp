@@ -78,6 +78,10 @@ void panic(bool condition) {
         panic("");
 }
 
+void cond_assert(bool condition) {
+    cond_assert(condition, "");
+}
+
 bool is_being_debugged() {
     std::ifstream f("/proc/self/status");
     std::string line;
