@@ -1,6 +1,7 @@
 #pragma once
 
 #include <format>
+#include <utility>
 
 #ifdef NDEBUG
     #define ASSERT(cond, ...) ((void)0)
