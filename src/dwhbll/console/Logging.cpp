@@ -18,14 +18,14 @@ namespace dwhbll::console {
     std::list<log_filter*> log_filters;
 
     std::unordered_map<Level, std::string> levelsToString = {
-        {Level::TRACE, "[TRACE]"},
-        {Level::DEBUG, "[DEBUG]"},
-        {Level::INFO, "[INFO] "},
-        {Level::WARN, "[WARN] "},
-        {Level::ERROR, "[ERROR]"},
-        {Level::CRITICAL, "[CRIT] "},
-        {Level::FATAL, "[FATAL]"},
-        {Level::NONE, "[NONE] "},
+        {Level::TRACE, "[TRACE] "},
+        {Level::DEBUG, "[DEBUG] "},
+        {Level::INFO, "[INFO]  "},
+        {Level::WARN, "[WARN]  "},
+        {Level::ERROR, "[ERROR] "},
+        {Level::CRITICAL, "[CRIT]  "},
+        {Level::FATAL, "[FATAL] "},
+        {Level::NONE, "[NONE]  "},
     };
 
     std::unordered_map<Level, std::string> tagColors = {
