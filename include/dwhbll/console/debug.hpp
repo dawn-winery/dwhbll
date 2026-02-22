@@ -59,4 +59,8 @@ template <typename... Args>
 #endif
 }
 
+[[noreturn]] inline void todo() {
+    panic("Not implemented!");
+}
+
 } // namespace dwhbll::debug
