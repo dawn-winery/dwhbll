@@ -32,7 +32,8 @@ namespace dwhbll::concurrency::queues {
             tail.store(0, std::memory_order_relaxed);
         }
 
-        bool put(T value) {
+        template <typename... Args>
+        bool put(Args&&... args) {
             auto t = tail.load(std::memory_order_relaxed);
             const auto next = (t + 1) & MASK;
 
@@ -47,7 +48,7 @@ namespace dwhbll::concurrency::queues {
                 }
             }
 
-            buffer[t] = value;
+            new(buffer + t) T(std::forward<Args...>(args...));
 
             tail.store(next, std::memory_order_release);
 
@@ -60,7 +61,8 @@ namespace dwhbll::concurrency::queues {
             if (h == tail.load(std::memory_order_acquire))
                 return std::nullopt; // nothing in the queue currently
 
-            auto result = buffer[h];
+            auto result = std::move(buffer[h]);
+            buffer[h].~T();
 
             head.store((h + 1) & MASK, std::memory_order_release);
 
@@ -76,7 +78,8 @@ namespace dwhbll::concurrency::queues {
 #endif
             }
 
-            auto result = buffer[h];
+            auto result = std::move(buffer[h]);
+            buffer[h].~T();
 
             head.store((h + 1) & MASK, std::memory_order_release);
 
