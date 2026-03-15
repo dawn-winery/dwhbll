@@ -73,6 +73,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/concurrency/coroutine/uring_sqe_awaitable.h
     include/dwhbll/concurrency/coroutine/wrappers/file.h
     include/dwhbll/concurrency/coroutine/wrappers/syscall_wrappers.h
+    include/dwhbll/concurrency/queues/bounded_mpsc_queue.h
     include/dwhbll/concurrency/queues/bounded_spsc_queue.h
     include/dwhbll/concurrency/spinlock.h
     include/dwhbll/console/debug.hpp
@@ -215,6 +216,7 @@ if (DWHBLL_TESTS)
         tests/collections/streams.cpp
         tests/graphics/bitmap.cpp
         tests/bench/bounded_spsc_int_bench.cpp
+        tests/bench/bounded_mpsc_int_bench.cpp
     )
 
     add_executable(dwhbll_test ${DWHBLL_TEST_CXX_SOURCES})
