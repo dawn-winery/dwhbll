@@ -11,6 +11,9 @@ extern bool cache_test(std::optional<std::string> test_to_run);
 extern bool stream_test(std::optional<std::string> test_to_run);
 extern bool bitmap_test(std::optional<std::string> test_to_run);
 
+// benchmarks
+extern bool bounded_spsc_int_bench(std::optional<std::string> test_to_run);
+
 // The optional string argument is for the subtests to run
 using TestFunc = std::function<bool(std::optional<std::string>)>;
 
@@ -21,6 +24,7 @@ std::unordered_map<std::string, TestFunc> module_dispatch{
     {"collections/cache", cache_test},
     {"collections/streams", stream_test},
     {"graphics/bitmap", bitmap_test},
+    {"bench/bounded_spsc_int", bounded_spsc_int_bench},
 };
 
 int main(int argc, char **argv) {

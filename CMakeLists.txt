@@ -55,6 +55,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/subprocess/process.cpp
     src/dwhbll/subprocess/pipe_wrapper.cpp
     src/dwhbll/utils/json.cpp
+    src/dwhbll/utils/perf.cpp
     src/dwhbll/utils/string.cpp
 
     include/dwhbll/collections/cache.h
@@ -213,6 +214,7 @@ if (DWHBLL_TESTS)
         tests/collections/ring.cpp
         tests/collections/streams.cpp
         tests/graphics/bitmap.cpp
+        tests/bench/bounded_spsc_int_bench.cpp
     )
 
     add_executable(dwhbll_test ${DWHBLL_TEST_CXX_SOURCES})
