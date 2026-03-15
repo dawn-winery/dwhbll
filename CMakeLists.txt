@@ -72,6 +72,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/concurrency/coroutine/uring_sqe_awaitable.h
     include/dwhbll/concurrency/coroutine/wrappers/file.h
     include/dwhbll/concurrency/coroutine/wrappers/syscall_wrappers.h
+    include/dwhbll/concurrency/queues/bounded_spsc_queue.h
     include/dwhbll/concurrency/spinlock.h
     include/dwhbll/console/debug.hpp
     include/dwhbll/console/Logging.h
