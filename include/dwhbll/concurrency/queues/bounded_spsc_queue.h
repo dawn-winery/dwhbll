@@ -19,6 +19,8 @@ namespace dwhbll::concurrency::queues {
         static_assert(__builtin_popcountll(N) == 1, "BoundedSPSCQueue expects N to be a power of 2!");
         static_assert(N > 1, "BoundedSPSCQueue has to be bigger than 1! (One entry is used to know if queue is full)");
 
+        static constexpr std::size_t MASK = N - 1;
+
         alignas(AlignmentSize) std::atomic_uint64_t head;
         alignas(AlignmentSize) std::atomic_uint64_t tail;
 
@@ -32,7 +34,7 @@ namespace dwhbll::concurrency::queues {
 
         bool put(T value) {
             auto t = tail.load(std::memory_order_relaxed);
-            const auto next = (t + 1) % N;
+            const auto next = (t + 1) & MASK;
 
             if constexpr (FailOnFull) {
                 if (next == head.load(std::memory_order_acquire))
@@ -60,7 +62,7 @@ namespace dwhbll::concurrency::queues {
 
             auto result = buffer[h];
 
-            head.store((h + 1) % N, std::memory_order_release);
+            head.store((h + 1) & MASK, std::memory_order_release);
 
             return result;
         }
@@ -76,7 +78,7 @@ namespace dwhbll::concurrency::queues {
 
             auto result = buffer[h];
 
-            head.store((h + 1) % N, std::memory_order_release);
+            head.store((h + 1) & MASK, std::memory_order_release);
 
             return result;
         }
