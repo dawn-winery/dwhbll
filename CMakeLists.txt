@@ -65,6 +65,8 @@ set(DWHBLL_SOURCES
     include/dwhbll/collections/sorted_linked_list.h
     include/dwhbll/collections/streams.hpp
     include/dwhbll/concurrency/backoff/backoff_policy.h
+    include/dwhbll/concurrency/backoff/policy_exponential.h
+    include/dwhbll/concurrency/backoff/policy_linear.h
     include/dwhbll/concurrency/backoff/policy_pause.h
     include/dwhbll/concurrency/common.h
     include/dwhbll/concurrency/coroutine/async_semaphore.h
