@@ -6,11 +6,14 @@
 #include <xmmintrin.h>
 #endif
 
+#include <dwhbll/concurrency/backoff/policy_pause.h>
+#include <dwhbll/concurrency/backoff/backoff_policy.h>
 #include <dwhbll/concurrency/common.h>
 
 namespace dwhbll::concurrency::queues {
 
-    template<typename T, std::size_t N, bool FailOnFull = false>
+    template<typename T, std::size_t N, bool FailOnFull = false, typename BackoffPolicy = backoff::PolicyPause>
+    requires backoff::BackoffPolicy<BackoffPolicy>
     class BoundedSPSCQueue {
         static_assert(__builtin_popcountll(N) == 1, "BoundedSPSCQueue expects N to be a power of 2!");
         static_assert(N > 1, "BoundedSPSCQueue has to be bigger than 1! (One entry is used to know if queue is full)");
@@ -37,10 +40,9 @@ namespace dwhbll::concurrency::queues {
                 if (next == head.load(std::memory_order_acquire))
                     return false;
             } else {
+                BackoffPolicy policy;
                 while (next == head.load(std::memory_order_acquire)) {
-#if defined(__x86_64__) || defined(__i386__)
-                    _mm_pause();
-#endif
+                    policy.pause();
                 }
             }
 
@@ -68,10 +70,10 @@ namespace dwhbll::concurrency::queues {
         T getBlocking() {
             auto h = head.load(std::memory_order_relaxed);
 
+            BackoffPolicy policy;
+
             while (h == tail.load(std::memory_order_acquire)) {
-#if defined(__x86_64__) || defined(__i386__)
-                _mm_pause();
-#endif
+                policy.pause();
             }
 
             auto result = std::move(buffer[h]);
