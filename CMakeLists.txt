@@ -77,6 +77,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/concurrency/coroutine/wrappers/syscall_wrappers.h
     include/dwhbll/concurrency/queues/bounded_mpsc_queue.h
     include/dwhbll/concurrency/queues/bounded_spsc_queue.h
+    include/dwhbll/concurrency/recycling_concurrent_stack.h
     include/dwhbll/concurrency/spinlock.h
     include/dwhbll/console/debug.hpp
     include/dwhbll/console/Logging.h
