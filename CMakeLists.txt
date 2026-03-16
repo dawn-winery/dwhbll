@@ -57,6 +57,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/utils/json.cpp
     src/dwhbll/utils/perf.cpp
     src/dwhbll/utils/string.cpp
+    src/dwhbll/utils/threading.cpp
 
     include/dwhbll/collections/cache.h
     include/dwhbll/collections/memory_buffer.h
@@ -110,6 +111,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/utils/utils.hpp
     include/dwhbll/utils/perf.h
     src/dwhbll/utils/perf.cpp
+    include/dwhbll/utils/threading.h
 )
 
 # Main target
