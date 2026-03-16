@@ -6,13 +6,9 @@
 #include <xmmintrin.h>
 #endif
 
-namespace dwhbll::concurrency::queues {
+#include <dwhbll/concurrency/common.h>
 
-#if __cpp_lib_hardware_interference_size >= 201703L
-    constexpr std::size_t AlignmentSize = std::hardware_destructive_interference_size;
-#else
-    constexpr std::size_t AlignmentSize = 64;
-#endif
+namespace dwhbll::concurrency::queues {
 
     template<typename T, std::size_t N, bool FailOnFull = false>
     class BoundedSPSCQueue {

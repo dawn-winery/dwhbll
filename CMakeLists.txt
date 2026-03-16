@@ -63,6 +63,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/collections/ring.h
     include/dwhbll/collections/sorted_linked_list.h
     include/dwhbll/collections/streams.hpp
+    include/dwhbll/concurrency/common.h
     include/dwhbll/concurrency/coroutine/async_semaphore.h
     include/dwhbll/concurrency/coroutine/defer_again.h
     include/dwhbll/concurrency/coroutine/detached_task.h

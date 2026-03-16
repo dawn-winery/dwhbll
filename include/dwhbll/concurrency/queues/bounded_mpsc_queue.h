@@ -6,14 +6,9 @@
 #include <xmmintrin.h>
 #endif
 
+#include <dwhbll/concurrency/common.h>
+
 namespace dwhbll::concurrency::queues {
-
-#if __cpp_lib_hardware_interference_size >= 201703L
-    constexpr std::size_t AlignmentSize = std::hardware_destructive_interference_size;
-#else
-    constexpr std::size_t AlignmentSize = 64;
-#endif
-
     template<typename T, std::size_t N, bool FailOnFull = false>
     class BoundedMPSCQueue {
         static_assert(__builtin_popcountll(N) == 1, "BoundedSPSCQueue expects N to be a power of 2!");
