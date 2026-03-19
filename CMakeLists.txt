@@ -227,6 +227,7 @@ if (DWHBLL_TESTS)
         tests/bench/bounded_spsc_int_bench.cpp
         tests/bench/bounded_mpsc_int_bench.cpp
         tests/bench/recycling_concurrent_stack_bench.cpp
+        tests/cryptography/arc4.cpp
     )
 
     add_executable(dwhbll_test ${DWHBLL_TEST_CXX_SOURCES})

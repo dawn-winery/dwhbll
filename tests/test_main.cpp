@@ -11,6 +11,9 @@ extern bool cache_test(std::optional<std::string> test_to_run);
 extern bool stream_test(std::optional<std::string> test_to_run);
 extern bool bitmap_test(std::optional<std::string> test_to_run);
 
+// cryptography
+extern bool crypto_arc4_test(std::optional<std::string> test_to_run);
+
 // benchmarks
 extern bool bounded_spsc_int_bench(std::optional<std::string> test_to_run);
 extern bool bounded_mpsc_int_bench(std::optional<std::string> test_to_run);
@@ -29,6 +32,8 @@ std::unordered_map<std::string, TestFunc> module_dispatch{
     {"bench/bounded_spsc_int", bounded_spsc_int_bench},
     {"bench/bounded_mpsc_int", bounded_mpsc_int_bench},
     {"bench/recycling_concurrent_stack", recycling_concurrent_stack_bench},
+
+    {"crypto/arc4", crypto_arc4_test},
 };
 
 int main(int argc, char **argv) {
