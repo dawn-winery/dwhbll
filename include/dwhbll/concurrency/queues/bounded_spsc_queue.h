@@ -21,7 +21,10 @@ namespace dwhbll::concurrency::queues {
         static constexpr std::size_t MASK = N - 1;
 
         alignas(AlignmentSize) std::atomic_uint64_t head;
+        size_t cached_tail = 0;
+
         alignas(AlignmentSize) std::atomic_uint64_t tail;
+        size_t cached_head = 0;
 
         T buffer[N];
 
@@ -36,15 +39,23 @@ namespace dwhbll::concurrency::queues {
             auto t = tail.load(std::memory_order_relaxed);
             const auto next = (t + 1) & MASK;
 
-            if constexpr (FailOnFull) {
-                if (next == head.load(std::memory_order_acquire))
-                    return false;
-            } else {
-                BackoffPolicy policy;
-                while (next == head.load(std::memory_order_acquire)) {
-                    policy.pause();
-                }
-            }
+
+            if (cached_head == next) {	// Local cache thinks the queue is full
+
+            	// We load the atomic to check
+            	cached_head = head.load(std::memory_order_acquire);
+
+	            if constexpr (FailOnFull) {
+	                if (next == cached_head)
+	                    return false;
+	            } else {
+	                BackoffPolicy policy;
+	                while (next == cached_head) {
+	                    policy.pause();
+						cached_head = head.load(std::memory_order_acquire);
+	                }
+	            }
+        	}
 
             new(buffer + t) T(std::forward<Args...>(args...));
 
@@ -56,8 +67,12 @@ namespace dwhbll::concurrency::queues {
         std::optional<T> get() {
             auto h = head.load(std::memory_order_relaxed);
 
-            if (h == tail.load(std::memory_order_acquire))
-                return std::nullopt; // nothing in the queue currently
+            if (h == cached_tail) {	 // queue empty maybe
+           		cached_tail = tail.load(std::memory_order_acquire);
+           		if (h == cached_tail)
+                	return std::nullopt; // nothing in the queue currently
+
+            }
 
             auto result = std::move(buffer[h]);
             buffer[h].~T();
