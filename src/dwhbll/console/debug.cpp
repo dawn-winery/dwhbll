@@ -1,6 +1,7 @@
 #include <dwhbll/console/debug.hpp>
 #include <dwhbll/utils/stacktrace.hpp>
 #include <iostream>
+#include <format>
 #include <fstream>
 #include <version>
 
@@ -63,9 +64,10 @@ namespace dwhbll::debug {
             sourcePosition = "???";
         }
 
+        // when under modules for some reason width specifiers are broken :xdd:
         const auto info = std::format(
-                "[{:#018x}] {}\n",
-                reinterpret_cast<std::uintptr_t>(entry.native_handle()), sourcePosition.data());
+                "[{:#x}] {}\n",
+                reinterpret_cast<std::uintptr_t>(entry.native_handle()), sourcePosition);
         std::cerr << (info);
     }
     #endif
