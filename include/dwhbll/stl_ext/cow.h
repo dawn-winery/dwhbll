@@ -31,7 +31,9 @@ namespace dwhbll::stl_ext {
     public:
         template <typename... Args>
         requires (sizeof...(Args) != 1) || (!std::is_same_v<cow, template_pack_nth<0, Args...>>)
-        explicit cow(Args&&... args) : object(std::forward<Args>(args)...) {}
+        explicit cow(Args&&... args) : object(std::make_shared<T>(std::forward<Args>(args)...)) {}
+
+        explicit cow(const T&& obj) : object(std::make_shared<T>(obj)) {}
 
         cow() : object(nullptr) {}
 
