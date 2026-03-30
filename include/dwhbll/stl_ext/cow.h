@@ -25,7 +25,7 @@ namespace dwhbll::stl_ext {
          */
         void copy() {
             if (object && !object.unique())
-                object = std::make_shared<T>(object);
+                object = std::make_shared<T>(*object);
         }
 
     public:
