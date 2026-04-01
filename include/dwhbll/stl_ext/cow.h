@@ -71,6 +71,12 @@ namespace dwhbll::stl_ext {
             return *object.get();
         }
 
+        T& mut() {
+            copy();
+
+            return *object.get();
+        }
+
         cow & operator=(const T& other) {
             object = std::make_shared<T>(other);
 
