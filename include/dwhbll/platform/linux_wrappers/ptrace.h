@@ -1,5 +1,6 @@
 #pragma once
 
+#include <span>
 #include <sched.h>
 #include <csignal>
 #include <sys/ptrace.h>
