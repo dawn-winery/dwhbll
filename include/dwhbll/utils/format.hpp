@@ -2,7 +2,7 @@
 
 #include <version>
 
-#if __cpp_impl_reflection >= 202506L && 0
+#if __cpp_impl_reflection >= 202506L
 
 #include <dwhbll/utils/utils.hpp>
 #include <dwhbll/utils/json.hpp>
@@ -18,14 +18,16 @@ constexpr std::string get_indentation(int depth, int step) {
 
 template <typename T>
 requires std::is_class_v<T>
-constexpr std::string debugfmt_print_struct(T const& val, int depth, int step);
+constexpr std::string dbg_print_struct(T const& val, int depth, int step);
 
 template <typename T>
-constexpr std::string debugfmt_print_value(T const& val, int depth, int step) {
+constexpr std::string dbg_print_value(T const& val, int depth, int step) {
+    constexpr std::string_view type = std::meta::display_string_of(^^T);
+
     if constexpr (std::formattable<T, char>)
         return std::format("{}", val);
     if constexpr (std::is_class_v<T>)
-        return debugfmt_print_struct<T>(val, depth, step);
+        return std::format("{} {}", type, dbg_print_struct<T>(val, depth, step));
 
     // TODO: Check for badly printed stdlib structs and print them
     //       Maybe also implement optional custom formatting
@@ -34,18 +36,20 @@ constexpr std::string debugfmt_print_value(T const& val, int depth, int step) {
 
 template <typename T>
 requires std::is_class_v<T>
-constexpr std::string debugfmt_print_struct(T const &val, int depth, int step) {
+constexpr std::string dbg_print_struct(T const &val, int depth, int step) {
     constexpr auto ctx = std::meta::access_context::current();
-    constexpr auto members = std::define_static_array(std::meta::nonstatic_data_members_of(^^T, ctx));
+    constexpr auto members = define_static_array(std::meta::nonstatic_data_members_of(^^T, ctx));
 
     if constexpr (members.empty())
         return "{}";
 
-    constexpr bool small_struct = [members] constexpr -> bool {
+    constexpr bool small_struct = [] constexpr -> bool {
+        constexpr auto members = define_static_array(std::meta::nonstatic_data_members_of(^^T, ctx));
+
         if constexpr (members.size() > 3)
             return false;
 
-        template for(constexpr auto m : members) {
+        template for(constexpr auto m : define_static_array(members)) {
             using V = [: std::meta::type_of(m) :];
             if constexpr (std::is_class_v<V>) {
                 return false;
@@ -62,11 +66,11 @@ constexpr std::string debugfmt_print_struct(T const &val, int depth, int step) {
             first = false;
         };
 
-        template for(constexpr auto m : members) {
+        template for(constexpr auto m : define_static_array(members)) {
             using V = [: std::meta::type_of(m) :];
             std::string_view id = std::meta::identifier_of(m);
             delim();
-            res += std::format("{} = {}", id, debugfmt_print_value<V>(val.[:m:], depth, step));
+            res += std::format("{} = {}", id, dbg_print_value<V>(val.[:m:], depth, step));
         }
 
         res += " }";
@@ -80,11 +84,11 @@ constexpr std::string debugfmt_print_struct(T const &val, int depth, int step) {
             first = false;
         };
 
-        template for(constexpr auto m : members) {
+        template for(constexpr auto m : define_static_array(members)) {
             using V = [: std::meta::type_of(m) :];
             std::string_view id = std::meta::identifier_of(m);
             delim();
-            res += std::format("{}{} = {}", ind, id, debugfmt_print_value<V>(val.[:m:], depth + 1, step));
+            res += std::format("{}{} = {}", ind, id, dbg_print_value<V>(val.[:m:], depth + 1, step));
         }
 
         res += "\n" + get_indentation(depth, step) + "}";
@@ -93,14 +97,16 @@ constexpr std::string debugfmt_print_struct(T const &val, int depth, int step) {
 }
 
 template <typename T>
-constexpr std::string debugfmt(T const& val, int depth = 0, int step = 4, bool first_indent = true) {
+constexpr std::string dbg(T const& val, int depth = 0, int step = 4, bool first_indent = true) {
     std::string indent = get_indentation(depth, step);
     constexpr std::string_view type = std::meta::display_string_of(^^T);
     if(first_indent)
-        return std::format("{}{} {}", indent, type, debugfmt_print_value(val, depth, step));
+        return std::format("{} {}", indent, dbg_print_value(val, depth, step));
     else
-        return std::format("{} {}", type, debugfmt_print_value(val, depth, step));
+        return dbg_print_value(val, depth, step);
 }
+
+#define 🦀 dbg
 
 #define TRACE_FUNC(func) \
     constexpr std::string_view __id = std::meta::identifier_of(^^func); \

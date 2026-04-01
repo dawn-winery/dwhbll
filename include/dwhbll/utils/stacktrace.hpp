@@ -16,6 +16,7 @@ namespace dwhbll::stacktrace {
     }
 }
 
+// LLVM's libc++ does not have <stacktrace> yet
 #ifndef __cpp_lib_stacktrace
 
 #include <dwhbll/sanify/types.hpp>
@@ -23,11 +24,6 @@ namespace dwhbll::stacktrace {
 #include <execinfo.h>
 #include <elfutils/libdwfl.h>
 #include <unistd.h>
-
-/*
- * Everything here is temporary until libc++ adds <stacktrace>
- * We need libc++ in case the library is built with reflection features
- */
 
 // Probably a sane default?
 #define MAX_STACK_SIZE 512

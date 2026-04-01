@@ -1,7 +1,8 @@
 # cmake/dwhbll-reflection-toolchain.cmake
 
-set(GCC_ROOT "/opt/gcc-reflect" CACHE PATH "Custom toolchain path")
+set(GCC_ROOT "/opt/gcc" CACHE PATH "Custom toolchain path")
 
+set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_C_COMPILER "${GCC_ROOT}/bin/gcc" CACHE FILEPATH "Custom gcc path" FORCE)
 set(CMAKE_CXX_COMPILER "${GCC_ROOT}/bin/g++" CACHE FILEPATH "Custom g++ path" FORCE)
 
