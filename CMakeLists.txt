@@ -112,6 +112,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/sanify/deferred.h
     include/dwhbll/sanify/types.hpp
     include/dwhbll/stl_ext/cow.h
+    include/dwhbll/stl_ext/get_set.h
     include/dwhbll/stl_ext/packs.h
     include/dwhbll/subprocess/pipe_wrapper.h
     include/dwhbll/subprocess/process.h
