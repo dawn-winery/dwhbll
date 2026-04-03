@@ -72,6 +72,8 @@ namespace dwhbll::debug {
     }
     #endif
 
+    std::cerr << "\e[0;0m" << std::endl;
+
     exit(1);
 }
 
