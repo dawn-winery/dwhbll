@@ -212,31 +212,12 @@ write_basic_package_version_file(
 
 install(FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/dwhbllConfig.cmake" # needed for find_package()
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/dwhbllTests.cmake"
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/dwhbll-reflection-toolchain.cmake"
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/find_module_exports.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/test_runner.cpp"
     "${CMAKE_CURRENT_BINARY_DIR}/dwhbllConfigVersion.cmake"
     DESTINATION lib/cmake/dwhbll
 )
 
 # TODO : IMPROVE INTEGRATION OF GPU COMPUTE FOR USERS
-
-if (DWHBLL_TESTS)
-    set(DWHBLL_TEST_CXX_SOURCES
-        tests/test_main.cpp
-        tests/pool.cpp
-        tests/matrix.cpp
-        tests/collections/cache.cpp
-        tests/collections/ring.cpp
-        tests/collections/streams.cpp
-        tests/graphics/bitmap.cpp
-        tests/bench/bounded_spsc_int_bench.cpp
-        tests/bench/bounded_mpsc_int_bench.cpp
-        tests/bench/recycling_concurrent_stack_bench.cpp
-        tests/cryptography/arc4.cpp
-    )
-
-    add_executable(dwhbll_test ${DWHBLL_TEST_CXX_SOURCES})
-
-
-    target_link_libraries(dwhbll_test PRIVATE dwhbll)
-    target_include_directories(dwhbll_test PRIVATE include)
-endif()
