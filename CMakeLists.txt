@@ -60,6 +60,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/utils/perf.cpp
     src/dwhbll/utils/string.cpp
     src/dwhbll/utils/threading.cpp
+    src/dwhbll/utils/uuid.cpp
 
     include/dwhbll/collections/cache.h
     include/dwhbll/collections/memory_buffer.h
@@ -123,6 +124,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/utils/utils.hpp
     include/dwhbll/utils/perf.h
     include/dwhbll/utils/threading.h
+    include/dwhbll/utils/uuid.h
 )
 
 # Main target
