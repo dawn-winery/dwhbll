@@ -77,6 +77,10 @@ namespace dwhbll::debug {
     exit(1);
 }
 
+void panic() {
+    panic("");
+}
+
 void panic(bool condition) {
     if (!condition)
         panic("");

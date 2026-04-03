@@ -25,6 +25,8 @@ namespace dwhbll::debug {
 // frames, but if I do that overload resolution shits itself
 [[noreturn]] void panic(const std::string& msg);
 
+[[noreturn]] void panic();
+
 template <typename... Args>
 requires (sizeof...(Args) != 0)
 [[noreturn]] void panic(const std::string& msg, Args&&... args) {
