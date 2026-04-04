@@ -12,6 +12,7 @@ option(DWHBLL_TESTS "Build tests" OFF)
 option(BUILD_HARDEN "enable hardening on the library." OFF)
 option(BUILD_HARDEN_EXPENSIVE "enable expensive hardening features on the library." OFF)
 option(DWHBLL_GPU_ENABLED "Toggle GPU acceleration" ON)
+option(DWHBLL_MODULES_ENABLED "Enable building additional dwhbll modules" ON)
 
 set(LINALG_GPU_THRESHOLD_VALUE 2048 CACHE STRING "Select the threshold for GPU delegation")
 
@@ -189,6 +190,35 @@ if (DWHBLL_GPU_ENABLED)
     endif()
 else()
     message(STATUS "Disabling GPU acceleration...")
+endif()
+
+# Enable building of dwhbll extension modules
+if (DWHBLL_MODULES_ENABLED)
+    set(DWHBLL_MODULE_FILE_SETS "")
+
+    add_library(dwhbll_modules STATIC)
+
+    add_subdirectory(modules)
+
+    set(_module_install_args)
+
+    foreach(set ${DWHBLL_MODULE_FILE_SETS})
+        list(APPEND _module_install_args
+            FILE_SET ${set} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dwhbll
+        )
+    endforeach()
+
+    install(TARGETS dwhbll_modules
+        EXPORT dwhbllTargets
+        ARCHIVE DESTINATION lib
+        INCLUDES DESTINATION include
+        ${_module_install_args}
+    )
+
+    target_link_libraries(dwhbll_modules PUBLIC dwhbll_core)
+    target_link_libraries(dwhbll INTERFACE dwhbll_modules)
+else()
+    message(STATUS "No additional modules will be built.")
 endif()
 
 install(DIRECTORY include/ DESTINATION include)

@@ -1,0 +1,8 @@
+target_sources(dwhbll_modules
+PUBLIC
+FILE_SET ssl_module TYPE CXX_MODULES FILES
+    ssl.ixx
+)
+
+list(APPEND DWHBLL_MODULE_FILE_SETS ssl_module)
+set(DWHBLL_MODULE_FILE_SETS "${DWHBLL_MODULE_FILE_SETS}" PARENT_SCOPE)
