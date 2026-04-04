@@ -3,6 +3,8 @@
 #include <iostream>
 #include <format>
 #include <fstream>
+#include <ranges>
+#include <vector>
 #include <version>
 
 #ifdef __cpp_lib_stacktrace
@@ -11,6 +13,23 @@
 #endif
 
 namespace dwhbll::debug {
+#ifndef NDEBUG
+thread_local std::vector<task_deferral*> _running_tasks;
+
+task_deferral::task_deferral(const std::string &name) : name(name) {
+    _running_tasks.push_back(this);
+}
+
+task_deferral::~task_deferral() {
+    ASSERT(_running_tasks.back() == this);
+
+    _running_tasks.pop_back();
+}
+
+const std::string & task_deferral::get_name() const {
+    return name;
+}
+#endif
 
 [[noreturn]] void panic(const std::string& msg) {
     std::cerr << "\n\e[1;91m============ [PANIC] ============\n";
@@ -71,6 +90,18 @@ namespace dwhbll::debug {
         std::cerr << (info);
     }
     #endif
+
+#ifdef NDEBUG
+    std::cerr << "Context Stack unavailable in release mode.\n";
+#else
+    if (!_running_tasks.empty()) {
+        std::cerr << "Context Stack (most recent task first):" << "\n";
+
+        for (const auto& [index, task] : _running_tasks | std::views::reverse | std::views::enumerate) {
+            std::cerr << std::format("  #{}: {}\n", index, task->get_name());
+        }
+    }
+#endif
 
     std::cerr << "\e[0;0m" << std::endl;
 

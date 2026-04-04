@@ -21,6 +21,24 @@
 
 namespace dwhbll::debug {
 
+#ifdef NDEBUG
+#define WITH_CONTEXT(fmt, ...) ((void)0)
+#else
+class task_deferral {
+    std::string name;
+
+public:
+    task_deferral(const std::string &name);
+
+    ~task_deferral();
+
+    const std::string& get_name() const;
+};
+
+// TODO: to minimize cost we could probably just store FMT args and format on demand.
+#define WITH_CONTEXT(fmt, ...) auto _ = ::dwhbll::debug::task_deferral(std::format(fmt __VA_OPT__(,) __VA_ARGS__))
+#endif
+
 // I would add a skip parameter here to avoid printing internal stack
 // frames, but if I do that overload resolution shits itself
 [[noreturn]] void panic(const std::string& msg);
