@@ -127,6 +127,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/utils/uuid.h
     include/dwhbll/math/vec4.h
     src/dwhbll/math/vec4.cpp
+    include/dwhbll/sanify/all.h
 )
 
 # Main target
