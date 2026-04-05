@@ -125,6 +125,8 @@ set(DWHBLL_SOURCES
     include/dwhbll/utils/perf.h
     include/dwhbll/utils/threading.h
     include/dwhbll/utils/uuid.h
+    include/dwhbll/math/vec4.h
+    src/dwhbll/math/vec4.cpp
 )
 
 # Main target
