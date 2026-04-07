@@ -18,6 +18,14 @@ namespace dwhbll::math {
 
         Vec4(float value);
 
+        Vec4(const Vec4 &other);
+
+        Vec4(Vec4 &&other) noexcept;
+
+        Vec4 & operator=(const Vec4 &other);
+
+        Vec4 & operator=(Vec4 &&other) noexcept;
+
         // Vec4(const Vec2 &v2, float z, float w);
 
         // Vec4(const Vec3 &v3, float w);
