@@ -12,6 +12,8 @@ option(DWHBLL_TESTS "Build tests" OFF)
 option(BUILD_HARDEN "enable hardening on the library." OFF)
 option(BUILD_HARDEN_EXPENSIVE "enable expensive hardening features on the library." OFF)
 option(DWHBLL_GPU_ENABLED "Toggle GPU acceleration" ON)
+option(DWHBLL_SANIFY_EXPORT "Export Sanification directly to the global namespace" OFF)
+option(DWHBLL_SUGAR_EXPORT "Export Sanification directly to the global namespace" OFF)
 
 set(LINALG_GPU_THRESHOLD_VALUE 2048 CACHE STRING "Select the threshold for GPU delegation")
 
@@ -27,6 +29,13 @@ if (BUILD_HARDEN_EXPENSIVE)
     add_compile_definitions(DWHBLL_HARDEN_EXPENSIVE)
 endif()
 
+if (DWHBLL_SANIFY_EXPORT)
+    add_compile_definitions(DWHBLL_SANIFY_EXPORT)
+endif()
+
+if (DWHBLL_SUGAR_EXPORT)
+    add_compile_definitions(DWHBLL_SUGAR_EXPORT)
+endif()
 
 set(DWHBLL_SOURCES
     src/dwhbll/collections/cache.cpp
@@ -109,8 +118,12 @@ set(DWHBLL_SOURCES
     include/dwhbll/network/http.h
     include/dwhbll/network/SocketManager.h
     include/dwhbll/platform/linux_wrappers/ptrace.h
+    include/dwhbll/sanify/all.h
     include/dwhbll/sanify/coroutines.hpp
     include/dwhbll/sanify/deferred.h
+    include/dwhbll/sanify/lang_ext.h
+    include/dwhbll/sanify/sugar/all.h
+    include/dwhbll/sanify/sugar/ranges.h
     include/dwhbll/sanify/types.hpp
     include/dwhbll/stl_ext/cow.h
     include/dwhbll/stl_ext/get_set.h
@@ -127,7 +140,6 @@ set(DWHBLL_SOURCES
     include/dwhbll/utils/uuid.h
     include/dwhbll/math/vec4.h
     src/dwhbll/math/vec4.cpp
-    include/dwhbll/sanify/all.h
 )
 
 # Main target
