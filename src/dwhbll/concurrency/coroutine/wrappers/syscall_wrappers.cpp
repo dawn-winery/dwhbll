@@ -27,7 +27,7 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
     task<int> open(const char *fptr, int flags, mode_t mode) {
         MAKE_PROMISE
 
-        io_uring_prep_open(sqe, fptr, flags, mode);
+        io_uring_prep_openat(sqe, AT_FDCWD, fptr, flags, mode);
 
         SUBMIT
 
@@ -136,7 +136,7 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
         SUBMIT
 
         auto result = co_await promise;
-        
+
         co_return result->res;
     }
 
