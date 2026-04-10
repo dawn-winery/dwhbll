@@ -12,6 +12,8 @@ namespace dwhbll::math {
         float _z;
 
     public:
+        Vec4();
+
         Vec4(const std::span<const float> &values);
 
         Vec4(float w, float x, float y, float z);

@@ -3,6 +3,8 @@
 #include <dwhbll/console/debug.hpp>
 
 namespace dwhbll::math {
+    Vec4::Vec4() : _w(), _x(), _y(), _z() {}
+
     Vec4::Vec4(const std::span<const float> &values) {
         if (values.size() < 4)
             throw std::out_of_range("Size too small!");
