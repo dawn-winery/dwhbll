@@ -5,9 +5,11 @@
 #include <dwhbll/utils/utils.hpp>
 #include <dwhbll/utils/string.h>
 
+#include <charconv>
 #include <sstream>
 #include <string>
 #include <utility>
+#include <cmath>
 
 namespace dwhbll::json {
 
@@ -42,8 +44,12 @@ std::string json::format_literal() const {
         return "null";
     if(is_string())
         return "\"" + utils::escape_string(as_string()) + "\"";
-    if(is_number())
-        return std::to_string(as_number());
+    if(is_number()) {
+        auto val = as_number();
+        if (std::isinf(val) || std::isnan(val))
+            return "null";
+        return std::format("{}", val);
+    }
     if(is_bool())
         return as_bool() ? "true" : "false";
 
@@ -69,31 +75,31 @@ std::string json::format_internal(int indentation = -1, int cur_indentation = 0)
     if(is_object()) {
         json_object members = as_object();
         ss << "{";
-        if(!members.empty())
-            ss << (pretty ? "\n" : " ");
+        if(!members.empty() && pretty)
+            ss << "\n";
 
         auto it = members.begin();
         while(it != members.end()) {
             if(pretty)
                 ss << ind;
             ss << "\"" << utils::escape_string(it->first) << "\"" 
-                << ": " << it->second.format_internal(indentation, cur_indentation);
+                << (pretty ? ": " : ":") << it->second.format_internal(indentation, cur_indentation);
 
             ++it;
             if(it != members.end()) {
-                ss << (pretty ? ",\n" : ", ");
+                ss << (pretty ? ",\n" : ",");
             }
         }
 
-        if(!members.empty())
-            ss << (pretty ? "\n" + base_ind : " ");
+        if(!members.empty() && pretty)
+            ss << "\n" + base_ind;
         ss << "}";
     }
     else if(is_array()) {
         json_array elements = as_array();
         ss << "[";
-        if(!elements.empty())
-            ss << (pretty ? "\n" : " ");
+        if(!elements.empty() && pretty)
+            ss << "\n";
 
         for(size_t i = 0; i < elements.size(); i++) {
             if(pretty)
@@ -101,11 +107,11 @@ std::string json::format_internal(int indentation = -1, int cur_indentation = 0)
             ss << elements[i].format_internal(indentation, cur_indentation);
 
             if(i != elements.size() - 1)
-                ss << (pretty ? ",\n" : ", ");
+                ss << (pretty ? ",\n" : ",");
         }
 
-        if(!elements.empty())
-            ss << (pretty ? "\n" + base_ind : " ");
+        if(!elements.empty() && pretty)
+            ss << "\n" + base_ind;
         ss << "]";
     }
 
@@ -132,14 +138,13 @@ json json::parse(std::istream& stream) {
 }
 
 void json_parser::ws() {
-    if(idx >= data.size())
-        return;
-    char c = peek();
-    while(c == ' ' || c == 0x20 || c == 0xA || c == 0xD || c == 0x9) {
-        consume();
-        if(idx >= data.size())
-            return;
-        c = peek();
+    while(idx < data.size()) {
+        char c = data[idx];
+        if(c == ' ' || c == '\n' || c == '\r' || c == '\t') {
+            idx++;
+        } else {
+            break;
+        }
     }
 }
 
@@ -154,14 +159,20 @@ std::pair<std::string, json> json_parser::member() {
 json::json_object json_parser::object() {
     match('{');
     json::json_object j;
+    ws();
+    if(peek() == '}') {
+        match('}');
+        return j;
+    }
     while(1) {
-        ws();
-        if(peek() == '}')
-            break;
         auto [id, val] = member();
         j[id] = val;
-        if(peek() != '}')
-            match(',');
+        ws();
+        char c = peek();
+        if(c == '}') {
+            break;
+        }
+        match(',');
     }
     match('}');
     return j;
@@ -170,14 +181,20 @@ json::json_object json_parser::object() {
 json::json_array json_parser::array() {
     match('[');
     json::json_array j;
+    ws();
+    if(peek() == ']') {
+        match(']');
+        return j;
+    }
     while(1) {
-        ws();
-        if(peek() == ']')
-            break;
         auto val = element();
         j.push_back(val);
-        if(peek() != ']')
-            match(',');
+        ws();
+        char c = peek();
+        if(c == ']') {
+            break;
+        }
+        match(',');
     }
     match(']');
     return j;
@@ -197,28 +214,46 @@ std::string json_parser::string() {
             switch(c) {
                 case '"':
                 case '\\':
+                case '/':
                     s += c;
                     break;
                 case 'b':
-                    // backspace
-                    s += 0x8;
+                    s += '\b';
                     break;
                 case 'f':
-                    // formfeed
-                    s += 0xC;
+                    s += '\f';
                     break;
                 case 'n':
-                    // linefeed
-                    s += 0xA;
+                    s += '\n';
                     break;
                 case 'r':
-                    // carriage return
-                    s += 0xD;
+                    s += '\r';
                     break;
                 case 't':
-                    // horizontal tab
-                    s += 0x9;
+                    s += '\t';
                     break;
+                case 'u': {
+                    uint32_t cp = 0;
+                    for(int i = 0; i < 4; i++) {
+                        char h = consume();
+                        cp <<= 4;
+                        if(h >= '0' && h <= '9') cp |= (h - '0');
+                        else if(h >= 'a' && h <= 'f') cp |= (h - 'a' + 10);
+                        else if(h >= 'A' && h <= 'F') cp |= (h - 'A' + 10);
+                        else debug::panic("Error while parsing JSON: invalid hex digit in \\u escape");
+                    }
+                    if (cp <= 0x7f) {
+                        s += static_cast<char>(cp);
+                    } else if (cp <= 0x7ff) {
+                        s += static_cast<char>(0xc0 | (cp >> 6));
+                        s += static_cast<char>(0x80 | (cp & 0x3f));
+                    } else if (cp <= 0xffff) {
+                        s += static_cast<char>(0xe0 | (cp >> 12));
+                        s += static_cast<char>(0x80 | ((cp >> 6) & 0x3f));
+                        s += static_cast<char>(0x80 | (cp & 0x3f));
+                    }
+                    break;
+                }
                 default:
                     debug::panic("Error while parsing JSON: unexpected character while parsing escape sequence: '{}'", c);
             }
@@ -231,42 +266,18 @@ std::string json_parser::string() {
 }
 
 sanify::f64 json_parser::number() {
-    bool negative = false;
-    if(peek() == '-') {
-        consume();
-        negative = true;
-    }
-    if(peek() < '0' || peek() > '9')
-        debug::panic("Error while parsing JSON: unexpected character while parsing number: '{}'", peek());
+    const char* start = data.data() + idx;
+    const char* end = data.data() + data.size();
+    sanify::f64 num;
+    auto [ptr, ec] = std::from_chars(start, end, num);
+    if(ec != std::errc())
+        debug::panic("Error while parsing JSON: invalid number");
 
-    sanify::f64 num = 0;
-    uint dec = 0;
-    while(1) {
-        char c = peek();
-        if(c < '0' || c > '9')
-            break;
+    if (data[idx] == '0' && idx + 1 < data.size() && data[idx+1] >= '0' && data[idx+1] <= '9')
+        debug::panic("Error while parsing JSON: leading zeros are not allowed");
 
-        consume();
-        if(dec == 0) {
-            num *= 10;
-            num += c - '0';
-        }
-        else {
-            num += static_cast<sanify::f64>(c - '0') / dec;
-            dec *= 10;
-        }
-
-        c = peek();
-        if(c == '.' && dec == 0) {
-            consume();
-            dec = 10;
-        }
-    }
-
-    if(negative)
-        return -num;
-    else
-        return num;
+    idx += (ptr - start);
+    return num;
 }
 
 json json_parser::element() {
@@ -290,9 +301,12 @@ json json_parser::element() {
         match("false");
         j = false;
     }
-    else {
+    else if(c == 'n') {
         match("null");
         j = nullptr;
+    }
+    else {
+        debug::panic("Error while parsing JSON: unexpected character '{}'", c);
     }
 
     ws();

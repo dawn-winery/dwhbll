@@ -51,7 +51,26 @@ namespace dwhbll::utils {
     }
 
     std::string escape_string(std::string_view str) {
-        std::string s = utils::replace_all(str, "\"", "\\\"");
-        return utils::replace_all(s, "\\", "\\\\");
+        std::string s;
+        s.reserve(str.size());
+        for (char c : str) {
+            switch (c) {
+                case '\"': s += "\\\""; break;
+                case '\\': s += "\\\\"; break;
+                case '\b': s += "\\b"; break;
+                case '\f': s += "\\f"; break;
+                case '\n': s += "\\n"; break;
+                case '\r': s += "\\r"; break;
+                case '\t': s += "\\t"; break;
+                default:
+                    if (static_cast<unsigned char>(c) < 0x20) {
+                        s += std::format("\\u{:04x}", static_cast<unsigned char>(c));
+                    } else {
+                        s += c;
+                    }
+                    break;
+            }
+        }
+        return s;
     }
 }

@@ -34,7 +34,7 @@ private:
     std::string format_internal(int indentation, int cur_indentation) const;
 
 public:
-    constexpr json() : value(json_object()) {}
+    constexpr json() : value(nullptr) {}
     constexpr json(nullptr_t) : value(nullptr) {}
     constexpr json(sanify::f64 v) : value(v) {}
     constexpr json(bool v) : value(v) {}
