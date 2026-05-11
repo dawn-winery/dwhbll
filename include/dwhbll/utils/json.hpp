@@ -21,7 +21,7 @@ public:
     using value_t = std::variant<
         json_object,
         json_array,
-        nullptr_t,
+        std::nullptr_t,
         sanify::f64,
         std::string,
         bool
@@ -35,7 +35,7 @@ private:
 
 public:
     constexpr json() : value(nullptr) {}
-    constexpr json(nullptr_t) : value(nullptr) {}
+    constexpr json(std::nullptr_t) : value(nullptr) {}
     constexpr json(sanify::f64 v) : value(v) {}
     constexpr json(bool v) : value(v) {}
     constexpr json(const std::string& v) : value(v) {}
