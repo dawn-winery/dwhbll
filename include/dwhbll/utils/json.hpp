@@ -3,9 +3,11 @@
 #include <dwhbll/sanify/types.hpp>
 #include <dwhbll/console/debug.hpp>
 #include <cassert>
+#include <concepts>
 #include <map>
 #include <utility>
 #include <string>
+#include <type_traits>
 #include <variant>
 #include <vector>
 
@@ -36,7 +38,11 @@ private:
 public:
     constexpr json() : value(nullptr) {}
     constexpr json(std::nullptr_t) : value(nullptr) {}
-    constexpr json(sanify::f64 v) : value(v) {}
+
+    template <typename T>
+    requires std::is_arithmetic_v<T> && (!std::is_same_v<T, bool>)
+    constexpr json(T v) : value(static_cast<sanify::f64>(v)) {}
+
     constexpr json(bool v) : value(v) {}
     constexpr json(const std::string& v) : value(v) {}
     constexpr json(std::string&& v) : value(std::move(v)) {}
