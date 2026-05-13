@@ -2,6 +2,7 @@
 
 #include <dwhbll/sanify/types.hpp>
 #include <dwhbll/console/debug.hpp>
+#include <dwhbll/utils/utils.hpp>
 #include <cassert>
 #include <concepts>
 #include <map>
@@ -10,6 +11,7 @@
 #include <type_traits>
 #include <variant>
 #include <vector>
+#include <expected>
 
 namespace dwhbll::json {
 
@@ -78,8 +80,8 @@ public:
     std::string dump() const;
     std::string format(int indentation = 2) const;
 
-    static json parse(std::string_view s);
-    static json parse(std::istream& s);
+    static std::expected<json, std::string> parse(std::string_view s);
+    static std::expected<json, std::string> parse(std::istream& s);
 };
 
 class json_parser {
@@ -91,37 +93,19 @@ private:
 
     json_parser(std::string_view v) : data(v) {};
 
-    char peek() { 
-        if(idx >= data.size())
-            debug::panic("Error while parsing JSON: unexpected EOF");
-        return data[idx];
-    };
-
-    char consume() {
-        if(idx >= data.size())
-            debug::panic("Error while parsing JSON: unexpected EOF");
-        return data[idx++];
-    };
-
-    void match(char c) {
-        char n = consume();
-        if(n != c)
-            debug::panic("Error while parsing JSON: unexpected character\nExpected: '{}'\n Found: '{}'", c, n);
-    };
-
-    void match(std::string_view s) {
-        for(auto c : s)
-            match(c);
-    }
+    std::expected<char, std::string> peek();
+    std::expected<char, std::string> consume();
+    std::expected<void, std::string> match(char c);
+    std::expected<void, std::string> match(std::string_view s);
 
     void ws();
-    std::pair<std::string, json> member();
-    json::json_object object();
-    json::json_array array();
-    std::string string();
-    sanify::f64 number();
-    json element();
-    json parse();
+    std::expected<std::pair<std::string, json>, std::string> member();
+    std::expected<json::json_object, std::string> object();
+    std::expected<json::json_array, std::string> array();
+    std::expected<std::string, std::string> string();
+    std::expected<sanify::f64, std::string> number();
+    std::expected<json, std::string> element();
+    std::expected<json, std::string> parse();
 };
 
 }

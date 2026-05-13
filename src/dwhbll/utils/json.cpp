@@ -126,15 +126,40 @@ std::string json::format(int indentation) const {
     return format_internal(indentation);
 }
 
-json json::parse(std::string_view s) {
+std::expected<json, std::string> json::parse(std::string_view s) {
     auto parser = json_parser(s);
     return parser.parse();
 }
 
-json json::parse(std::istream& stream) {
+std::expected<json, std::string> json::parse(std::istream& stream) {
     std::string s(std::istreambuf_iterator<char>(stream), {});
     auto parser = json_parser(s);
     return parser.parse();
+}
+
+std::expected<char, std::string> json_parser::peek() {
+    if(idx >= data.size())
+        return std::unexpected("Error while parsing JSON: unexpected EOF");
+    return data[idx];
+}
+
+std::expected<char, std::string> json_parser::consume() {
+    if(idx >= data.size())
+        return std::unexpected("Error while parsing JSON: unexpected EOF");
+    return data[idx++];
+}
+
+std::expected<void, std::string> json_parser::match(char c) {
+    char n = TRY(consume());
+    if(n != c)
+        return std::unexpected(std::format("Error while parsing JSON: unexpected character\nExpected: '{}'\n Found: '{}'", c, n));
+    return {};
+}
+
+std::expected<void, std::string> json_parser::match(std::string_view s) {
+    for(auto c : s)
+        TRY(match(c));
+    return {};
 }
 
 void json_parser::ws() {
@@ -148,69 +173,69 @@ void json_parser::ws() {
     }
 }
 
-std::pair<std::string, json> json_parser::member() {
+std::expected<std::pair<std::string, json>, std::string> json_parser::member() {
     ws();
-    std::string id = string();
+    std::string id = TRY(string());
     ws();
-    match(':');
-    return { id, element() };
+    TRY(match(':'));
+    return std::make_pair(id, TRY(element()));
 }
 
-json::json_object json_parser::object() {
-    match('{');
+std::expected<json::json_object, std::string> json_parser::object() {
+    TRY(match('{'));
     json::json_object j;
     ws();
-    if(peek() == '}') {
-        match('}');
+    if(TRY(peek()) == '}') {
+        TRY(match('}'));
         return j;
     }
     while(1) {
-        auto [id, val] = member();
+        auto [id, val] = TRY(member());
         j[id] = val;
         ws();
-        char c = peek();
+        char c = TRY(peek());
         if(c == '}') {
             break;
         }
-        match(',');
+        TRY(match(','));
     }
-    match('}');
+    TRY(match('}'));
     return j;
 }
 
-json::json_array json_parser::array() {
-    match('[');
+std::expected<json::json_array, std::string> json_parser::array() {
+    TRY(match('['));
     json::json_array j;
     ws();
-    if(peek() == ']') {
-        match(']');
+    if(TRY(peek()) == ']') {
+        TRY(match(']'));
         return j;
     }
     while(1) {
-        auto val = element();
+        auto val = TRY(element());
         j.push_back(val);
         ws();
-        char c = peek();
+        char c = TRY(peek());
         if(c == ']') {
             break;
         }
-        match(',');
+        TRY(match(','));
     }
-    match(']');
+    TRY(match(']'));
     return j;
 }
 
-std::string json_parser::string() {
-    match('"');
+std::expected<std::string, std::string> json_parser::string() {
+    TRY(match('"'));
     std::string s;
     while(1) {
-        char c = peek();
+        char c = TRY(peek());
         if(c == '"')
             break;
-        consume();
+        TRY(consume());
         if(c == '\\') {
-            c = peek();
-            consume();
+            c = TRY(peek());
+            TRY(consume());
             switch(c) {
                 case '"':
                 case '\\':
@@ -235,12 +260,12 @@ std::string json_parser::string() {
                 case 'u': {
                     uint32_t cp = 0;
                     for(int i = 0; i < 4; i++) {
-                        char h = consume();
+                        char h = TRY(consume());
                         cp <<= 4;
                         if(h >= '0' && h <= '9') cp |= (h - '0');
                         else if(h >= 'a' && h <= 'f') cp |= (h - 'a' + 10);
                         else if(h >= 'A' && h <= 'F') cp |= (h - 'A' + 10);
-                        else debug::panic("Error while parsing JSON: invalid hex digit in \\u escape");
+                        else return std::unexpected("Error while parsing JSON: invalid hex digit in \\u escape");
                     }
                     if (cp <= 0x7f) {
                         s += static_cast<char>(cp);
@@ -255,65 +280,65 @@ std::string json_parser::string() {
                     break;
                 }
                 default:
-                    debug::panic("Error while parsing JSON: unexpected character while parsing escape sequence: '{}'", c);
+                    return std::unexpected(std::format("Error while parsing JSON: unexpected character while parsing escape sequence: '{}'", c));
             }
             continue;
         }
         s.push_back(c);
     }
-    match('"');
+    TRY(match('"'));
     return s;
 }
 
-sanify::f64 json_parser::number() {
+std::expected<sanify::f64, std::string> json_parser::number() {
     const char* start = data.data() + idx;
     const char* end = data.data() + data.size();
     sanify::f64 num;
     auto [ptr, ec] = std::from_chars(start, end, num);
     if(ec != std::errc())
-        debug::panic("Error while parsing JSON: invalid number");
+        return std::unexpected("Error while parsing JSON: invalid number");
 
     if (data[idx] == '0' && idx + 1 < data.size() && data[idx+1] >= '0' && data[idx+1] <= '9')
-        debug::panic("Error while parsing JSON: leading zeros are not allowed");
+        return std::unexpected("Error while parsing JSON: leading zeros are not allowed");
 
     idx += (ptr - start);
     return num;
 }
 
-json json_parser::element() {
+std::expected<json, std::string> json_parser::element() {
     ws();
-    char c = peek();
+    char c = TRY(peek());
     json j;
 
     if(c == '{')
-        j = object();
+        j = TRY(object());
     else if(c == '[')
-        j = array();
+        j = TRY(array());
     else if(c == '"')
-        j = string();
+        j = TRY(string());
     else if(c == '-' || (c >= '0' && c <= '9'))
-        j = number();
+        j = TRY(number());
     else if(c == 't')  {
-        match("true");
+        TRY(match("true"));
         j = true;
     }
     else if(c == 'f') {
-        match("false");
+        TRY(match("false"));
         j = false;
     }
     else if(c == 'n') {
-        match("null");
+        TRY(match("null"));
         j = nullptr;
     }
     else {
-        debug::panic("Error while parsing JSON: unexpected character '{}'", c);
+        return std::unexpected(std::format("Error while parsing JSON: unexpected character '{}'", c));
     }
 
     ws();
     return j;
 }
 
-json json_parser::parse() {
+std::expected<json, std::string> json_parser::parse() {
     return element();
 }
 
