@@ -1,11 +1,13 @@
 #pragma once
 
+#include <expected>
+#include <utility>
+
 #define TRY(expr)                                                          \
     ({                                                                     \
         auto&& _exp = (expr);                                              \
         if (!_exp.has_value()) {                                           \
-            auto&& _err = _exp.error();                                    \
-            return std::unexpected(std::forward<decltype(_err)>(_err));    \
+            return std::unexpected(std::move(_exp.error()));               \
         }                                                                  \
-        std::forward<decltype(_exp.value())>(_exp.value());                \
+        _exp.value();                                                      \
     })
