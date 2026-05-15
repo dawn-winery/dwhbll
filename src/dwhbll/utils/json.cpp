@@ -139,20 +139,20 @@ std::expected<json, std::string> json::parse(std::istream& stream) {
 
 std::expected<char, std::string> json_parser::peek() {
     if(idx >= data.size())
-        return std::unexpected("Error while parsing JSON: unexpected EOF");
+        return std::unexpected("Unexpected EOF");
     return data[idx];
 }
 
 std::expected<char, std::string> json_parser::consume() {
     if(idx >= data.size())
-        return std::unexpected("Error while parsing JSON: unexpected EOF");
+        return std::unexpected("Unexpected EOF");
     return data[idx++];
 }
 
 std::expected<void, std::string> json_parser::match(char c) {
     char n = TRY(consume());
     if(n != c)
-        return std::unexpected(std::format("Error while parsing JSON: unexpected character\nExpected: '{}'\n Found: '{}'", c, n));
+        return std::unexpected(std::format("Unexpected character\nExpected: '{}'\n Found: '{}'", c, n));
     return {};
 }
 
@@ -265,7 +265,7 @@ std::expected<std::string, std::string> json_parser::string() {
                         if(h >= '0' && h <= '9') cp |= (h - '0');
                         else if(h >= 'a' && h <= 'f') cp |= (h - 'a' + 10);
                         else if(h >= 'A' && h <= 'F') cp |= (h - 'A' + 10);
-                        else return std::unexpected("Error while parsing JSON: invalid hex digit in \\u escape");
+                        else return std::unexpected("Invalid hex digit in \\u escape");
                     }
                     if (cp <= 0x7f) {
                         s += static_cast<char>(cp);
@@ -280,7 +280,7 @@ std::expected<std::string, std::string> json_parser::string() {
                     break;
                 }
                 default:
-                    return std::unexpected(std::format("Error while parsing JSON: unexpected character while parsing escape sequence: '{}'", c));
+                    return std::unexpected(std::format("Unexpected character while parsing escape sequence: '{}'", c));
             }
             continue;
         }
@@ -296,10 +296,10 @@ std::expected<sanify::f64, std::string> json_parser::number() {
     sanify::f64 num;
     auto [ptr, ec] = std::from_chars(start, end, num);
     if(ec != std::errc())
-        return std::unexpected("Error while parsing JSON: invalid number");
+        return std::unexpected("Invalid number");
 
     if (data[idx] == '0' && idx + 1 < data.size() && data[idx+1] >= '0' && data[idx+1] <= '9')
-        return std::unexpected("Error while parsing JSON: leading zeros are not allowed");
+        return std::unexpected("Leading zeros are not allowed");
 
     idx += (ptr - start);
     return num;
@@ -331,7 +331,7 @@ std::expected<json, std::string> json_parser::element() {
         j = nullptr;
     }
     else {
-        return std::unexpected(std::format("Error while parsing JSON: unexpected character '{}'", c));
+        return std::unexpected(std::format("Unexpected character '{}'", c));
     }
 
     ws();
