@@ -37,10 +37,11 @@ namespace dwhbll::subprocess {
 
         while (remaining != 0) {
             const auto result = ::read(fd, buffer.data() + head, count);
-            if (result < 0 && errno == EAGAIN)
-                continue; // keep busy waiting until we have data.
-            if (result < 0)
+            if (result < 0) {
+                if (errno == EAGAIN)
+                    continue; // keep busy waiting until we have data.
                 throw exceptions::sys_error(strerror(errno));
+            }
 
             remaining -= result;
             head += result;
@@ -104,6 +105,8 @@ namespace dwhbll::subprocess {
     size_t pipe_wrapper::ll_write(const std::span<char> &data) const {
         const auto result = ::write(fd, data.data(), data.size_bytes());
 
+        if (result < 0 && errno == EAGAIN)
+            return 0;
         if (result < 0)
             throw exceptions::sys_error(strerror(errno));
 

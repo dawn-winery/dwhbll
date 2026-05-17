@@ -17,7 +17,7 @@ namespace dwhbll::subprocess {
         int child_stdout_[2];
         int child_stderr_[2];
 
-        if (pipe2(child_stdin_, O_NONBLOCK) == -1 || pipe2(child_stdout_, O_NONBLOCK) == -1 | pipe2(child_stderr_, O_NONBLOCK) == -1)
+        if (pipe2(child_stdin_, O_NONBLOCK) == -1 || pipe2(child_stdout_, O_NONBLOCK) == -1 || pipe2(child_stderr_, O_NONBLOCK) == -1)
             throw exceptions::rt_exception_base("pipe() failed");
 
         // stdin is reversed, we write, they read.
@@ -33,7 +33,13 @@ namespace dwhbll::subprocess {
             dup2(child_stdout_[1], STDOUT_FILENO);
             dup2(child_stderr_[1], STDERR_FILENO);
 
-            // TODO: don't cary the parent's FDs into the child!
+            close(child_stdin_[1]);
+            close(child_stdout_[0]);
+            close(child_stderr_[0]);
+
+            close(child_stdin_[0]);
+            close(child_stdout_[1]);
+            close(child_stderr_[1]);
 
             std::vector<char*> cargs;
 
@@ -46,12 +52,16 @@ namespace dwhbll::subprocess {
                 cargs.push_back(nullptr);
 
             execvp(cargs[0], cargs.data());
+        } else {
+            close(child_stdin_[0]);
+            close(child_stdout_[1]);
+            close(child_stderr_[1]);
         }
     }
 
     process::~process() {
         if (subprocess != -1) {
-            console::warn("due to filefd problems (among some other things), the subprocess will be"
+            console::warn("due to filefd problems (among some other things), the subprocess will be "
                           "terminated as this object is now dead.");
             ::kill(subprocess, SIGKILL);
 
@@ -71,17 +81,18 @@ namespace dwhbll::subprocess {
 
         int status;
         while (waitpid(subprocess, &status, WNOHANG | WUNTRACED) == 0) {
-            if (WIFEXITED(status)) {
-                // exited normally
-                exit_code = WEXITSTATUS(status);
-            } else if (WIFSIGNALED(status)) {
-                // exited non normally
-                exit_code = std::unexpected(WTERMSIG(status));
-            }
-
             // drain the pipes
             stdout_pipe.available_to_null();
-            stdout_pipe.available_to_null();
+            stderr_pipe.available_to_null();
+            usleep(1000);
+        }
+
+        if (WIFEXITED(status)) {
+            // exited normally
+            exit_code = WEXITSTATUS(status);
+        } else if (WIFSIGNALED(status)) {
+            // exited non normally
+            exit_code = std::unexpected(WTERMSIG(status));
         }
     }
 
@@ -119,13 +130,13 @@ namespace dwhbll::subprocess {
     returncode process::wait(std::optional<long long> timeout) {
         int status;
 
-        auto tm = std::chrono::seconds(timeout.value());
-
         if (timeout.has_value()) {
+            auto tm = std::chrono::seconds(timeout.value());
             auto start = std::chrono::high_resolution_clock::now();
             while (waitpid(subprocess, &status, WNOHANG | WUNTRACED) == 0) {
                 if (std::chrono::high_resolution_clock::now() - start > tm)
                     throw dwhbll::exceptions::timeout_exception("timed out waiting for child process to exit.");
+                usleep(1000);
             }
         } else
             waitpid(subprocess, &status, WUNTRACED); // wait indefinitely
@@ -162,39 +173,60 @@ namespace dwhbll::subprocess {
         std::optional<pipe_wrapper> out = stdout_.has_value() ? std::optional(get_stdout_pipe()) : std::nullopt;
         std::optional<pipe_wrapper> err = stderr_.has_value() ? std::optional(get_stderr_pipe()) : std::nullopt;
 
-        bool stdin_done = !stdin_.has_value(), stdout_done = !stdout_.has_value(), stderr_done = !stderr_.has_value();
+        bool stdin_done = !stdin_.has_value() || !input.has_value();
+        if (stdin_.has_value() && !input.has_value()) {
+            close(stdin_.value());
+            stdin_ = std::nullopt;
+        }
+
+        bool stdout_done = !stdout_.has_value(), stderr_done = !stderr_.has_value();
 
         while (!stdin_done || !stdout_done || !stderr_done) {
             if (input.has_value() && !stdin_done) {
                 auto write_size = in.value().ll_write(stdin_buffer);
                 stdin_head += write_size;
                 stdin_remaining -= write_size;
-                if (stdin_head != stdin_remaining)
+                if (stdin_remaining > 0)
                     stdin_buffer = stdin_buffer.subspan(write_size);
-                else
+                else {
                     stdin_done = true;
+                    close(stdin_.value());
+                    stdin_ = std::nullopt;
+                }
             }
             if (!stdout_done) {
                 auto value = out.value().ll_read(65535);
                 if (!value.has_value())
                     stdout_done = true;
-                auto result = value.value();
-                stdout_output.insert(stdout_output.end(), result.begin(), result.end());
+                else {
+                    auto result = value.value();
+                    stdout_output.insert(stdout_output.end(), result.begin(), result.end());
+                }
             }
             if (!stderr_done) {
                 auto value = err.value().ll_read(65535);
                 if (!value.has_value())
                     stderr_done = true;
-                auto result = value.value();
-                stderr_output.insert(stderr_output.end(), result.begin(), result.end());
+                else {
+                    auto result = value.value();
+                    stderr_output.insert(stderr_output.end(), result.begin(), result.end());
+                }
             }
+            if (!stdin_done || !stdout_done || !stderr_done)
+                usleep(1000);
         }
 
         int status;
         while (waitpid(subprocess, &status, WNOHANG | WUNTRACED) == 0) {
             if (timeout.has_value() && std::chrono::high_resolution_clock::now() - start > tm)
                 throw exceptions::timeout_exception("timed out waiting for child process to exit.");
+            usleep(1000);
         }
+
+        if (WIFEXITED(status))
+            exit_code = WEXITSTATUS(status);
+        else if (WIFSIGNALED(status))
+            exit_code = std::unexpected(WTERMSIG(status));
 
         return {stdout_output, stderr_output};
     }
