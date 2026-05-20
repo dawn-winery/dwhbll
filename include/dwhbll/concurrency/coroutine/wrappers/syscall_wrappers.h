@@ -1,8 +1,8 @@
 #pragma once
 
 #include <dwhbll/concurrency/coroutine/task.h>
-#include <linux/stat.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 
 namespace dwhbll::concurrency::coroutine::wrappers::calls {
     task<> nop();
