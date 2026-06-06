@@ -142,6 +142,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/math/vec4.cpp
     include/dwhbll/concurrency/owning_spinlock.h
     include/dwhbll/stl_ext/ranges.h
+    include/dwhbll/stl_ext/utilities.h
 )
 
 # Main target
