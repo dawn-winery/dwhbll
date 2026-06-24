@@ -1,8 +1,9 @@
 #pragma once
 
-#include <cstdint>
 #include <memory>
 #include <vector>
+
+#include <dwhbll/stl_ext/result.h>
 
 namespace dwhbll::sanify {
 
@@ -27,5 +28,7 @@ using Unique = std::unique_ptr<T>;
 
 template <typename T>
 using Shared = std::shared_ptr<T>;
+
+using namespace dwhbll::stl_ext;
 
 } // namespace dwhbll::sanify
