@@ -31,7 +31,7 @@ bool fractal_test() {
       double fy = (y - height / 2.0) * 2.0 / height;
       int iters = get_iters(fx, fy);
       uint8_t color = 256 * iters / max_iters;
-      b->set_pixel(x, y, color, color, color);
+      (void)b->set_pixel(x, y, color, color, color);
     }
   }
 
