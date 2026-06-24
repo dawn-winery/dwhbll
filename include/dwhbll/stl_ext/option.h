@@ -7,8 +7,6 @@
 #include <dwhbll/console/debug.hpp>
 #include <dwhbll/stl_ext/common_helpers.h>
 
-#define __DWHBLL_OPTION_DEF
-
 // TODO: Spend 5 afternoons reading the C++ spec and figuring out how to optimize this garbage to be more user friendly.
 // TODO: Function template to accept universal
 namespace dwhbll::stl_ext {
