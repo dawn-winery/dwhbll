@@ -128,6 +128,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/stl_ext/common_helpers.h
     include/dwhbll/stl_ext/cow.h
     include/dwhbll/stl_ext/get_set.h
+    include/dwhbll/stl_ext/option.h
     include/dwhbll/stl_ext/packs.h
     include/dwhbll/stl_ext/result.h
     include/dwhbll/subprocess/pipe_wrapper.h

@@ -17,6 +17,11 @@ namespace dwhbll::stl_ext {
         struct result_none_helper {
         };
 
+        template <typename T>
+        struct result_some_helper {
+            T value;
+        };
+
         struct err_value_helper {
             template <typename T>
             result_err_helper<T> operator()(T&& data) {
@@ -36,9 +41,17 @@ namespace dwhbll::stl_ext {
                 return {};
             }
         };
+
+        struct some_value_helper {
+            template <typename T>
+            result_some_helper<T> operator()(T&& data) {
+                return result_some_helper(std::forward<T>(data));
+            }
+        };
     }
 
     inline __detail::err_value_helper Err;
     inline __detail::ok_value_helper Ok;
     inline __detail::none_value_helper None;
+    inline __detail::some_value_helper Some;
 }

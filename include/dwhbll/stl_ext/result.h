@@ -1,5 +1,6 @@
 #pragma once
 
+#include <concepts>
 #include <functional>
 
 #include <dwhbll/console/debug.hpp>
@@ -8,6 +9,10 @@
 // TODO: Spend 5 afternoons reading the C++ spec and figuring out how to optimize this garbage to be more user friendly.
 // TODO: Function template to accept universal
 namespace dwhbll::stl_ext {
+    template <typename T>
+    requires (!std::same_as<T, void>)
+    class Option;
+
     /**
      * @brief rust but in c++ I mean what?
      * @tparam T Value of Ok variant
@@ -16,11 +21,11 @@ namespace dwhbll::stl_ext {
     template <typename T, typename E>
     requires (!std::same_as<T, void> && !std::same_as<E, void>)
     class Result {
-    public:
         enum TYPE {
+            Invalid,
             Ok,
             Err,
-        } type;
+        } type{};
 
         struct DUMMY_TYPE_NEVER{};
         union DATA {
@@ -31,6 +36,20 @@ namespace dwhbll::stl_ext {
             ~DATA() {}
         } data;
 
+        void __destroy_storage() {
+            switch (type) {
+            case Invalid:
+                break;
+            case Ok:
+                data.OK_VALUE.~T();
+                break;
+            case Err:
+                data.ERR_VALUE.~E();
+                break;
+            }
+        }
+
+    public:
         Result(const __detail::result_ok_helper<T>&& ok_val) {
             type = Ok;
             new (&data.OK_VALUE) T(std::move(ok_val.value));
@@ -52,6 +71,8 @@ namespace dwhbll::stl_ext {
         Result(const Result &other) {
             type = other.type;
             switch (other.type) {
+            case Invalid:
+                debug::panic();
             case Ok:
                 new (&data.OK_VALUE) T(other.data.OK_VALUE);
                 break;
@@ -64,6 +85,8 @@ namespace dwhbll::stl_ext {
         Result(Result &&other) noexcept {
             type = other.type;
             switch (other.type) {
+            case Invalid:
+                debug::panic();
             case Ok:
                 new (&data.OK_VALUE) T(std::move(other.data.OK_VALUE));
                 break;
@@ -76,8 +99,11 @@ namespace dwhbll::stl_ext {
         Result & operator=(const Result &other) {
             if (this == &other)
                 return *this;
+            __destroy_storage();
             type = other.type;
             switch (other.type) {
+            case Invalid:
+                debug::panic();
             case Ok:
                 new (&data.OK_VALUE) T(other.data.OK_VALUE);
                 break;
@@ -91,8 +117,11 @@ namespace dwhbll::stl_ext {
         Result & operator=(Result &&other) noexcept {
             if (this == &other)
                 return *this;
+            __destroy_storage();
             type = other.type;
             switch (other.type) {
+            case Invalid:
+                debug::panic();
             case Ok:
                 new (&data.OK_VALUE) T(std::move(other.data.OK_VALUE));
                 break;
@@ -104,14 +133,7 @@ namespace dwhbll::stl_ext {
         }
 
         ~Result() {
-            switch (type) {
-            case Ok:
-                data.OK_VALUE.~T();
-                break;
-            case Err:
-                data.ERR_VALUE.~E();
-                break;
-            }
+            __destroy_storage();
         }
 
         [[nodiscard]] constexpr bool is_ok() const noexcept {
@@ -130,23 +152,22 @@ namespace dwhbll::stl_ext {
             return type == Err && func(data.ERR_VALUE);
         }
 
-        // No rust Option :xdd:, todo: ok(), err()
-        std::optional<T> ok() {
-            if (type == Err)
-                return std::nullopt;
-            return data.OK_VALUE;
+        Option<T> ok(this auto&& self)  {
+            if (self.type == Err)
+                return Option<T>();
+            return Some(std::forward<decltype(self)>(self).data.OK_VALUE);
         }
 
-        std::optional<E> err() {
-            if (type == Ok)
-                return std::nullopt;
-            return data.ERR_VALUE;
+        Option<E> err(this auto&& self) {
+            if (self.type == Ok)
+                return Option<E>();
+            return Some(std::forward<decltype(self)>(self).data.ERR_VALUE);
         }
 
         template <typename U>
         Result<U, E> map(std::function<U(T)> func) const noexcept {
             if (type == Err)
-                return Result<U, E>(Err(data.ERR_VALUE));
+                return Result<U, E>(__detail::result_err_helper<E>(data.ERR_VALUE));
             return Result<U, E>(func(data.OK_VALUE));
         }
 
@@ -167,7 +188,7 @@ namespace dwhbll::stl_ext {
         template <typename U>
         Result<T, U> map_err(std::function<U(E)> func) const noexcept {
             if (type == Ok)
-                return Result<T, U>(Ok(data.OK_VALUE));
+                return Result<T, U>(__detail::result_ok_helper<T>(data.OK_VALUE));
             return Result<T, U>(func(data.ERR_VALUE));
         }
 
@@ -176,7 +197,7 @@ namespace dwhbll::stl_ext {
         decltype(auto) expect(this auto&& self, const std::string& msg) {
             // TODO: Check for std::format specialization for E type
             if (self.type == Err)
-                debug::panic("{}: called `Result::expect()` on an `Err` value", msg);
+                debug::panic("{}", msg); // {}: in future
             return (std::forward<decltype(self)>(self).data.OK_VALUE);
         }
 
@@ -197,7 +218,7 @@ namespace dwhbll::stl_ext {
         decltype(auto) expect_err(this auto&& self, const std::string& msg) {
             // TODO: Check for std::format specialization for E type
             if (self.type == Ok)
-                debug::panic("{}: called `Result::expect_err()` on an `Ok` value", msg);
+                debug::panic("{}", msg); // {}: in future
             return (std::forward<decltype(self)>(self).data.ERR_VALUE);
         }
 
@@ -209,9 +230,9 @@ namespace dwhbll::stl_ext {
         }
 
         template <typename U>
-        Result<U, E> and_(this auto&& self, const Result<U, E>&& res) {
+        Result<U, E> and_(this auto&& self, const Result<U, E>& res) {
             if (self.type == Err)
-                return Result<U, E>(Err(std::forward<decltype(self)>(self).data.ERR_VALUE));
+                return Result<U, E>(__detail::result_err_helper<E>(std::forward<decltype(self)>(self).data.ERR_VALUE));
             return res;
         }
 
@@ -219,11 +240,11 @@ namespace dwhbll::stl_ext {
         Result<U, E> and_then(this auto&& self, const std::function<Result<U, E>(T)>& op) {
             if (self.type == Ok)
                 return op(std::forward<decltype(self)>(self).data.OK_VALUE);
-            return Result<U, E>(Err(std::forward<decltype(self)>(self).data.ERR_VALUE));
+            return Result<U, E>(__detail::result_err_helper<E>(std::forward<decltype(self)>(self).data.ERR_VALUE));
         }
 
         template <typename F>
-        Result<T, F> or_(this auto&& self, const Result<T, F>&& res) {
+        Result<T, F> or_(this auto&& self, const Result<T, F>& res) {
             if (self.type == Err)
                 return res;
             return Result<T, F>(std::forward<decltype(self)>(self).data.OK_VALUE);
@@ -233,7 +254,7 @@ namespace dwhbll::stl_ext {
         Result<T, F> or_else(this auto&& self, const std::function<Result<T, F>(E)>& op) {
             if (self.type == Err)
                 return op(std::forward<decltype(self)>(self).data.ERR_VALUE);
-            return Result<T, F>(Ok(std::forward<decltype(self)>(self).data.OK_VALUE));
+            return Result<T, F>(__detail::result_ok_helper<T>(std::forward<decltype(self)>(self).data.OK_VALUE));
         }
 
         decltype(auto) unwrap_or(this auto&& self, T&& def) {
