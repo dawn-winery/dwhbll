@@ -131,7 +131,7 @@ namespace dwhbll::network {
     }
 
     task<Socket> Socket::accept() const {
-        auto f = co_await calls::accept(fd, nullptr, nullptr, 0);
+        auto f = (co_await calls::accept(fd, nullptr, nullptr, 0)).unwrap();
         co_return std::move(Socket{f, CONNECT});
     }
 
