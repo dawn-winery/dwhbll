@@ -122,6 +122,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/network/buffered_socket.h
     include/dwhbll/network/dns/dns.h
     include/dwhbll/network/http.h
+    include/dwhbll/network/http_server.hpp
     include/dwhbll/network/SocketManager.h
     include/dwhbll/platform/linux_wrappers/ptrace.h
     include/dwhbll/sanify/all.h
@@ -271,3 +272,7 @@ if (DWHBLL_TESTS)
     target_link_libraries(dwhbll_test PRIVATE dwhbll)
     target_include_directories(dwhbll_test PRIVATE include)
 endif()
+
+add_executable(http_server_test tests/http_server_test.cpp)
+target_link_libraries(http_server_test dwhbll)
+target_include_directories(http_server_test PRIVATE include)
