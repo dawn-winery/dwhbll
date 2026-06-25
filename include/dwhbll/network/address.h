@@ -9,13 +9,15 @@
 namespace dwhbll::network {
     struct address {
         enum TYPE {
+            EMPTY,
             DOMAIN,
             IPV4,
             IPV6
         } type;
-        std::variant<std::string, std::array<std::uint8_t, 4>, std::array<std::uint16_t, 8>> host;
+        std::variant<std::monostate, std::string, std::array<std::uint8_t, 4>, std::array<std::uint16_t, 8>> host;
         std::uint16_t port;
 
+        address();
         address(std::string host, std::uint16_t port);
         address(std::array<std::uint8_t, 4> host, std::uint16_t port);
         address(std::array<std::uint16_t, 8> host, std::uint16_t port);

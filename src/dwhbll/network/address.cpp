@@ -1,6 +1,8 @@
 #include <dwhbll/network/address.h>
 
 namespace dwhbll::network {
+    address::address() : type(EMPTY) {}
+
     address::address(std::string host, const std::uint16_t port): type(DOMAIN), host(std::move(host)),
                                                                   port(port) {}
 
