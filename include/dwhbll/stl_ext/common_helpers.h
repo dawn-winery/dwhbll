@@ -3,6 +3,8 @@
 #include <utility>
 
 namespace dwhbll::stl_ext {
+    struct UNIT {};
+
     namespace __detail {
         template <typename T>
         struct result_err_helper {
@@ -25,14 +27,20 @@ namespace dwhbll::stl_ext {
         struct err_value_helper {
             template <typename T>
             result_err_helper<T> operator()(T&& data) {
-                return result_err_helper(std::forward<T>(data));
+                return result_err_helper<T>(std::forward<T>(data));
+            }
+            result_err_helper<UNIT> operator()() const {
+                return {};
             }
         };
 
         struct ok_value_helper {
             template <typename T>
             result_ok_helper<T> operator()(T&& data) {
-                return result_ok_helper(std::forward<T>(data));
+                return result_ok_helper<T>(std::forward<T>(data));
+            }
+            result_ok_helper<UNIT> operator()() const {
+                return {};
             }
         };
 
@@ -45,7 +53,10 @@ namespace dwhbll::stl_ext {
         struct some_value_helper {
             template <typename T>
             result_some_helper<T> operator()(T&& data) {
-                return result_some_helper(std::forward<T>(data));
+                return result_some_helper<T>(std::forward<T>(data));
+            }
+            result_some_helper<UNIT> operator()() const {
+                return {};
             }
         };
     }

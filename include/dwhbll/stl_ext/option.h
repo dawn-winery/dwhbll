@@ -40,7 +40,9 @@ namespace dwhbll::stl_ext {
         }
 
     public:
-        Option(const __detail::result_some_helper<T>&& some_val) {
+        template <typename TV>
+        requires (std::is_convertible_v<TV, T>)
+        Option(const __detail::result_some_helper<TV>&& some_val) {
             type = Some;
             new (&data.SOME_VALUE) T(std::move(some_val.value));
         }
@@ -49,7 +51,9 @@ namespace dwhbll::stl_ext {
             type = None;
         }
 
-        Option(const T&& ok_val) :
+        template <typename TV>
+        requires (std::is_convertible_v<TV, T>)
+        Option(const TV&& ok_val) :
             Option(__detail::result_some_helper<T>(std::move(ok_val))) {}
 
         Option() :

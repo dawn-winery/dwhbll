@@ -50,22 +50,28 @@ namespace dwhbll::stl_ext {
         }
 
     public:
-        Result(const __detail::result_ok_helper<T>&& ok_val) {
+        template <typename TV>
+        requires (std::is_convertible_v<TV, T>)
+        Result(const __detail::result_ok_helper<TV>&& ok_val) {
             type = Ok;
             new (&data.OK_VALUE) T(std::move(ok_val.value));
         }
 
-        Result(const __detail::result_err_helper<E>&& err_val) {
+        template <typename EV>
+        requires (std::is_convertible_v<EV, E>)
+        Result(const __detail::result_err_helper<EV>&& err_val) {
             type = Err;
             new (&data.ERR_VALUE) E(std::move(err_val.value));
         }
 
-        Result(const T&& ok_val)
-            requires (!std::is_same_v<std::decay_t<E>, std::decay_t<T>>) :
+        template <typename TV>
+        requires (!std::is_same_v<std::decay_t<E>, std::decay_t<T>> && std::is_convertible_v<TV, T>)
+        Result(const TV&& ok_val) :
             Result(__detail::result_ok_helper<T>(std::move(ok_val))) {}
 
-        Result(const E&& err_val)
-            requires (!std::is_same_v<std::decay_t<E>, std::decay_t<T>>) :
+        template <typename EV>
+        requires (!std::is_same_v<std::decay_t<E>, std::decay_t<T>> && std::is_convertible_v<EV, E>)
+        Result(const EV&& err_val) :
             Result(__detail::result_err_helper<E>(std::move(err_val))) {}
 
         Result(const Result &other) {
@@ -164,11 +170,11 @@ namespace dwhbll::stl_ext {
             return Some(std::forward<decltype(self)>(self).data.ERR_VALUE);
         }
 
-        template <typename U>
-        Result<U, E> map(std::function<U(T)> func) const noexcept {
+        template <typename F, typename U = std::invoke_result_t<F, T>>
+        auto map(F&& func) const noexcept -> Result<U, E> {
             if (type == Err)
                 return Result<U, E>(__detail::result_err_helper<E>(data.ERR_VALUE));
-            return Result<U, E>(func(data.OK_VALUE));
+            return Result<U, E>(__detail::result_ok_helper<U>(func(data.OK_VALUE)));
         }
 
         template <typename U>
