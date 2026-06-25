@@ -50,28 +50,29 @@ namespace dwhbll::stl_ext {
         }
 
     public:
+        // TODO: universal reference
         template <typename TV>
         requires (std::is_convertible_v<TV, T>)
-        Result(const __detail::result_ok_helper<TV>&& ok_val) {
+        Result(__detail::result_ok_helper<TV>&& ok_val) {
             type = Ok;
             new (&data.OK_VALUE) T(std::move(ok_val.value));
         }
 
         template <typename EV>
         requires (std::is_convertible_v<EV, E>)
-        Result(const __detail::result_err_helper<EV>&& err_val) {
+        Result(__detail::result_err_helper<EV>&& err_val) {
             type = Err;
             new (&data.ERR_VALUE) E(std::move(err_val.value));
         }
 
         template <typename TV>
         requires (!std::is_same_v<std::decay_t<E>, std::decay_t<T>> && std::is_convertible_v<TV, T>)
-        Result(const TV&& ok_val) :
+        Result(TV&& ok_val) :
             Result(__detail::result_ok_helper<T>(std::move(ok_val))) {}
 
         template <typename EV>
         requires (!std::is_same_v<std::decay_t<E>, std::decay_t<T>> && std::is_convertible_v<EV, E>)
-        Result(const EV&& err_val) :
+        Result(EV&& err_val) :
             Result(__detail::result_err_helper<E>(std::move(err_val))) {}
 
         Result(const Result &other) {
@@ -210,7 +211,7 @@ namespace dwhbll::stl_ext {
         decltype(auto) unwrap(this auto&& self) {
             // TODO: Check for std::format specialization for E type
             if (self.type == Err)
-                debug::panic("called `Result::unwrap()` on an `Err` value");
+                debug::panic("called `Result::unwrap()` on an `Err` value: {}", self.data.ERR_VALUE);
             return (std::forward<decltype(self)>(self).data.OK_VALUE);
         }
 
