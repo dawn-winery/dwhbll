@@ -1,8 +1,10 @@
 #pragma once
 
-#include <dwhbll/concurrency/coroutine/task.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+
+#include <dwhbll/concurrency/coroutine/task.h>
+#include <dwhbll/sanify/types.hpp>
 
 namespace dwhbll::concurrency::coroutine::wrappers::calls {
     task<> nop();
@@ -17,11 +19,11 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
 
     task<int> poll(int fd, short poll_mask);
 
-    task<> connect(int fd, ::sockaddr* addr, socklen_t addrlen);
+    task<stl_ext::Result<stl_ext::UNIT, int>> connect(int fd, ::sockaddr* addr, socklen_t addrlen);
 
-    task<ssize_t> send(int fd, const void* buf, size_t len, int flags);
+    task<stl_ext::Result<ssize_t, int>> send(int fd, const void* buf, size_t len, int flags);
 
-    task<ssize_t> recv(int fd, void* buf, size_t len, int flags);
+    task<stl_ext::Result<ssize_t, int>> recv(int fd, void* buf, size_t len, int flags);
 
     task<int> statx(int dirfd, const char* path, int flags, int mask, struct statx* statxbuf);
 

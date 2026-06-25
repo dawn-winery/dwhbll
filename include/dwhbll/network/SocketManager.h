@@ -4,9 +4,11 @@
 #include <vector>
 
 #include <arpa/inet.h>
-#include <dwhbll/concurrency/coroutine/task.h>
 
-#include "../memory/pool.h"
+#include <dwhbll/concurrency/coroutine/task.h>
+#include <dwhbll/stl_ext/result.h>
+
+#include <dwhbll/memory/pool.h>
 
 #define BuildIPV4(a, b, c, d) (htonl((((std::uint32_t)a) << 24 & 0xFF000000) | (((std::uint32_t)b) << 16 & 0xFF0000) | (((std::uint32_t)c) << 8 & 0xFF00) | (((std::uint32_t)d) & 0xFF)))
 
@@ -73,7 +75,7 @@ namespace dwhbll::network {
          */
         ssize_t send(const std::span<char>& data) const;
 
-        concurrency::coroutine::task<ssize_t> send_async(const std::span<char>& data) const;
+        concurrency::coroutine::task<stl_ext::Result<ssize_t, int>> send_async(const std::span<char>& data) const;
 
         /**
          * @brief receive a set amount of data
@@ -82,7 +84,7 @@ namespace dwhbll::network {
          */
         ssize_t recv(std::span<char>& data) const;
 
-        concurrency::coroutine::task<ssize_t> recv_async(std::span<char>& data) const;
+        concurrency::coroutine::task<stl_ext::Result<ssize_t, int>> recv_async(std::span<char>& data) const;
 
         /**
          * @brief receive a set amount of data
@@ -91,7 +93,7 @@ namespace dwhbll::network {
          */
         ssize_t recv(std::vector<char>& data) const;
 
-        concurrency::coroutine::task<ssize_t> recv_async(std::vector<char>& data) const;
+        concurrency::coroutine::task<stl_ext::Result<ssize_t, int>> recv_async(std::vector<char>& data) const;
 
         /**
          * @brief read a set amount of data
@@ -109,7 +111,7 @@ namespace dwhbll::network {
          */
         ssize_t send(const std::string& data) const;
 
-        concurrency::coroutine::task<ssize_t> send_async(const std::string& data) const;
+        concurrency::coroutine::task<stl_ext::Result<ssize_t, int>> send_async(const std::string& data) const;
 
         /**
          * @brief receive a set amount of data
@@ -118,7 +120,7 @@ namespace dwhbll::network {
          */
         ssize_t recv(std::string& data) const;
 
-        concurrency::coroutine::task<ssize_t> recv_async(std::string& data) const;
+        concurrency::coroutine::task<stl_ext::Result<ssize_t, int>> recv_async(std::string& data) const;
 
         concurrency::coroutine::task<Socket> accept() const;
     };

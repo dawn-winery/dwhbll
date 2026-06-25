@@ -34,7 +34,7 @@ namespace dwhbll::concurrency::coroutine::wrappers {
             co_return true;
 
         wrbuf.get_raw_buffer().make_cont();
-        auto wrote = await calls::write(fd, wrbuf.get_raw_buffer().data().data(), wrbuf.get_raw_buffer().size(), write_head);
+        auto wrote = co_await calls::write(fd, wrbuf.get_raw_buffer().data().data(), wrbuf.get_raw_buffer().size(), write_head);
 
         write_head += wrote;
 
@@ -87,17 +87,17 @@ namespace dwhbll::concurrency::coroutine::wrappers {
 
     task<file> file::open(const char *path, std::ios::openmode mode) {
         std::string str(path);
-        co_return await open(str, mode);
+        co_return co_await open(str, mode);
     }
 
     task<file> file::open(const std::filesystem::path &path, std::ios::openmode mode) {
-        co_return await open(path.string(), mode);
+        co_return co_await open(path.string(), mode);
     }
 
     task<> file::close() {
-        await drain();
+        co_await drain();
 
-        await calls::close(fd);
+        co_await calls::close(fd);
 
         fd = -1;
     }
@@ -117,7 +117,7 @@ namespace dwhbll::concurrency::coroutine::wrappers {
 
             int read;
 
-            while (read = await calls::read(fd, buffer, 65536, read_head), read != 0) {
+            while (read = co_await calls::read(fd, buffer, 65536, read_head), read != 0) {
                 read_head += read;
                 result.insert(result.end(), buffer, buffer + read);
             }
@@ -139,7 +139,7 @@ namespace dwhbll::concurrency::coroutine::wrappers {
         result.resize(n);
 
         if (n - b2s > batch_read_count) {
-            auto read = await calls::read(fd, result.data() + b2s, n - b2s, read_head);
+            auto read = co_await calls::read(fd, result.data() + b2s, n - b2s, read_head);
             read_head += read;
 
             if (read == 0)
@@ -150,7 +150,7 @@ namespace dwhbll::concurrency::coroutine::wrappers {
             co_return result;
         } else {
             char buffer[batch_read_count];
-            auto read = await calls::read(fd, buffer, batch_read_count, read_head);
+            auto read = co_await calls::read(fd, buffer, batch_read_count, read_head);
             read_head += read;
 
             if (n - b2s > read) {
@@ -169,7 +169,7 @@ namespace dwhbll::concurrency::coroutine::wrappers {
     }
 
     task<std::string> file::read_str(int n) {
-        auto res = await read(n);
+        auto res = co_await read(n);
 
         co_return std::string(res.begin(), res.end());
     }
@@ -185,7 +185,7 @@ namespace dwhbll::concurrency::coroutine::wrappers {
         std::vector<char> result = std::vector<char>{buf2.begin(), buf2.end()};
         result.resize(n);
 
-        int read = await calls::read(fd, result.data() + buf2.size(), n - buf2.size(), read_head);
+        int read = co_await calls::read(fd, result.data() + buf2.size(), n - buf2.size(), read_head);
         if (read != 0)
             read_head += read;
 
@@ -199,10 +199,10 @@ namespace dwhbll::concurrency::coroutine::wrappers {
         if (fd < 0)
             throw exceptions::rt_exception_base("writing to closed file!");
 
-        auto result = await try_flush_wrbuf();
+        auto result = co_await try_flush_wrbuf();
 
         if (result) {
-            int wrote = await calls::write(fd, data.data(), data.size(), write_head);
+            int wrote = co_await calls::write(fd, data.data(), data.size(), write_head);
 
             write_head += wrote;
 
@@ -217,12 +217,12 @@ namespace dwhbll::concurrency::coroutine::wrappers {
             throw exceptions::rt_exception_base("writing to closed file!");
 
         while (true) {
-            auto result = await try_flush_wrbuf();
+            auto result = co_await try_flush_wrbuf();
 
             if (result)
                 co_return;
 
-            await calls::poll(fd, POLLOUT);
+            co_await calls::poll(fd, POLLOUT);
         }
     }
 
@@ -244,7 +244,7 @@ namespace dwhbll::concurrency::coroutine::wrappers {
 
     task<file> file::open(const std::string &path, std::ios::openmode mode) {
         std::string p = path;
-        const int fd = await calls::open(p.c_str(), compute_openmode_flags(mode));
+        const int fd = co_await calls::open(p.c_str(), compute_openmode_flags(mode));
 
         co_return std::move(file{fd});
     }

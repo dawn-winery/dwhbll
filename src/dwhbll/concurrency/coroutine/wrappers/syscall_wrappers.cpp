@@ -91,7 +91,7 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
         co_return result->res;
     }
 
-    task<> connect(int fd, ::sockaddr * addr, socklen_t addrlen) {
+    task<stl_ext::Result<stl_ext::UNIT, int>> connect(int fd, ::sockaddr * addr, socklen_t addrlen) {
         MAKE_PROMISE
 
         io_uring_prep_connect(sqe, fd, addr, addrlen);
@@ -101,10 +101,11 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
         auto result = co_await promise;
 
         if (result->res < 0)
-            throw exceptions::rt_exception_base("connect fd {} failed({})!", fd, strerror(-result->res));
+            co_return stl_ext::Err(-result->res);
+        co_return stl_ext::Ok();
     }
 
-    task<ssize_t> send(int fd, const void *buf, size_t len, int flags) {
+    task<stl_ext::Result<ssize_t, int>> send(int fd, const void *buf, size_t len, int flags) {
         MAKE_PROMISE
 
         io_uring_prep_send(sqe, fd, buf, len, flags);
@@ -113,10 +114,12 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
 
         auto result = co_await promise;
 
-        co_return result->res;
+        if (result->res < 0)
+            co_return stl_ext::Err(-result->res);
+        co_return stl_ext::Ok(result->res);
     }
 
-    task<ssize_t> recv(int fd, void *buf, size_t len, int flags) {
+    task<stl_ext::Result<ssize_t, int>> recv(int fd, void *buf, size_t len, int flags) {
         MAKE_PROMISE
 
         io_uring_prep_recv(sqe, fd, buf, len, flags);
@@ -125,7 +128,9 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
 
         auto result = co_await promise;
 
-        co_return result->res;
+        if (result->res)
+            co_return stl_ext::Err(-result->res);
+        co_return stl_ext::Ok(result->res);
     }
 
     task<int> statx(int dirfd, const char *path, int flags, int mask, struct ::statx *statxbuf) {

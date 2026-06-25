@@ -1,4 +1,4 @@
-#include "../../../include/dwhbll/network/buffered_socket.h"
+#include <dwhbll/network/buffered_socket.h>
 
 #include <dwhbll/console/debug.hpp>
 #include <dwhbll/exceptions/rt_exception_base.h>
@@ -28,7 +28,7 @@ namespace dwhbll::network {
         // TODO: zero copy this part in the future
         std::vector<char> buffer(1024);
 
-        auto recv_count = await socket->read_async(buffer);
+        auto recv_count = co_await socket->read_async(buffer);
 
         // TODO: what is this lmao
         if ((recv_count == -1 && (errno != EAGAIN && errno != EWOULDBLOCK)) || recv_count == 0)
@@ -51,7 +51,7 @@ namespace dwhbll::network {
     task<> outbound_network_buffer::flush_async() {
         buffer.make_cont();
 
-        await socket->send_async(std::span{reinterpret_cast<char *>(buffer.data().data()), buffer.size()});
+        co_await socket->send_async(std::span{reinterpret_cast<char *>(buffer.data().data()), buffer.size()});
 
         buffer.clear();
     }

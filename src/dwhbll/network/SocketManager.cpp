@@ -51,7 +51,7 @@ namespace dwhbll::network {
             addr
         };
 
-        await calls::connect(fd, reinterpret_cast<sockaddr *>(&a), sizeof(a));
+        co_await calls::connect(fd, reinterpret_cast<sockaddr *>(&a), sizeof(a));
     }
 
     void Socket::wait() const {
@@ -76,9 +76,9 @@ namespace dwhbll::network {
         }
 
         if (mode == LISTEN)
-            await calls::poll(fd, POLLIN);
+            co_await calls::poll(fd, POLLIN);
         else if (mode == CONNECT)
-            await calls::poll(fd, POLLOUT);
+            co_await calls::poll(fd, POLLOUT);
     }
 
     ssize_t Socket::send(const std::span<char> &data) const {
@@ -86,7 +86,7 @@ namespace dwhbll::network {
     }
 
     // todo: return the awaitable directly let the user handle it instead.
-    task<ssize_t> Socket::send_async(const std::span<char> &data) const {
+    task<stl_ext::Result<ssize_t, int>> Socket::send_async(const std::span<char> &data) const {
         return calls::send(fd, data.data(), data.size(), MSG_NOSIGNAL);
     }
 
@@ -94,7 +94,7 @@ namespace dwhbll::network {
         return ::recv(fd, data.data(), data.size(), 0);
     }
 
-    task<ssize_t> Socket::recv_async(std::span<char> &data) const {
+    task<stl_ext::Result<ssize_t, int>> Socket::recv_async(std::span<char> &data) const {
         return calls::recv(fd, data.data(), data.size(), 0);
     }
 
@@ -102,7 +102,7 @@ namespace dwhbll::network {
         return ::recv(fd, data.data(), data.size(), 0);
     }
 
-    task<ssize_t> Socket::recv_async(std::vector<char> &data) const {
+    task<stl_ext::Result<ssize_t, int>> Socket::recv_async(std::vector<char> &data) const {
         return calls::recv(fd, data.data(), data.size(), 0);
     }
 
@@ -118,7 +118,7 @@ namespace dwhbll::network {
         return ::send(fd, data.data(), data.size(), MSG_NOSIGNAL);
     }
 
-    task<ssize_t> Socket::send_async(const std::string &data) const {
+    task<stl_ext::Result<ssize_t, int>> Socket::send_async(const std::string &data) const {
         return calls::send(fd, data.data(), data.size(), MSG_NOSIGNAL);
     }
 
@@ -126,12 +126,12 @@ namespace dwhbll::network {
         return ::recv(fd, data.data(), data.size(), 0);
     }
 
-    task<ssize_t> Socket::recv_async(std::string &data) const {
+    task<stl_ext::Result<ssize_t, int>> Socket::recv_async(std::string &data) const {
         return calls::recv(fd, data.data(), data.size(), 0);
     }
 
     task<Socket> Socket::accept() const {
-        auto f = await calls::accept(fd, nullptr, nullptr, 0);
+        auto f = co_await calls::accept(fd, nullptr, nullptr, 0);
         co_return std::move(Socket{f, CONNECT});
     }
 
@@ -144,7 +144,7 @@ namespace dwhbll::network {
     task<SocketManager::socket_t> SocketManager::getIPv4TCPSocket_async(in_addr addr,
     unsigned short port) {
         auto tcp = pool.acquire(::socket(AF_INET, SOCK_STREAM, 0), Socket::CONNECT);
-        await tcp->connect_async(addr, port);
+        co_await tcp->connect_async(addr, port);
         co_return std::move(tcp);
     }
 
@@ -159,7 +159,7 @@ namespace dwhbll::network {
     unsigned short port) {
         auto i = ::socket(AF_INET, SOCK_DGRAM, 0);
         auto udp = pool.acquire(i, Socket::CONNECT);
-        await udp->connect_async(addr, port);
+        co_await udp->connect_async(addr, port);
         co_return std::move(udp);
     }
 
