@@ -12,6 +12,38 @@
 #include <netinet/tcp.h>
 
 namespace dwhbll::async {
+    task<stl_ext::Result<socket, int>> socket::connect_internal(bool use_ipv6, const network::address &endpoint, int socktype) {
+        sockaddr_storage addr{};
+        std::size_t addrlen{};
+        switch (endpoint.type) {
+        case network::address::DOMAIN:
+            debug::todo();
+        case network::address::IPV4: {
+            use_ipv6 = false;
+            auto& v4addr = std::get<std::array<std::uint8_t, 4>>(endpoint.host);
+            auto* v4 = reinterpret_cast<sockaddr_in*>(&addr);
+            v4->sin_family = AF_INET;
+            v4->sin_addr.s_addr = v4addr[3] << 24 | v4addr[2] << 16 | v4addr[1] << 8 | v4addr[0];
+            v4->sin_port = htons(endpoint.port);
+            addrlen = sizeof(sockaddr_in);
+            break;
+        }
+        case network::address::IPV6:
+            use_ipv6 = true;
+            debug::todo();
+            break;
+        }
+
+        auto sock = ::socket(use_ipv6 ? AF_INET6 : AF_INET, socktype, 0);
+
+        if (sock == -1)
+            co_return stl_ext::Err(errno);
+
+        co_return (co_await calls::connect(sock, reinterpret_cast<sockaddr *>(&addr), addrlen)).map([sock](auto) {
+            return socket{sock};
+        });
+    }
+
     socket::socket() = default;
 
     socket::socket(int fd) : fd(fd) {}
@@ -51,35 +83,11 @@ namespace dwhbll::async {
     }
 
     task<stl_ext::Result<socket, int>> socket::connect_tcp(bool use_ipv6, const network::address &endpoint) {
-        sockaddr_storage addr{};
-        std::size_t addrlen{};
-        switch (endpoint.type) {
-        case network::address::DOMAIN:
-            debug::todo();
-        case network::address::IPV4: {
-            use_ipv6 = false;
-            auto& v4addr = std::get<std::array<std::uint8_t, 4>>(endpoint.host);
-            auto* v4 = reinterpret_cast<sockaddr_in*>(&addr);
-            v4->sin_family = AF_INET;
-            v4->sin_addr.s_addr = v4addr[3] << 24 | v4addr[2] << 16 | v4addr[1] << 8 | v4addr[0];
-            v4->sin_port = htons(endpoint.port);
-            addrlen = sizeof(sockaddr_in);
-            break;
-        }
-        case network::address::IPV6:
-            use_ipv6 = true;
-            debug::todo();
-            break;
-        }
+        return connect_internal(use_ipv6, endpoint, SOCK_STREAM);
+    }
 
-        auto sock = ::socket(use_ipv6 ? AF_INET6 : AF_INET, SOCK_STREAM, 0);
-
-        if (sock == -1)
-            co_return stl_ext::Err(errno);
-
-        co_return (co_await calls::connect(sock, reinterpret_cast<sockaddr *>(&addr), addrlen)).map([sock](auto) {
-            return socket{sock};
-        });
+    task<stl_ext::Result<socket, int>> socket::connect_udp(bool use_ipv6, const network::address &endpoint) {
+        return connect_internal(use_ipv6, endpoint, SOCK_DGRAM);
     }
 
     task<stl_ext::Result<ssize_t, int>> socket::read(std::span<std::uint8_t> buffer) const {
