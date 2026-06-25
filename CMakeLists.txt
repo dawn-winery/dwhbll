@@ -38,6 +38,7 @@ if (DWHBLL_SUGAR_EXPORT)
 endif()
 
 set(DWHBLL_SOURCES
+    src/dwhbll/async/socket.cpp
     src/dwhbll/collections/cache.cpp
     src/dwhbll/collections/memory_buffer.cpp
     src/dwhbll/concurrency/coroutine/async_semaphore.cpp
@@ -71,6 +72,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/utils/threading.cpp
     src/dwhbll/utils/uuid.cpp
 
+    include/dwhbll/async/socket.h
     include/dwhbll/collections/cache.h
     include/dwhbll/collections/memory_buffer.h
     include/dwhbll/collections/ring.h

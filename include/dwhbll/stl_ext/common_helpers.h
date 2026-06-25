@@ -5,6 +5,8 @@
 namespace dwhbll::stl_ext {
     struct UNIT {};
 
+    constexpr auto TO_UNIT = [](auto) -> UNIT { return {}; };
+
     namespace __detail {
         template <typename T>
         struct result_err_helper {
