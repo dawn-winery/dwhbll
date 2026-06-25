@@ -31,7 +31,7 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
 
         SUBMIT
 
-        auto result = co_await promise;
+        const auto result = co_await promise;
 
         if (result->res < 0)
             throw exceptions::rt_exception_base("opening {} failed ({})!", fptr, strerror(-result->res));
@@ -46,7 +46,7 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
 
         SUBMIT
 
-        auto result = co_await promise;
+        const auto result = co_await promise;
 
         if (result->res < 0)
             throw exceptions::rt_exception_base("closing {} failed ({})!", fd, strerror(-result->res));
@@ -59,7 +59,7 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
 
         SUBMIT
 
-        auto result = co_await promise;
+        const auto result = co_await promise;
 
         co_return result->res;
     }
@@ -71,7 +71,7 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
 
         SUBMIT
 
-        auto result = co_await promise;
+        const auto result = co_await promise;
 
         co_return result->res;
     }
@@ -83,7 +83,7 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
 
         SUBMIT
 
-        auto result = co_await promise;
+        const auto result = co_await promise;
 
         if (result->res < 0)
             throw exceptions::rt_exception_base("polling fd {} failed ({})!", fd, strerror(-result->res));
@@ -98,7 +98,7 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
 
         SUBMIT
 
-        auto result = co_await promise;
+        const auto result = co_await promise;
 
         if (result->res < 0)
             co_return stl_ext::Err(-result->res);
@@ -112,7 +112,7 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
 
         SUBMIT
 
-        auto result = co_await promise;
+        const auto result = co_await promise;
 
         if (result->res < 0)
             co_return stl_ext::Err(-result->res);
@@ -126,9 +126,9 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
 
         SUBMIT
 
-        auto result = co_await promise;
+        const auto result = co_await promise;
 
-        if (result->res)
+        if (result->res < 0)
             co_return stl_ext::Err(-result->res);
         co_return stl_ext::Ok(result->res);
     }
@@ -140,20 +140,22 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
 
         SUBMIT
 
-        auto result = co_await promise;
+        const auto result = co_await promise;
 
         co_return result->res;
     }
 
-    task<int> accept(int fd, sockaddr *addr, socklen_t *addrlen, int flags) {
+    task<stl_ext::Result<int, int>> accept(int fd, sockaddr *addr, socklen_t *addrlen, int flags) {
         MAKE_PROMISE
 
         io_uring_prep_accept(sqe, fd, addr, addrlen, flags);
 
         SUBMIT
 
-        auto result = co_await promise;
+        const auto result = co_await promise;
 
-        co_return result->res;
+        if (result->res < 0)
+            co_return stl_ext::Err(-result->res);
+        co_return stl_ext::Ok(result->res);
     }
 }

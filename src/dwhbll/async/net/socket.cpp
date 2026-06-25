@@ -7,6 +7,7 @@
 #include <dwhbll/concurrency/coroutine/wrappers/syscall_wrappers.h>
 #include <dwhbll/network/address.h>
 #include <dwhbll/sanify/coroutines.hpp>
+#include <utility>
 #include <dwhbll/stl_ext/option.h>
 
 #include <netinet/tcp.h>
@@ -32,6 +33,8 @@ namespace dwhbll::async::net {
             use_ipv6 = true;
             debug::todo();
             break;
+        case network::address::EMPTY:
+            debug::panic();
         }
 
         auto sock = ::socket(use_ipv6 ? AF_INET6 : AF_INET, socktype, 0);
@@ -39,8 +42,8 @@ namespace dwhbll::async::net {
         if (sock == -1)
             co_return stl_ext::Err(errno);
 
-        co_return (co_await calls::connect(sock, reinterpret_cast<sockaddr *>(&addr), addrlen)).map([sock](auto) {
-            return socket{sock};
+        co_return (co_await calls::connect(sock, reinterpret_cast<sockaddr *>(&addr), addrlen)).map([sock, endpoint](auto) {
+            return socket{sock, endpoint};
         });
     }
 
@@ -48,8 +51,28 @@ namespace dwhbll::async::net {
 
     socket::socket(int fd) : fd(fd) {}
 
+    socket::socket(int fd, network::address addr) : fd(fd), addr(std::move(addr)) {}
+
     socket::~socket() {
         close();
+    }
+
+    socket::socket(socket &&other) noexcept: fd(other.fd),
+                                             addr(std::move(other.addr)),
+                                             shutdown(other.shutdown),
+                                             nodelay_(other.nodelay_) {
+        other.fd = -1;
+    }
+
+    socket & socket::operator=(socket &&other) noexcept {
+        if (this == &other)
+            return *this;
+        fd = other.fd;
+        other.fd = -1;
+        addr = std::move(other.addr);
+        shutdown = other.shutdown;
+        nodelay_ = other.nodelay_;
+        return *this;
     }
 
     bool socket::is_shutdown() const noexcept {
@@ -80,6 +103,10 @@ namespace dwhbll::async::net {
         ::close(fd);
         shutdown = true;
         fd = -1;
+    }
+
+    const network::address & socket::get_address() const noexcept {
+        return addr;
     }
 
     task<stl_ext::Result<socket, int>> socket::connect_tcp(bool use_ipv6, const network::address &endpoint) {

@@ -27,5 +27,5 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
 
     task<int> statx(int dirfd, const char* path, int flags, int mask, struct statx* statxbuf);
 
-    task<int> accept(int fd, sockaddr* addr, socklen_t* addrlen, int flags);
+    task<stl_ext::Result<int, int>> accept(int fd, sockaddr* addr, socklen_t* addrlen, int flags);
 }

@@ -1,15 +1,13 @@
 #pragma once
 
 #include <dwhbll/concurrency/coroutine/task.h>
+#include <dwhbll/network/address.h>
 #include <dwhbll/stl_ext/result.h>
-
-namespace dwhbll::network {
-    struct address;
-}
 
 namespace dwhbll::async::net {
     class socket {
         int fd{-1};
+        network::address addr{};
 
         bool shutdown {false};
         bool nodelay_ {false};
@@ -21,7 +19,17 @@ namespace dwhbll::async::net {
 
         explicit socket(int fd);
 
+        socket(int fd, network::address addr);
+
         ~socket();
+
+        socket(const socket &other) = delete;
+
+        socket(socket &&other) noexcept;
+
+        socket & operator=(const socket &other) = delete;
+
+        socket & operator=(socket &&other) noexcept;
 
         [[nodiscard]] bool is_shutdown() const noexcept;
         [[nodiscard]] bool has_socket() const noexcept;
@@ -30,6 +38,8 @@ namespace dwhbll::async::net {
         [[nodiscard]] bool get_nodelay() const noexcept;
 
         void close() noexcept;
+
+        [[nodiscard]] const network::address& get_address() const noexcept;
 
         /**
          * @brief Connect TCP Socket
