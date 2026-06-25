@@ -7,7 +7,7 @@ namespace dwhbll::network {
     struct address;
 }
 
-namespace dwhbll::async {
+namespace dwhbll::async::net {
     class socket {
         int fd{-1};
 

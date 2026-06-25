@@ -1,4 +1,4 @@
-#include <dwhbll/async/socket.h>
+#include <dwhbll/async/net/socket.h>
 
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -11,7 +11,7 @@
 
 #include <netinet/tcp.h>
 
-namespace dwhbll::async {
+namespace dwhbll::async::net {
     task<stl_ext::Result<socket, int>> socket::connect_internal(bool use_ipv6, const network::address &endpoint, int socktype) {
         sockaddr_storage addr{};
         std::size_t addrlen{};
