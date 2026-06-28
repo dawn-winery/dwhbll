@@ -117,19 +117,7 @@ namespace dwhbll::async::net {
         return connect_internal(use_ipv6, endpoint, SOCK_DGRAM);
     }
 
-    task<stl_ext::Result<ssize_t, int>> socket::read(std::span<std::uint8_t> buffer) const {
-        if (!has_socket())
-            debug::panic();
-        co_return (co_await calls::recv(fd, buffer.data(), buffer.size(), 0));
-    }
-
-    task<stl_ext::Result<ssize_t, int>> socket::write(std::span<const std::uint8_t> buffer) const {
-        if (!has_socket())
-            debug::panic();
-        co_return (co_await calls::send(fd, buffer.data(), buffer.size(), 0));
-    }
-
-    task<stl_ext::Result<stl_ext::UNIT, int>> socket::read_exact(std::span<std::uint8_t> buffer) const {
+    task<stl_ext::Result<stl_ext::UNIT, int>> socket::read_exact0(std::span<std::uint8_t> buffer) {
         if (!has_socket())
             debug::panic();
 
@@ -144,12 +132,17 @@ namespace dwhbll::async::net {
             auto count = res.ok().unwrap();
             head += count;
             size -= count;
+
+            if (count == 0) {
+                close();
+                co_return stl_ext::Err(-1);
+            }
         }
 
         co_return stl_ext::Ok();
     }
 
-    task<stl_ext::Result<stl_ext::UNIT, int>> socket::write_exact(std::span<const std::uint8_t> buffer) const {
+    task<stl_ext::Result<stl_ext::UNIT, int>> socket::write_exact0(std::span<const std::uint8_t> buffer) const {
         if (!has_socket())
             debug::panic();
 
@@ -166,6 +159,43 @@ namespace dwhbll::async::net {
             size -= count;
         }
 
+        co_return stl_ext::Ok();
+    }
+
+    task<stl_ext::Result<stl_ext::UNIT, int>> socket::read(std::span<std::uint8_t> buffer) {
+        if (!has_socket())
+            debug::panic();
+
+        co_return co_await read_exact0(buffer);
+    }
+
+    task<stl_ext::Result<stl_ext::UNIT, int>> socket::write(std::span<const std::uint8_t> buffer) {
+        if (!has_socket())
+            debug::panic();
+
+        co_return co_await write_exact0(buffer);
+    }
+
+    task<stl_ext::Result<ssize_t, int>> socket::read_some(std::span<std::uint8_t> buffer) {
+        if (!has_socket())
+            debug::panic();
+
+        auto r = co_await calls::recv(fd, buffer.data(), buffer.size(), 0);
+
+        if (r.is_ok() && r.ok().unwrap() == 0)
+            close();
+
+        co_return r;
+    }
+
+    task<stl_ext::Result<ssize_t, int>> socket::write_some(std::span<const std::uint8_t> buffer) {
+        if (!has_socket())
+            debug::panic();
+
+        co_return co_await calls::send(fd, buffer.data(), buffer.size(), 0);
+    }
+
+    task<stl_ext::Result<stl_ext::UNIT, int>> socket::flush() {
         co_return stl_ext::Ok();
     }
 }

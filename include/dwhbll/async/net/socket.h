@@ -14,6 +14,10 @@ namespace dwhbll::async::net {
 
         static concurrency::coroutine::task<stl_ext::Result<socket, int>> connect_internal(bool use_ipv6, const network::address &endpoint, int socktype);
 
+        [[nodiscard]] concurrency::coroutine::task<stl_ext::Result<stl_ext::UNIT, int>> read_exact0(std::span<std::uint8_t> buffer);
+
+        [[nodiscard]] concurrency::coroutine::task<stl_ext::Result<stl_ext::UNIT, int>> write_exact0(std::span<const std::uint8_t> buffer) const;
+
     public:
         socket();
 
@@ -21,7 +25,7 @@ namespace dwhbll::async::net {
 
         socket(int fd, network::address addr);
 
-        ~socket();
+        virtual ~socket();
 
         socket(const socket &other) = delete;
 
@@ -47,7 +51,7 @@ namespace dwhbll::async::net {
          * @param endpoint Address to connect to, or domain, domain will be resolved
          * @return Socket if connected
          */
-        static concurrency::coroutine::task<stl_ext::Result<socket, int>> connect_tcp(bool use_ipv6, const network::address &endpoint);
+        [[nodiscard]] static concurrency::coroutine::task<stl_ext::Result<socket, int>> connect_tcp(bool use_ipv6, const network::address &endpoint);
 
         /**
          * @brief Connect UDP Socket
@@ -55,14 +59,16 @@ namespace dwhbll::async::net {
          * @param endpoint Address to connect to, or domain, domain will be resolved
          * @return Socket if connected
          */
-        static concurrency::coroutine::task<stl_ext::Result<socket, int>> connect_udp(bool use_ipv6, const network::address &endpoint);
+        [[nodiscard]] static concurrency::coroutine::task<stl_ext::Result<socket, int>> connect_udp(bool use_ipv6, const network::address &endpoint);
 
-        [[nodiscard]] concurrency::coroutine::task<stl_ext::Result<ssize_t, int>> read(std::span<std::uint8_t> buffer) const;
+        [[nodiscard]] virtual concurrency::coroutine::task<stl_ext::Result<stl_ext::UNIT, int>> read(std::span<std::uint8_t> buffer);
 
-        [[nodiscard]] concurrency::coroutine::task<stl_ext::Result<ssize_t, int>> write(std::span<const std::uint8_t> buffer) const;
+        [[nodiscard]] virtual concurrency::coroutine::task<stl_ext::Result<stl_ext::UNIT, int>> write(std::span<const std::uint8_t> buffer);
 
-        [[nodiscard]] concurrency::coroutine::task<stl_ext::Result<stl_ext::UNIT, int>> read_exact(std::span<std::uint8_t> buffer) const;
+        [[nodiscard]] virtual concurrency::coroutine::task<stl_ext::Result<ssize_t, int>> read_some(std::span<std::uint8_t> buffer);
 
-        [[nodiscard]] concurrency::coroutine::task<stl_ext::Result<stl_ext::UNIT, int>> write_exact(std::span<const std::uint8_t> buffer) const;
+        [[nodiscard]] virtual concurrency::coroutine::task<stl_ext::Result<ssize_t, int>> write_some(std::span<const std::uint8_t> buffer);
+
+        [[nodiscard]] virtual concurrency::coroutine::task<stl_ext::Result<stl_ext::UNIT, int>> flush();
     };
 }

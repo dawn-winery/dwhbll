@@ -38,6 +38,7 @@ if (DWHBLL_SUGAR_EXPORT)
 endif()
 
 set(DWHBLL_SOURCES
+    src/dwhbll/async/net/buffered_socket.cpp
     src/dwhbll/async/net/socket.cpp
     src/dwhbll/async/net/tcp_listener.cpp
     src/dwhbll/collections/cache.cpp
@@ -74,6 +75,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/utils/threading.cpp
     src/dwhbll/utils/uuid.cpp
 
+    include/dwhbll/async/net/buffered_socket.h
     include/dwhbll/async/net/socket.h
     include/dwhbll/async/net/tcp_listener.h
     include/dwhbll/collections/cache.h

@@ -171,6 +171,20 @@ namespace dwhbll::stl_ext {
             return Some(std::forward<decltype(self)>(self).data.ERR_VALUE);
         }
 
+        template <typename TV>
+        Result<TV, E> ok_to(this auto&& self) {
+            if (self.type == Ok)
+                debug::panic("Cannot coerce Ok type when populated! Use ::map()");
+            return Result<TV, E>(Err(std::forward<decltype(self)>(self).data.ERR_VALUE));
+        }
+
+        template <typename EV>
+        Result<T, EV> err_to(this auto&& self) {
+            if (self.type == Err)
+                debug::panic("Cannot coerce Err type when populated! Use ::map()");
+            return Result<T, EV>(Ok(std::forward<decltype(self)>(self).data.OK_VALUE));
+        }
+
         template <typename F, typename U = std::invoke_result_t<F, T>>
         auto map(F&& func) const noexcept -> Result<U, E> {
             if (type == Err)
