@@ -588,9 +588,4 @@ public:
 
   void stop();
 };
-
-constexpr uint32_t ipv4(uint32_t a, uint32_t b, uint32_t c, uint32_t d) {
-  return (a << 24 & 0xFF000000) | (b << 16 & 0xFF0000) | (c << 8 & 0xFF00) |
-         (d & 0xFF);
-}
 } // namespace dwhbll::network::http_server

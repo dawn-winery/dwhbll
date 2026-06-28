@@ -1,5 +1,7 @@
 #include <dwhbll/network/http_server.hpp>
 
+#include <dwhbll/network/address.h>
+
 struct Handler {
   void handle(dwhbll::network::http_server::Request &request,
               dwhbll::network::http_server::Response &response) {
@@ -17,7 +19,7 @@ int main() {
   dwhbll::console::info("adding route");
   server.add_route("/", Factory());
   dwhbll::console::info("listening to stuff");
-  server.listen_to(dwhbll::network::http_server::ipv4(127, 0, 0, 1), 8000);
+  server.listen_to(dwhbll::network::conv::make_ipv4(127, 0, 0, 1), 8000);
   dwhbll::console::info("starting threads");
   server.listen();
   dwhbll::console::info("waiting for them");

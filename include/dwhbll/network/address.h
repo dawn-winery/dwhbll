@@ -7,6 +7,17 @@
 #include <variant>
 
 namespace dwhbll::network {
+    namespace conv {
+        constexpr uint32_t make_ipv4(uint32_t a, uint32_t b, uint32_t c, uint32_t d) {
+            return (a << 24 & 0xFF000000) | (b << 16 & 0xFF0000) | (c << 8 & 0xFF00) |
+                   (d & 0xFF);
+        }
+        constexpr uint32_t make_ipv4(const std::array<std::uint8_t, 4>& addr) {
+            return (addr[0] << 24 & 0xFF000000) | (addr[1] << 16 & 0xFF0000) | (addr[2] << 8 & 0xFF00) |
+                   (addr[3] & 0xFF);
+        }
+    }
+
     struct address {
         enum TYPE {
             EMPTY,
