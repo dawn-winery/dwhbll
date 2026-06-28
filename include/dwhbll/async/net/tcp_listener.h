@@ -36,5 +36,7 @@ namespace dwhbll::async::net {
         [[nodiscard]] stl_ext::Result<stl_ext::UNIT, int> listen(const network::address &endpoint, int backlog = 4096);
 
         [[nodiscard]] concurrency::coroutine::task<stl_ext::Result<socket, int>> accept() const noexcept;
+
+        stl_ext::Result<stl_ext::UNIT, int> set_reuseaddr() const noexcept;
     };
 }

@@ -101,4 +101,16 @@ namespace dwhbll::async::net {
             }
         }()));
     }
+
+    Result<UNIT, int> tcp_listener::set_reuseaddr() const noexcept {
+        if (!has_socket())
+            debug::panic();
+
+        int one = 1;
+        auto r = setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
+
+        if (r == 0)
+            return Ok();
+        return Err(errno);
+    }
 }
