@@ -7,6 +7,7 @@
 #include <dwhbll/concurrency/coroutine/uring_promise.h>
 #include <dwhbll/console/debug.hpp>
 #include <dwhbll/console/Logging.h>
+#include <dwhbll/stl_ext/utilities.h>
 
 namespace dwhbll::concurrency::coroutine {
     namespace detail {
@@ -31,7 +32,7 @@ namespace dwhbll::concurrency::coroutine {
         auto now = std::lower_bound(time_tasks.begin(), time_tasks.end(), timer_task{std::chrono::steady_clock::now()});
 
         for (auto b = time_tasks.begin(); b != now; ++b)
-            ready_queue.push_back(b->h);
+            ready_queue.push_back(b->data);
 
         time_tasks.erase(time_tasks.begin(), now);
     }
@@ -51,15 +52,71 @@ namespace dwhbll::concurrency::coroutine {
         return __kernel_timespec{secs.count(), diff.count()};
     }
 
-    void reactor::resume_stall_check(std::coroutine_handle<> h) {
+    void reactor::resume_stall_check(user_data *data, std::coroutine_handle<> h) {
         auto begin = std::chrono::steady_clock::now();
 
-        h.resume();
+        if (!data->parent)
+            debug::panic("Continuation has no associated job!");
+
+        {
+            auto _ = stl_ext::store_temporary(current_job, data->parent);
+            h.resume();
+        }
 
         auto total_time = std::chrono::steady_clock::now() - begin;
 
         if (total_time > std::chrono::milliseconds(5))
             console::warn("reactor stall detected! reactor stalled for {}", total_time);
+
+        user_data_lifetime_end(data);
+    }
+
+    reactor::user_data * reactor::user_data_lifetime_begin() {
+        auto* obj = data_pool.acquire(current_job, nullptr).disown();
+
+        current_job->completions.insert(obj);
+
+        return obj;
+    }
+
+    void reactor::user_data_lifetime_end(user_data *data) {
+        auto* parent_job = data->parent;
+
+        // get rid of parent's completion wait.
+        parent_job->completions.erase(data);
+
+        if (parent_job->completions.empty() && parent_job->children.empty())
+            job_lifetime_end(parent_job); // job lifetime is over if it has nothing left.
+
+        data_pool.offer(data);
+    }
+
+    reactor::job * reactor::job_lifetime_begin() {
+        // start a job who's parent is the current job.
+        auto* job = job_pool.acquire(current_job).disown();
+
+        if (current_job) // job might be root.
+            current_job->children.insert(job);
+
+        inflight_jobs++;
+
+        return job;
+    }
+
+    void reactor::job_lifetime_end(job *job) {
+        auto* parent_job = job->parent;
+
+        if (parent_job) {
+            // have parent waiting on us
+            parent_job->children.erase(job);
+
+            if (parent_job->completions.empty() && parent_job->children.empty())
+                job_lifetime_end(parent_job); // job lifetime is over
+        }
+
+        inflight_jobs--;
+
+        job_pool.offer(job);
     }
 
     reactor::reactor(std::uint32_t size) : ring() {
@@ -77,18 +134,23 @@ namespace dwhbll::concurrency::coroutine {
     }
 
     bool reactor::empty() const {
-        return ready_queue.empty() && time_tasks.empty() && sqe_waiters.empty() && live_uring_tasks == 0;
+        return ready_queue.empty() && time_tasks.empty() && sqe_waiters.empty() && inflight_completions == 0;
     }
 
     void reactor::enqueue(std::coroutine_handle<> handle) {
-        ready_queue.push_back(handle);
+        auto* data = user_data_lifetime_begin();
+        data->handle = handle;
+        ready_queue.push_back(data);
     }
 
     void reactor::add_sleep_task(std::chrono::steady_clock::time_point resume, std::coroutine_handle<> h) {
+        auto* data = user_data_lifetime_begin();
+        data->handle = h;
+
         if (resume < std::chrono::steady_clock::now())
-            ready_queue.push_back(h);
+            ready_queue.push_back(data);
         else
-            time_tasks.insert({resume, h});
+            time_tasks.insert({resume, data});
     }
 
     void reactor::run() {
@@ -120,7 +182,7 @@ namespace dwhbll::concurrency::coroutine {
             while (!ready_queue.empty()) {
                 auto front = ready_queue.front();
                 ready_queue.pop_front();
-                resume_stall_check(front);
+                resume_stall_check(front, front->handle);
             }
 
             while (!sqe_waiters.empty() &&
@@ -128,7 +190,7 @@ namespace dwhbll::concurrency::coroutine {
 
                 auto h = sqe_waiters.front();
                 sqe_waiters.pop_front();
-                resume_stall_check(h);
+                resume_stall_check(h, h->handle);
            }
         }
     }
@@ -150,6 +212,8 @@ namespace dwhbll::concurrency::coroutine {
             }
         };
 
+        auto* job = job_lifetime_begin();
+        auto _ = stl_ext::store_temporary(current_job, job);
         f();
     }
 
@@ -166,6 +230,8 @@ namespace dwhbll::concurrency::coroutine {
             }
         };
 
+        auto* job = job_lifetime_begin();
+        auto _ = stl_ext::store_temporary(current_job, job);
         f();
 
         return fut;
@@ -183,9 +249,12 @@ namespace dwhbll::concurrency::coroutine {
         if (!sqe)
             return nullptr;
 
-        io_uring_sqe_set_data(sqe, &h);
+        auto* data = user_data_lifetime_begin();
+        data->promise = &h;
 
-        live_uring_tasks++;
+        io_uring_sqe_set_data(sqe, data);
+
+        inflight_completions++;
 
         return sqe;
     }
@@ -195,19 +264,23 @@ namespace dwhbll::concurrency::coroutine {
     }
 
     void reactor::process_cqe(io_uring_cqe *cqe) {
-        live_uring_tasks--;
+        inflight_completions--;
 
-        auto promise = static_cast<uring_promise *>(io_uring_cqe_get_data(cqe));
+        auto* job_info = static_cast<user_data *>(io_uring_cqe_get_data(cqe));
+
+        auto* promise = static_cast<uring_promise*>(job_info->promise);
 
         promise->cqe = cqe;
 
-        resume_stall_check(promise->waiter); // resume the coroutine
+        resume_stall_check(job_info, promise->waiter); // resume the coroutine
 
         io_uring_cqe_seen(&ring, cqe);
     }
 
     void reactor::enqueue_sqe_waiter(std::coroutine_handle<> handle) {
-        sqe_waiters.push_back(handle);
+        auto* data = user_data_lifetime_begin();
+        data->handle = handle;
+        sqe_waiters.push_back(data);
     }
 
     io_uring * reactor::get_uring_ptr() {

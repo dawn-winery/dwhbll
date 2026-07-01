@@ -14,7 +14,6 @@ namespace dwhbll::memory {
 	 * @tparam T the type of the object in the pool
 	 */
 	template <typename T, size_t BlockSize = std::max(1024/sizeof(T), 1ul)>
-	requires std::default_initializable<T>
 	class Pool {
 // #pragma pack(push, 1)
 		struct Obj {
@@ -28,6 +27,7 @@ namespace dwhbll::memory {
 		Obj* objects, *objectsBack;
 		std::size_t available = 0, size = 0;
 		concurrency::spinlock _lock;
+	    // TODO: this is probably avoidable.
 		std::unordered_map<T*, std::pair<Obj*, std::size_t>> returning;
 
 		Obj* makeNew() {
@@ -151,7 +151,7 @@ namespace dwhbll::memory {
 			--obj->blockAvailable;
 			obj->used[index] = true;
 			auto* f = obj->object;
-			auto* newobj = new(f + index)T(args...);
+			auto* newobj = new(f + index)T(std::forward<Args>(args)...);
 			returning[f + index] = {obj, index};
 			return ObjectWrapper(this, f + index);
 		}
@@ -200,7 +200,7 @@ namespace dwhbll::memory {
 		}
 	};
 
-	template<typename T, size_t BlockSize> requires std::default_initializable<T>
+	template<typename T, size_t BlockSize>
 	Pool<T, BlockSize>::ObjectWrapper::~ObjectWrapper() {
 		if (object != nullptr) {
 			parent->offer(object);

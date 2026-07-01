@@ -9,6 +9,7 @@ namespace dwhbll::concurrency::coroutine {
      */
     struct uring_promise {
         io_uring_cqe* cqe = nullptr;
+        // todo get this into the reactor user_data struct instead.
         std::coroutine_handle<> waiter;
 
         bool await_ready() const noexcept;
