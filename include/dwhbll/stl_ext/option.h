@@ -156,8 +156,8 @@ namespace dwhbll::stl_ext {
             return (std::forward<decltype(self)>(self).data.SOME_VALUE);
         }
 
-        template <typename U>
-        Option<U> map(this auto&& self, const std::function<U(T)> &f) {
+        template <typename F, typename U = std::invoke_result_t<F, T>>
+        Option<U> map(this auto&& self, F&& f) {
             if (self.type == None)
                 return Option<U>();
             return Option<U>(f(std::forward<decltype(self)>(self).data.SOME_VALUE));
