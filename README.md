@@ -18,4 +18,5 @@ General list of library components:
 - Collection of networking related things
 - Some platform specific wrappers (notably linux ptrace)
 - Subprocess tooling (similar to python popen) 
+- Testing lib (uses C++26 reflection!)
 - Trash drawer of other utilities in `utils`
