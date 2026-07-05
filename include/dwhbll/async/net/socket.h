@@ -1,22 +1,20 @@
 #pragma once
 
+#include <memory>
+#include <dwhbll/async/net/isocket.h>
 #include <dwhbll/concurrency/coroutine/task.h>
 #include <dwhbll/network/address.h>
 #include <dwhbll/stl_ext/result.h>
 
 namespace dwhbll::async::net {
-    class socket {
+    class socket : public isocket {
         int fd{-1};
         network::address addr{};
 
         bool shutdown {false};
         bool nodelay_ {false};
 
-        static concurrency::coroutine::task<stl_ext::Result<socket, int>> connect_internal(bool use_ipv6, const network::address &endpoint, int socktype);
-
-        [[nodiscard]] concurrency::coroutine::task<stl_ext::Result<stl_ext::UNIT, int>> read_exact0(std::span<std::uint8_t> buffer);
-
-        [[nodiscard]] concurrency::coroutine::task<stl_ext::Result<stl_ext::UNIT, int>> write_exact0(std::span<const std::uint8_t> buffer) const;
+        static concurrency::coroutine::task<stl_ext::Result<std::unique_ptr<socket>, int>> connect_internal(bool use_ipv6, const network::address &endpoint, int socktype);
 
     public:
         socket();
@@ -25,7 +23,7 @@ namespace dwhbll::async::net {
 
         socket(int fd, network::address addr);
 
-        virtual ~socket();
+        ~socket() override;
 
         socket(const socket &other) = delete;
 
@@ -51,7 +49,7 @@ namespace dwhbll::async::net {
          * @param endpoint Address to connect to, or domain, domain will be resolved
          * @return Socket if connected
          */
-        [[nodiscard]] static concurrency::coroutine::task<stl_ext::Result<socket, int>> connect_tcp(bool use_ipv6, const network::address &endpoint);
+        [[nodiscard]] static concurrency::coroutine::task<stl_ext::Result<std::unique_ptr<socket>, int>> connect_tcp(bool use_ipv6, const network::address &endpoint);
 
         /**
          * @brief Connect UDP Socket
@@ -59,16 +57,16 @@ namespace dwhbll::async::net {
          * @param endpoint Address to connect to, or domain, domain will be resolved
          * @return Socket if connected
          */
-        [[nodiscard]] static concurrency::coroutine::task<stl_ext::Result<socket, int>> connect_udp(bool use_ipv6, const network::address &endpoint);
+        [[nodiscard]] static concurrency::coroutine::task<stl_ext::Result<std::unique_ptr<socket>, int>> connect_udp(bool use_ipv6, const network::address &endpoint);
 
-        [[nodiscard]] virtual concurrency::coroutine::task<stl_ext::Result<stl_ext::UNIT, int>> read(std::span<std::uint8_t> buffer);
+        [[nodiscard]] concurrency::coroutine::task<stl_ext::Result<stl_ext::UNIT, int>> read(std::span<std::uint8_t> buffer) override;
 
-        [[nodiscard]] virtual concurrency::coroutine::task<stl_ext::Result<stl_ext::UNIT, int>> write(std::span<const std::uint8_t> buffer);
+        [[nodiscard]] concurrency::coroutine::task<stl_ext::Result<stl_ext::UNIT, int>> write(std::span<const std::uint8_t> buffer) override;
 
-        [[nodiscard]] virtual concurrency::coroutine::task<stl_ext::Result<ssize_t, int>> read_some(std::span<std::uint8_t> buffer);
+        [[nodiscard]] concurrency::coroutine::task<stl_ext::Result<ssize_t, int>> read_some(std::span<std::uint8_t> buffer) override;
 
-        [[nodiscard]] virtual concurrency::coroutine::task<stl_ext::Result<ssize_t, int>> write_some(std::span<const std::uint8_t> buffer);
+        [[nodiscard]] concurrency::coroutine::task<stl_ext::Result<ssize_t, int>> write_some(std::span<const std::uint8_t> buffer) override;
 
-        [[nodiscard]] virtual concurrency::coroutine::task<stl_ext::Result<stl_ext::UNIT, int>> flush();
+        [[nodiscard]] concurrency::coroutine::task<stl_ext::Result<stl_ext::UNIT, int>> flush() override;
     };
 }

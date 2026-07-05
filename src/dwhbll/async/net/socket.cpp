@@ -13,7 +13,7 @@
 #include <netinet/tcp.h>
 
 namespace dwhbll::async::net {
-    task<stl_ext::Result<socket, int>> socket::connect_internal(bool use_ipv6, const network::address &endpoint, int socktype) {
+    task<stl_ext::Result<std::unique_ptr<socket>, int>> socket::connect_internal(bool use_ipv6, const network::address &endpoint, int socktype) {
         sockaddr_storage addr{};
         std::size_t addrlen{};
         switch (endpoint.type) {
@@ -43,7 +43,7 @@ namespace dwhbll::async::net {
             co_return stl_ext::Err(errno);
 
         co_return (co_await calls::connect(sock, reinterpret_cast<sockaddr *>(&addr), addrlen)).map([sock, endpoint](auto) {
-            return socket{sock, endpoint};
+            return std::make_unique<socket>(sock, endpoint);
         });
     }
 
@@ -109,29 +109,27 @@ namespace dwhbll::async::net {
         return addr;
     }
 
-    task<stl_ext::Result<socket, int>> socket::connect_tcp(bool use_ipv6, const network::address &endpoint) {
+    task<stl_ext::Result<std::unique_ptr<socket>, int>> socket::connect_tcp(bool use_ipv6, const network::address &endpoint) {
         return connect_internal(use_ipv6, endpoint, SOCK_STREAM);
     }
 
-    task<stl_ext::Result<socket, int>> socket::connect_udp(bool use_ipv6, const network::address &endpoint) {
+    task<stl_ext::Result<std::unique_ptr<socket>, int>> socket::connect_udp(bool use_ipv6, const network::address &endpoint) {
         return connect_internal(use_ipv6, endpoint, SOCK_DGRAM);
     }
 
-    task<stl_ext::Result<stl_ext::UNIT, int>> socket::read_exact0(std::span<std::uint8_t> buffer) {
+    task<stl_ext::Result<stl_ext::UNIT, int>> socket::read(std::span<std::uint8_t> buffer) {
         if (!has_socket())
             debug::panic();
 
-        auto* head = buffer.data();
-        auto size = buffer.size();
+        auto buf = buffer;
 
-        while (size != 0) {
-            auto res = co_await calls::recv(fd, head, size, 0);
+        while (!buf.empty()) {
+            auto res = co_await read_some(buf);
             if (res.is_err())
                 co_return res.map(stl_ext::TO_UNIT);
 
             auto count = res.ok().unwrap();
-            head += count;
-            size -= count;
+            buf = buf.subspan(count);
 
             if (count == 0) {
                 close();
@@ -142,38 +140,22 @@ namespace dwhbll::async::net {
         co_return stl_ext::Ok();
     }
 
-    task<stl_ext::Result<stl_ext::UNIT, int>> socket::write_exact0(std::span<const std::uint8_t> buffer) const {
-        if (!has_socket())
-            debug::panic();
-
-        auto* head = buffer.data();
-        auto size = buffer.size();
-
-        while (size != 0) {
-            auto res = co_await calls::send(fd, head, size, 0);
-            if (res.is_err())
-                co_return res.map(stl_ext::TO_UNIT);
-
-            auto count = res.ok().unwrap();
-            head += count;
-            size -= count;
-        }
-
-        co_return stl_ext::Ok();
-    }
-
-    task<stl_ext::Result<stl_ext::UNIT, int>> socket::read(std::span<std::uint8_t> buffer) {
-        if (!has_socket())
-            debug::panic();
-
-        co_return co_await read_exact0(buffer);
-    }
-
     task<stl_ext::Result<stl_ext::UNIT, int>> socket::write(std::span<const std::uint8_t> buffer) {
         if (!has_socket())
             debug::panic();
 
-        co_return co_await write_exact0(buffer);
+        auto buf = buffer;
+
+        while (!buf.empty()) {
+            auto res = co_await write_some(buf);
+            if (res.is_err())
+                co_return res.map(stl_ext::TO_UNIT);
+
+            auto count = res.ok().unwrap();
+            buf = buf.subspan(count);
+        }
+
+        co_return stl_ext::Ok();
     }
 
     task<stl_ext::Result<ssize_t, int>> socket::read_some(std::span<std::uint8_t> buffer) {

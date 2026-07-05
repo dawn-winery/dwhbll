@@ -80,7 +80,7 @@ namespace dwhbll::async::net {
         return Ok();
     }
 
-    task<Result<socket, int>> tcp_listener::accept() const noexcept {
+    task<Result<std::unique_ptr<socket>, int>> tcp_listener::accept() const noexcept {
         if (fd_ < 0)
             debug::panic("Socket not listening!");
 
@@ -92,7 +92,7 @@ namespace dwhbll::async::net {
         if (sock.is_err())
             co_return Err(sock.unwrap_err_unchecked());
 
-        co_return Ok(socket(sock.unwrap_unchecked(), [&] -> network::address {
+        co_return Ok(std::make_unique<socket>(sock.unwrap_unchecked(), [&] -> network::address {
             switch (addr.ss_family) {
                 case AF_INET: {
                     auto* a = reinterpret_cast<sockaddr_in*>(&addr);

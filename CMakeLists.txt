@@ -77,6 +77,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/utils/uuid.cpp
 
     include/dwhbll/async/net/buffered_socket.h
+    include/dwhbll/async/net/isocket.h
     include/dwhbll/async/net/socket.h
     include/dwhbll/async/net/tcp_listener.h
     include/dwhbll/collections/cache.h
