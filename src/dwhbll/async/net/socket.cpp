@@ -54,7 +54,7 @@ namespace dwhbll::async::net {
     socket::socket(int fd, network::address addr) : fd(fd), addr(std::move(addr)) {}
 
     socket::~socket() {
-        close();
+        socket::close();
     }
 
     socket::socket(socket &&other) noexcept: fd(other.fd),

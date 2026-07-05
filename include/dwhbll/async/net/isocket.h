@@ -10,7 +10,7 @@ namespace dwhbll::network {
 namespace dwhbll::async::net {
     class isocket {
     public:
-        virtual ~isocket();
+        virtual ~isocket() = default;
 
         [[nodiscard]] virtual bool is_shutdown() const noexcept = 0;
         [[nodiscard]] virtual bool has_socket() const noexcept = 0;
