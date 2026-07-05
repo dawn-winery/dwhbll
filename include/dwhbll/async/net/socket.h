@@ -33,15 +33,15 @@ namespace dwhbll::async::net {
 
         socket & operator=(socket &&other) noexcept;
 
-        [[nodiscard]] bool is_shutdown() const noexcept;
-        [[nodiscard]] bool has_socket() const noexcept;
+        [[nodiscard]] bool is_shutdown() const noexcept override;
+        [[nodiscard]] bool has_socket() const noexcept override;
 
-        void set_nodelay(bool state) noexcept;
-        [[nodiscard]] bool get_nodelay() const noexcept;
+        void set_nodelay(bool state) noexcept override;
+        [[nodiscard]] bool get_nodelay() const noexcept override;
 
-        void close() noexcept;
+        void close() noexcept override;
 
-        [[nodiscard]] const network::address& get_address() const noexcept;
+        [[nodiscard]] const network::address& get_address() const noexcept override;
 
         /**
          * @brief Connect TCP Socket

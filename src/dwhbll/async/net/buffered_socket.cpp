@@ -14,8 +14,6 @@ namespace dwhbll::async::net {
         return copy_size;
     }
 
-    buffered_socket::buffered_socket(std::unique_ptr<isocket> &&sock) : super(std::move(sock)) {}
-
     task<Result<UNIT, int>> buffered_socket::read(std::span<std::uint8_t> buffer) {
         auto buf = buffer;
 
@@ -43,10 +41,10 @@ namespace dwhbll::async::net {
 
         if (requested >= BUFFER_SIZE) {
             // huge
-            co_return co_await super->read_some(buffer);
+            co_return co_await decorated_socket::read_some(buffer);
         }
 
-        auto r = co_await super->read_some(inbound_buffer);
+        auto r = co_await decorated_socket::read_some(inbound_buffer);
         inbound_size = BUFFER_SIZE;
         inbound_head = 0;
 
@@ -64,7 +62,7 @@ namespace dwhbll::async::net {
         }
 
         if (high_water)
-            co_return (co_await super->write(buffer)).map([&buffer](auto) -> ssize_t { return buffer.size(); });
+            co_return (co_await decorated_socket::write(buffer)).map([&buffer](auto) -> ssize_t { return buffer.size(); });
 
         bool wrapped = outbound_head + outbound_size >= BUFFER_SIZE;
         bool will_wrap = outbound_head + outbound_size + buffer.size() >= BUFFER_SIZE;
@@ -91,7 +89,7 @@ namespace dwhbll::async::net {
     }
 
     task<Result<UNIT, int>> buffered_socket::flush() {
-        auto r = co_await super->write({
+        auto r = co_await decorated_socket::write({
             outbound_buffer.begin() + outbound_head,
             outbound_buffer.begin() + std::min(BUFFER_SIZE, outbound_head + outbound_size)
         });
@@ -100,7 +98,7 @@ namespace dwhbll::async::net {
             co_return r;
 
         if (outbound_head + outbound_size >= BUFFER_SIZE) {
-            r = co_await super->write({
+            r = co_await decorated_socket::write({
                 outbound_buffer.begin(),
                 outbound_buffer.begin() + outbound_head + outbound_size - BUFFER_SIZE
             });
