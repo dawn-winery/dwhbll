@@ -75,6 +75,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/utils/string.cpp
     src/dwhbll/utils/threading.cpp
     src/dwhbll/utils/uuid.cpp
+    src/dwhbll/testing/testing.cpp
 
     include/dwhbll/async/net/buffered_socket.h
     include/dwhbll/async/net/socket.h
@@ -161,6 +162,8 @@ set(DWHBLL_SOURCES
     include/dwhbll/concurrency/owning_spinlock.h
     include/dwhbll/stl_ext/ranges.h
     include/dwhbll/stl_ext/utilities.h
+    include/dwhbll/testing/testing.hpp
+    include/dwhbll/testing/testing_detail.hpp
 )
 
 # Main target
