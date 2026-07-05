@@ -6,7 +6,6 @@
 #include <dwhbll/console/debug.hpp>
 
 #include <exception>
-#include <print>
 
 namespace dwhbll::test {
 

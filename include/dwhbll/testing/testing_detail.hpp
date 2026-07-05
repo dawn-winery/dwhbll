@@ -4,6 +4,7 @@
 
 #if __cpp_impl_reflection >= 202506L
 
+#include <algorithm>
 #include <source_location>
 #include <string>
 #include <vector>
@@ -42,6 +43,16 @@ struct entry {
     bool skip;
 };
 
+// Random bullshit go!
+template <std::size_t N>
+struct fixed_string {
+    char data[N]{};
+    consteval fixed_string(char const (&s)[N]) {
+        std::copy_n(s, N, data);
+    }
+};
+template <std::size_t N> fixed_string(char const (&)[N]) -> fixed_string<N>;
+
 std::vector<entry>& registry();
 
 consteval std::meta::info find_test_annotation(std::meta::info n) {
@@ -55,7 +66,7 @@ consteval std::meta::info find_test_annotation(std::meta::info n) {
     return std::meta::info();
 }
 
-template <std::meta::info Scope>
+template <std::meta::info Scope, fixed_string TU>
 void collect_tests() {
     constexpr auto ctx = std::meta::access_context::unchecked();
 
@@ -65,11 +76,11 @@ void collect_tests() {
                              (std::meta::identifier_of(n) == "std" ||
                               std::meta::identifier_of(n).starts_with("__"))))
             if constexpr (std::meta::is_enumerable_type(n))
-                collect_tests<n>();
+                collect_tests<n, TU>();
         }
         else if constexpr (std::meta::is_type(n) && std::meta::is_class_type(n)) {
             if constexpr (std::meta::is_enumerable_type(n))
-                collect_tests<n>();
+                collect_tests<n, TU>();
         }
         else if constexpr (std::meta::is_function(n)) {
             constexpr auto ann = find_test_annotation(n);
@@ -97,11 +108,6 @@ void collect_tests() {
             }
         }
     }
-}
-
-inline bool register_file() {
-    collect_tests<^^::>();
-    return true;
 }
 
 } // namespace dwhbll::test::detail
