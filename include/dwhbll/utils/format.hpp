@@ -103,6 +103,7 @@ constexpr std::string dbg(T const& val, int depth = 0, int step = 4, bool first_
 
 #define 🦀 dbg
 
+#if 0
 #define TRACE_FUNC(func) \
     constexpr std::string_view __id = std::meta::identifier_of(^^func); \
     std::string __s; \
@@ -111,6 +112,6 @@ constexpr std::string dbg(T const& val, int depth = 0, int step = 4, bool first_
         __s += std::format("{}{} = {}\n", get_indentation(2, 5), std::meta::identifier_of(__e), debugfmt([: std::meta::variable_of(__e) :], 2, 5, false)); \
     } \
     trace(std::format("function {}:\n{}", __id, __s));
-
+#endif
 
 } // namespace dwhbll::debug
