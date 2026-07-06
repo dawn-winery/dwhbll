@@ -62,8 +62,8 @@ int main() {
     if (cloned.inventory[0].get() == user.inventory[0].get()) return 1;
 
 
-    dwhbll::console::info("Original Struct: {}",::dwhbll::debug::dbg(user));
-    dwhbll::console::info("Cloned Struct: {}",::dwhbll::debug::dbg(cloned));
+    dwhbll::console::info("Original Struct: {}",::dwhbll::meta::dbg(user));
+    dwhbll::console::info("Cloned Struct: {}",::dwhbll::meta::dbg(cloned));
 
 
     return 0;

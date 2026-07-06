@@ -1,9 +1,5 @@
 #pragma once
 
-#include <version>
-
-#if __cpp_impl_reflection >= 202506L
-
 #include <dwhbll/testing/testing_detail.hpp>
 
 #include <cstddef>
@@ -67,5 +63,3 @@ int run_all();
 #define DWHBLL_TEST_REGISTER_FILE() \
     namespace { static const bool registered_here_ = \
         (::dwhbll::test::detail::collect_tests<^^::, ::dwhbll::test::detail::fixed_string(__FILE__)>(), true); }
-
-#endif

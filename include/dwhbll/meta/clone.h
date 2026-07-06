@@ -1,13 +1,12 @@
 #pragma once
 
-#if __cpp_impl_reflection >= 202506L
-
-#include <meta>
 #include <concepts>
 #include <memory>
 #include <vector>
+#include <meta>
 
-namespace dwhbll::clone {
+namespace dwhbll::meta {
+
 template <typename T>
   requires std::copy_constructible<T> && (!std::is_aggregate_v<T>) &&
            (!std::ranges::input_range<T>)
@@ -83,6 +82,5 @@ T clone(T const &value) {
   }
   return result;
 }
-} // namespace dwhbll::meta
 
-#endif
+} // namespace dwhbll::meta

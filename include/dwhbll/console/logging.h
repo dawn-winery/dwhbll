@@ -4,7 +4,7 @@
 #include <list>
 #include <string>
 #include <unordered_map>
-#include <dwhbll/utils/format.hpp>
+#include <dwhbll/debug/format.h>
 
 #include <type_traits>
 
@@ -37,19 +37,9 @@ namespace dwhbll::console {
             if constexpr (std::formattable<U, char>) {
                 return std::forward<T>(value);
             } 
-#if __cpp_impl_reflection >= 202506L                 
             else {
-                return ::dwhbll::debug::dbg(value);
+                return ::dwhbll::meta::dbg(value);
             }   
-#else
-            else {
-                static_assert(
-                    false,
-                    "This type is not std::formattable. "
-                    "Compile this target with reflection support to log arbitrary structs."
-                );
-            }
-#endif
         }
 
         template <typename T>

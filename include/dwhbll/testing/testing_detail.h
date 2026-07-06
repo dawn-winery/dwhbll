@@ -1,9 +1,5 @@
 #pragma once
 
-#include <version>
-
-#if __cpp_impl_reflection >= 202506L
-
 #include <algorithm>
 #include <source_location>
 #include <string>
@@ -111,5 +107,3 @@ void collect_tests() {
 }
 
 } // namespace dwhbll::test::detail
-
-#endif
