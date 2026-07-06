@@ -239,6 +239,15 @@ install(TARGETS dwhbll
     EXPORT dwhbllTargets
 )
 
+add_library(dwhbll_test_main STATIC src/dwhbll/testing/test_main.cpp)
+target_link_libraries(dwhbll_test_main PUBLIC dwhbll_core)
+
+install(TARGETS dwhbll_test_main
+    EXPORT dwhbllTargets
+    ARCHIVE DESTINATION lib
+    INCLUDES DESTINATION include
+)
+
 install(EXPORT dwhbllTargets
     FILE dwhbllTargets.cmake
     NAMESPACE dwhbll::
@@ -263,25 +272,6 @@ install(FILES
 # TODO : IMPROVE INTEGRATION OF GPU COMPUTE FOR USERS
 
 if (DWHBLL_TESTS)
-    set(DWHBLL_TEST_CXX_SOURCES
-        tests/test_main.cpp
-        tests/pool.cpp
-        tests/matrix.cpp
-        tests/collections/cache.cpp
-        tests/collections/ring.cpp
-        tests/collections/streams.cpp
-        tests/graphics/bitmap.cpp
-        tests/bench/bounded_spsc_int_bench.cpp
-        tests/bench/bounded_mpsc_int_bench.cpp
-        tests/bench/recycling_concurrent_stack_bench.cpp
-        tests/cryptography/arc4.cpp
-    )
-
-    add_executable(dwhbll_test ${DWHBLL_TEST_CXX_SOURCES})
-    target_link_libraries(dwhbll_test PRIVATE dwhbll)
-    target_include_directories(dwhbll_test PRIVATE include)
+    add_executable(dwhbll_test tests/test.cpp)
+    target_link_libraries(dwhbll_test PRIVATE dwhbll dwhbll_test_main)
 endif()
-
-add_executable(http_server_test tests/http_server_test.cpp)
-target_link_libraries(http_server_test dwhbll)
-target_include_directories(http_server_test PRIVATE include)

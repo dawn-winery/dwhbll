@@ -8,10 +8,11 @@
 
 namespace dwhbll::test::detail {
 
+struct test_marker {};
+
 template <std::size_t N>
-struct TestInfo {
-    char name[N]{};
-    bool skip = false;
+struct name_tag {
+    char value[N]{};
 };
 
 struct failure {
@@ -51,11 +52,15 @@ template <std::size_t N> fixed_string(char const (&)[N]) -> fixed_string<N>;
 
 std::vector<entry>& registry();
 
-consteval std::meta::info find_test_annotation(std::meta::info n) {
+consteval bool is_test(std::meta::info n) {
+    return !std::meta::annotations_of_with_type(n, ^^test_marker).empty();
+}
+
+consteval std::meta::info find_name_annotation(std::meta::info n) {
     for (auto a : std::meta::annotations_of(n)) {
         auto t = std::meta::type_of(a);
         if (std::meta::has_template_arguments(t) &&
-            std::meta::template_of(t) == ^^TestInfo) {
+            std::meta::template_of(t) == ^^name_tag) {
             return a;
         }
     }
@@ -79,28 +84,35 @@ void collect_tests() {
                 collect_tests<n, TU>();
         }
         else if constexpr (std::meta::is_function(n)) {
-            constexpr auto ann = find_test_annotation(n);
-            if constexpr (ann != std::meta::info()) {
-                if constexpr (std::meta::is_class_member(n) &&
-                              !std::meta::is_static_member(n)) {
-                    static_assert(false, "Test annotation on non-static member "
-                                         "functions is not allowed.");
+            if constexpr (is_test(n)) {
+                static_assert(!std::meta::is_class_member(n) || std::meta::is_static_member(n),
+                              "test annotation on non-static member functions is not allowed.");
+                constexpr auto name_ann = find_name_annotation(n);
+                std::string_view name;
+
+                if constexpr (name_ann != std::meta::info()) {
+                    static constexpr auto name_val =
+                        std::meta::extract<typename[: std::meta::type_of(name_ann) :]>(name_ann);
+                    name = std::string_view(name_val.value);
+                } else {
+                    static_assert(std::meta::has_identifier(n),
+                        "test with no name given on a function with no identifier");
+                    static constexpr auto id = std::meta::identifier_of(n);
+                    name = id;
                 }
-                else {
-                    static constexpr auto info_val =
-                        std::meta::extract<typename[: std::meta::type_of(ann) :]>(ann);
-                    auto fn = std::meta::extract<void(*)()>(n);
-                    auto& reg = registry();
-                    bool found = false;
-                    for (auto const& e : reg) {
-                        if (e.fn == fn) {
-                            found = true;
-                            break;
-                        }
+
+                auto fn = std::meta::extract<void(*)()>(n);
+                auto& reg = registry();
+
+                bool found = false;
+                for (auto const& e : reg) {
+                    if (e.fn == fn) {
+                        found = true;
+                        break;
                     }
-                    if (!found)
-                        reg.push_back({info_val.name, fn, info_val.skip});
                 }
+                if (!found)
+                    reg.push_back({name, fn, false});
             }
         }
     }
