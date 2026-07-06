@@ -6,7 +6,6 @@
 
 #include <dwhbll/utils/utils.hpp>
 #include <dwhbll/utils/json.hpp>
-#include <dwhbll/console/Logging.h>
 #include <cassert>
 #include <meta>
 

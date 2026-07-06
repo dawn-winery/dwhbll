@@ -277,8 +277,6 @@ if (DWHBLL_TESTS)
     )
 
     add_executable(dwhbll_test ${DWHBLL_TEST_CXX_SOURCES})
-
-
     target_link_libraries(dwhbll_test PRIVATE dwhbll)
     target_include_directories(dwhbll_test PRIVATE include)
 endif()
