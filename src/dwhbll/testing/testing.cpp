@@ -1,7 +1,7 @@
 #include <dwhbll/testing/testing.hpp>
 #include <dwhbll/console/debug.hpp>
-#include <print>
 
+#include <print>
 #include <exception>
 
 namespace dwhbll::test {

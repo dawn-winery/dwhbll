@@ -12,15 +12,6 @@
 
 namespace dwhbll::test {
 
-inline constexpr detail::test_marker test{};
-
-template <std::size_t N>
-consteval auto name(char const (&s)[N]) {
-    detail::name_tag<N> t{};
-    std::copy_n(s, N, t.value);
-    return t;
-}
-
 bool expect(bool cond, std::string_view msg = {},
             std::source_location loc = std::source_location::current());
 
