@@ -1,12 +1,15 @@
 #include <dwhbll/testing/testing.hpp>
 
-[[=dwhbll::test::test]]
-[[=dwhbll::test::name("test1")]]
+using namespace dwhbll::test;
+
+[[=test]]
+[[=skip("reason")]]
+[[=name("test1")]]
 void test1() {
     return;
 }
 
-[[=dwhbll::test::test]]
+[[=test]]
 void test2() {
     return;
 }
