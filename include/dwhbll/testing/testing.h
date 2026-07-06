@@ -12,11 +12,12 @@
 
 namespace dwhbll::test {
 
+inline constexpr detail::test_marker test{};
+
 template <std::size_t N>
-consteval auto Test(char const (&s)[N], bool skip = false) {
-    detail::TestInfo<N> t{};
-    for (std::size_t i = 0; i < N; ++i) t.name[i] = s[i];
-    t.skip = skip;
+consteval auto name(char const (&s)[N]) {
+    detail::name_tag<N> t{};
+    std::copy_n(s, N, t.value);
     return t;
 }
 
@@ -61,5 +62,5 @@ int run_all();
     do { if (!::dwhbll::test::expect_ne((a), (b))) return; } while (0)
 
 #define DWHBLL_TEST_REGISTER_FILE() \
-    namespace { static const bool registered_here_ = \
+    namespace { static const bool _ = \
         (::dwhbll::test::detail::collect_tests<^^::, ::dwhbll::test::detail::fixed_string(__FILE__)>(), true); }
