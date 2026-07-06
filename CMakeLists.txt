@@ -211,6 +211,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/math/vec4.h
     include/dwhbll/memory/pool.h
     include/dwhbll/meta/meta.h
+    include/dwhbll/meta/clone.h
     include/dwhbll/network/address.h
     include/dwhbll/network/buffered_socket.h
     include/dwhbll/network/dns/dns.h
