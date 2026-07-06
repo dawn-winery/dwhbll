@@ -1,7 +1,3 @@
-#include <version>
-
-#if __cpp_impl_reflection >= 202506L
-
 #include <dwhbll/testing/testing.hpp>
 #include <dwhbll/console/debug.hpp>
 
@@ -110,5 +106,3 @@ int run_all() {
 }
 
 } // namespace dwhbll::test
-
-#endif
