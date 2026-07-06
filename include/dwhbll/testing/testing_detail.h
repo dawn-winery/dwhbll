@@ -6,19 +6,31 @@
 #include <vector>
 #include <meta>
 
-namespace dwhbll::test::detail {
+namespace dwhbll::test {
 
 struct test_marker {};
+inline constexpr test_marker test{};
 
-template <std::size_t N>
-struct name_tag {
-    char value[N]{};
+struct name {
+    constexpr explicit name(char const* name = {})
+        : test_name(name) {}
+
+    char const* test_name;
+};
+
+struct skip {
+    constexpr explicit skip(char const* reason_ = {})
+        : reason(reason_) {}
+
+    char const* reason;
 };
 
 struct failure {
     std::string msg;
     std::source_location loc;
 };
+
+namespace detail {
 
 class result {
 public:
@@ -56,13 +68,11 @@ consteval bool is_test(std::meta::info n) {
     return !std::meta::annotations_of_with_type(n, ^^test_marker).empty();
 }
 
-consteval std::meta::info find_name_annotation(std::meta::info n) {
+consteval std::meta::info find_annotation(std::meta::info n, std::meta::info type) {
     for (auto a : std::meta::annotations_of(n)) {
         auto t = std::meta::type_of(a);
-        if (std::meta::has_template_arguments(t) &&
-            std::meta::template_of(t) == ^^name_tag) {
+        if (t == type)
             return a;
-        }
     }
     return std::meta::info();
 }
@@ -87,13 +97,13 @@ void collect_tests() {
             if constexpr (is_test(n)) {
                 static_assert(!std::meta::is_class_member(n) || std::meta::is_static_member(n),
                               "test annotation on non-static member functions is not allowed.");
-                constexpr auto name_ann = find_name_annotation(n);
+                constexpr auto name_ann = find_annotation(n, ^^name);
                 std::string_view name;
 
                 if constexpr (name_ann != std::meta::info()) {
                     static constexpr auto name_val =
                         std::meta::extract<typename[: std::meta::type_of(name_ann) :]>(name_ann);
-                    name = std::string_view(name_val.value);
+                    name = std::string_view(name_val.test_name);
                 } else {
                     static_assert(std::meta::has_identifier(n),
                         "test with no name given on a function with no identifier");
@@ -118,4 +128,6 @@ void collect_tests() {
     }
 }
 
-} // namespace dwhbll::test::detail
+} // namespace detail
+
+} // namespace dwhbll::test
