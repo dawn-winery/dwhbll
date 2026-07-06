@@ -45,19 +45,9 @@ namespace dwhbll::console {
             if constexpr (std::formattable<U, char>) {
                 return std::forward<T>(value);
             } 
-#if __cpp_impl_reflection >= 202506L                 
             else {
                 return ::dwhbll::debug::dbg(value);
             }   
-#else
-            else {
-                static_assert(
-                    false,
-                    "This type is not std::formattable. "
-                    "Compile this target with reflection support to log arbitrary structs."
-                );
-            }
-#endif
         }
 
         template <typename T>

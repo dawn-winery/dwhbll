@@ -1,8 +1,5 @@
 #pragma once
 
-#include <version>
-
-#if __cpp_impl_reflection >= 202506L
 #include <meta>
 #include <string>
 #include <algorithm>
@@ -48,4 +45,3 @@ constexpr std::optional<E> string_to_enum(std::string_view name) {
 }
 
 } // namespace dwhbll::utils
-#endif

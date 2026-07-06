@@ -5,8 +5,6 @@
 #include <meta>
 #include <vector>
 
-#if __cpp_impl_reflection >= 202506L
-
 namespace dwhbll::utils {
 template <typename T>
   requires std::copy_constructible<T> && (!std::is_aggregate_v<T>) &&
@@ -84,9 +82,3 @@ T clone(T const &value) {
   return result;
 }
 } // namespace dwhbll::utils
-
-#else
-
-#error "Your compiler is bad. Plz understand"
-
-#endif

@@ -1,9 +1,5 @@
 #pragma once
 
-#include <version>
-
-#if __cpp_impl_reflection >= 202506L
-
 #include <dwhbll/utils/utils.hpp>
 #include <dwhbll/utils/json.hpp>
 #include <cassert>
@@ -118,5 +114,3 @@ constexpr std::string dbg(T const& val, int depth = 0, int step = 4, bool first_
 
 
 } // namespace dwhbll::debug
-
-#endif

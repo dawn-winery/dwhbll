@@ -7,6 +7,7 @@ find_package(PkgConfig REQUIRED)
 
 set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+add_compile_options("-freflection")
 
 option(DWHBLL_TESTS "Build tests" OFF)
 option(BUILD_HARDEN "enable hardening on the library." OFF)
