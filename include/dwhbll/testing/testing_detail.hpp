@@ -78,48 +78,49 @@ consteval std::meta::info find_annotation(std::meta::info n, std::meta::info typ
 
 template <std::meta::info Scope, fixed_string TU>
 void collect_tests() {
-    constexpr auto ctx = std::meta::access_context::unchecked();
+    using namespace std::meta;
+    constexpr auto ctx = access_context::unchecked();
 
-    template for (constexpr auto n : define_static_array(std::meta::members_of(Scope, ctx))) {
-        if constexpr (std::meta::is_namespace(n)) {
-            if constexpr (!(std::meta::has_identifier(n) &&
-                             (std::meta::identifier_of(n) == "std" ||
-                              std::meta::identifier_of(n).starts_with("__"))))
-            if constexpr (std::meta::is_enumerable_type(n))
+    template for (constexpr auto n : define_static_array(members_of(Scope, ctx))) {
+        if constexpr (is_namespace(n)) {
+            if constexpr (!(has_identifier(n) &&
+                             (identifier_of(n) == "std" ||
+                              identifier_of(n).starts_with("__"))))
+            if constexpr (is_enumerable_type(n))
                 collect_tests<n, TU>();
         }
-        else if constexpr (std::meta::is_type(n) && std::meta::is_class_type(n)) {
-            if constexpr (std::meta::is_enumerable_type(n))
+        else if constexpr (is_type(n) && is_class_type(n)) {
+            if constexpr (is_enumerable_type(n))
                 collect_tests<n, TU>();
         }
-        else if constexpr (std::meta::is_function(n)) {
+        else if constexpr (is_function(n)) {
             if constexpr (is_test(n)) {
-                static_assert(!std::meta::is_class_member(n) || std::meta::is_static_member(n),
+                static_assert(!is_class_member(n) || is_static_member(n),
                               "test annotation on non-static member functions is not allowed.");
 
                 constexpr auto name_ann = find_annotation(n, ^^name);
                 std::string_view name;
-                if constexpr (name_ann != std::meta::info()) {
+                if constexpr (name_ann != info()) {
                     static constexpr auto name_val =
-                        std::meta::extract<typename[: std::meta::type_of(name_ann) :]>(name_ann);
+                        extract<typename[: type_of(name_ann) :]>(name_ann);
                     name = std::string_view(name_val.test_name);
                 } else {
-                    static_assert(std::meta::has_identifier(n),
+                    static_assert(has_identifier(n),
                         "test with no name given on a function with no identifier");
-                    static constexpr auto id = std::meta::identifier_of(n);
+                    static constexpr auto id = identifier_of(n);
                     name = id;
                 }
 
                 constexpr auto skip_ann = find_annotation(n, ^^skip);
-                constexpr bool skip = skip_ann != std::meta::info();
+                constexpr bool skip = skip_ann != info();
                 std::string_view skip_reason;
                 if constexpr (skip) {
                     static constexpr auto skip_val =
-                        std::meta::extract<typename[: std::meta::type_of(skip_ann) :]>(skip_ann);
+                        extract<typename[: type_of(skip_ann) :]>(skip_ann);
                     skip_reason = std::string_view(skip_val.reason);
                 }
 
-                auto fn = std::meta::extract<void(*)()>(n);
+                auto fn = extract<void(*)()>(n);
                 auto& reg = registry();
 
                 bool found = false;
