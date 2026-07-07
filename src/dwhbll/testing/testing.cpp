@@ -63,7 +63,10 @@ int run_all() {
 
     for (auto const& t : tests) {
         if (t.skip) {
-            std::println("{}[skip]{} {}", color::yellow, color::reset, t.name);
+            if (!t.skip_reason.empty())
+                std::println("{}[skip]{} {} ({})", color::yellow, color::reset, t.name, t.skip_reason);
+            else
+                std::println("{}[skip]{} {}", color::yellow, color::reset, t.name);
             ++skipped;
             continue;
         }
