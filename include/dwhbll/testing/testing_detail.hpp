@@ -11,18 +11,20 @@ namespace dwhbll::test {
 struct test_marker {};
 inline constexpr test_marker test{};
 
-struct name {
-    constexpr explicit name(char const* name = {})
-        : test_name(name) {}
-
-    char const* test_name;
+struct name_tag {
+    char const* name;
 };
 
-struct skip {
-    constexpr explicit skip(char const* reason_ = {})
-        : reason(reason_) {}
+static constexpr auto name(char const* n) {
+    return name_tag {n};
+};
 
+struct skip_tag {
     char const* reason;
+};
+
+static constexpr auto skip(char const* reason) {
+    return skip_tag {reason};
 };
 
 struct failure {
@@ -69,12 +71,13 @@ consteval bool is_test(std::meta::info n) {
     return !std::meta::annotations_of_with_type(n, ^^test_marker).empty();
 }
 
-consteval std::meta::info find_annotation(std::meta::info n, std::meta::info type) {
-    for (auto a : std::meta::annotations_of_with_type(n, type)) {
+template <std::meta::info n, std::meta::info type>
+consteval std::meta::info find_annotation() {
+    template for (constexpr auto a : std::define_static_array(std::meta::annotations_of_with_type(n, type))) {
         // This does not work. Why? I truly fucking wonder
         // TODO: dig in draft and figure it out
-        // auto c = std::meta::constant_of(a);
-        // return c;
+        // return std::meta::constant_of(a);
+        return a;
     }
     return std::meta::info();
 }
@@ -100,12 +103,13 @@ void collect_tests() {
                 static_assert(!std::meta::is_class_member(n) || std::meta::is_static_member(n),
                               "test annotation on non-static member functions is not allowed.");
 
-                constexpr auto name_ann = find_annotation(n, ^^name);
+                constexpr auto name_ann = find_annotation<n, ^^name_tag>();
                 std::string_view name;
                 if constexpr (name_ann != std::meta::info()) {
-                    static constexpr auto name_val =
-                        std::meta::extract<::dwhbll::test::name>(name_ann);
-                    name = std::string_view(name_val.test_name);
+                    // TODO: Broken?
+                    // static constexpr auto name_val =
+                    //     std::meta::extract<typename[: std::meta::type_of(name_ann) :]>(name_ann);
+                    // name = std::string_view(name_val.name);
                 } else {
                     static_assert(std::meta::has_identifier(n),
                         "test with no name given on a function with no identifier");
@@ -113,13 +117,14 @@ void collect_tests() {
                     name = id;
                 }
 
-                constexpr auto skip_ann = find_annotation(n, ^^skip);
+                constexpr auto skip_ann = find_annotation<n, ^^skip_tag>();
                 constexpr bool skip = skip_ann != std::meta::info();
                 std::string_view skip_reason;
                 if constexpr (skip) {
-                    static constexpr auto skip_val =
-                        std::meta::extract<::dwhbll::test::skip>(skip_ann);
-                    skip_reason = std::string_view(skip_val.reason);
+                    // TODO: Broken?
+                    // static constexpr auto skip_val =
+                    //     std::meta::extract<typename[: std::meta::type_of(skip_ann) :]>(skip_ann);
+                    // skip_reason = std::string_view(skip_val.reason);
                 }
 
                 auto fn = std::meta::extract<void(*)()>(n);
