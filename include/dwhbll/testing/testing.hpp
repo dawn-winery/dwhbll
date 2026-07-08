@@ -2,15 +2,20 @@
 
 #include <dwhbll/testing/testing_detail.hpp>
 
-#include <cstddef>
 #include <format>
 #include <meta>
 #include <source_location>
 #include <string>
 #include <string_view>
-#include <vector>
 
 namespace dwhbll::test {
+
+struct tag_filter {
+    std::vector<std::string> include;
+    std::vector<std::string> exclude;
+
+    bool matches(std::vector<std::string_view> tags) const;
+};
 
 bool expect(bool cond, std::string_view msg = {},
             std::source_location loc = std::source_location::current());
@@ -41,7 +46,11 @@ bool expect_ne(A const& a, B const& b,
     return ok;
 }
 
+tag_filter parse_filter(std::string_view expr);
+
 int run_all();
+int run_all(tag_filter const& filter);
+int run_all(int argc, char** argv);
 
 } // namespace dwhbll::test
 

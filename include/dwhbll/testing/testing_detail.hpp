@@ -25,6 +25,13 @@ struct skip {
         : reason(std::define_static_string(reason_)) {}
 };
 
+struct tag {
+    char const* tag_name;
+
+    consteval explicit tag(std::string_view name_ = "")
+        : tag_name(std::define_static_string(name_)) {}
+};
+
 struct failure {
     std::string msg;
     std::source_location loc;
@@ -51,6 +58,7 @@ struct entry {
     void (*fn)();
     bool skip;
     std::string_view skip_reason;
+    std::vector<std::string_view> tags;
 };
 
 // Random bullshit go!
@@ -74,6 +82,17 @@ consteval std::meta::info find_annotation(std::meta::info n, std::meta::info typ
         return std::meta::constant_of(a);
     }
     return std::meta::info();
+}
+
+template <std::meta::info n>
+std::vector<std::string_view> get_tags() {
+    std::vector<std::string_view> result;
+    template for (constexpr auto a : define_static_array(std::meta::annotations_of_with_type(n, ^^tag))) {
+        constexpr auto ann = std::meta::constant_of(a);
+        constexpr auto val = extract<tag>(ann);
+        result.push_back(std::string_view(val.tag_name));
+    }
+    return result;
 }
 
 template <std::meta::info Scope, fixed_string TU>
@@ -120,18 +139,20 @@ void collect_tests() {
                     skip_reason = std::string_view(skip_val.reason);
                 }
 
+                auto tags_arr = get_tags<n>();
+
                 auto fn = extract<void(*)()>(n);
                 auto& reg = registry();
 
                 bool found = false;
-                for (auto const& e : reg) {
+                for (const auto& e : reg) {
                     if (e.fn == fn) {
                         found = true;
                         break;
                     }
                 }
                 if (!found)
-                    reg.push_back({name, fn, skip, skip_reason});
+                    reg.push_back({ name, fn, skip, skip_reason, tags_arr });
             }
         }
     }
