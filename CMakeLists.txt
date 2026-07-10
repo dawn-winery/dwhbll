@@ -111,6 +111,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/console/Logging.h
     include/dwhbll/cryptography/arc4/arc4.h
     include/dwhbll/cryptography/banner.h
+    include/dwhbll/cryptography/hmac.h
     include/dwhbll/cryptography/ihash.h
     include/dwhbll/cryptography/SHA1.h
     include/dwhbll/exceptions/concurrency_exception.h
