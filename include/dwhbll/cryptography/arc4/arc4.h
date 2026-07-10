@@ -3,8 +3,6 @@
 #include <cstdint>
 #include <vector>
 
-#include <dwhbll/cryptography/banner.h>
-
 namespace dwhbll::cryptography::arc4 {
     class arc4 {
         std::uint8_t S[256];

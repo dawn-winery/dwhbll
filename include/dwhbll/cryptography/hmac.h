@@ -4,8 +4,6 @@
 #include <cstring>
 #include <span>
 
-#include "banner.h"
-
 namespace dwhbll::cryptography {
     template <typename HASH>
     class hmac {

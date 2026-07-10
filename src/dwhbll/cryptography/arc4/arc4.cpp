@@ -1,6 +1,7 @@
 #include <dwhbll/cryptography/arc4/arc4.h>
 
-#include <string.h>
+#include <cstring>
+#include <stdexcept>
 
 namespace dwhbll::cryptography::arc4 {
     std::uint8_t arc4::keystream_next() {

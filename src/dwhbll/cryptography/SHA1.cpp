@@ -1,6 +1,7 @@
-#include <dwhbll/cryptography/SHA1.h>
+#include <dwhbll/cryptography/hash/SHA1.h>
 
 #include <cstring>
+#include <dwhbll/console/debug.hpp>
 
 namespace dwhbll::cryptography {
     void SHA1::digest_chunk() {
@@ -55,8 +56,11 @@ namespace dwhbll::cryptography {
     }
 
     SHA1::SHA1() {
-        printBanner();
+        initialize();
+    }
 
+    SHA1::~SHA1() {
+        // erase all state.
         initialize();
     }
 
@@ -72,7 +76,10 @@ namespace dwhbll::cryptography {
         h[4] = 0xC3D2E1F0;
     }
 
-    void SHA1::update(const std::uint8_t *data, std::uint64_t length) {
+    void SHA1::update(const std::span<const std::uint8_t> &in) {
+        auto length = in.size();
+        auto data = in.data();
+
         if (length == 0)
             return;
 
@@ -83,7 +90,7 @@ namespace dwhbll::cryptography {
             message_length += length;
             return;
         }
-        std::uint64_t copied = static_cast<std::uint64_t>(64 - block_head);
+        auto copied = static_cast<std::uint64_t>(64 - block_head);
         std::memcpy(block + block_head, data, copied);
         length -= copied;
         data += copied;
@@ -107,12 +114,13 @@ namespace dwhbll::cryptography {
         }
     }
 
-    void SHA1::update(std::span<std::uint8_t> data) {
-        update(data.data(), data.size());
-    }
+    void SHA1::finalize(std::span<std::uint8_t> output) {
+        if (output.size() < HLEN)
+            debug::panic("SHA-1 finalize buffer cannot fit hash!");
 
-    std::array<std::uint32_t, 5> SHA1::finalize(const std::uint8_t *data, std::uint64_t length) {
-        update(data, length); // first consume the whole buffer as normal, this will leave only the last < 512 bits of the message.
+        // add the 1 bit, if this was 64 it would have already been consumed by
+        // update, therefore less than 64 in length.
+        block[block_head++] = 0x80;
 
         if (block_head >= (64 - 8)) {
             // we need to consume this whole block
@@ -121,46 +129,35 @@ namespace dwhbll::cryptography {
                 block[block_head++] = 0;
 
             digest_chunk();
-        } else {
-            block[block_head++] = 0x80;
 
-            while (block_head < (64 - 8))
-                block[block_head++] = 0;
-
-            // this is the part block, we now have to append the 64-bit message bit length in big-endian
-            message_length *= 8; // we computed this in bytes originally, we need to extend to bits.
-
-            block[56] = (message_length >> 56) & 0xFF;
-            block[57] = (message_length >> 48) & 0xFF;
-            block[58] = (message_length >> 40) & 0xFF;
-            block[59] = (message_length >> 32) & 0xFF;
-            block[60] = (message_length >> 24) & 0xFF;
-            block[61] = (message_length >> 16) & 0xFF;
-            block[62] = (message_length >> 8) & 0xFF;
-            block[63] = (message_length) & 0xFF;
-
-            digest_chunk(); // consume final chunk
+            block_head = 0;
         }
 
-        std::array<std::uint32_t, 5> result;
+        while (block_head < (64 - 8))
+            block[block_head++] = 0;
 
-        result[0] = h[0];
-        result[1] = h[1];
-        result[2] = h[2];
-        result[3] = h[3];
-        result[4] = h[4];
+        // this is the part block, we now have to append the 64-bit message bit length in big-endian
+        message_length *= 8; // we computed this in bytes originally, we need to extend to bits.
+
+        block[56] = (message_length >> 56) & 0xFF;
+        block[57] = (message_length >> 48) & 0xFF;
+        block[58] = (message_length >> 40) & 0xFF;
+        block[59] = (message_length >> 32) & 0xFF;
+        block[60] = (message_length >> 24) & 0xFF;
+        block[61] = (message_length >> 16) & 0xFF;
+        block[62] = (message_length >> 8) & 0xFF;
+        block[63] = (message_length) & 0xFF;
+
+        digest_chunk(); // consume final chunk
+
+        for (int i = 0; i < 5; ++i) {
+            output[i * 4 + 0] = static_cast<uint8_t>(h[i] >> 24);
+            output[i * 4 + 1] = static_cast<uint8_t>(h[i] >> 16);
+            output[i * 4 + 2] = static_cast<uint8_t>(h[i] >> 8);
+            output[i * 4 + 3] = static_cast<uint8_t>(h[i]);
+        }
 
         // erase all state
         initialize();
-
-        return result;
-    }
-
-    std::array<std::uint32_t, 5> SHA1::finalize() {
-        return finalize(nullptr, 0);
-    }
-
-    std::array<std::uint32_t, 5> SHA1::finalize(std::span<std::uint8_t> data) {
-        return finalize(data.data(), data.size());
     }
 }

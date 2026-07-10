@@ -3,8 +3,6 @@
 #include <cstdint>
 #include <span>
 
-#include "banner.h"
-
 namespace dwhbll::cryptography {
     class ihash {
     public:
