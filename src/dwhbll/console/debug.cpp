@@ -6,6 +6,10 @@
 #include <ranges>
 #include <vector>
 #include <version>
+// TODO: other architectures like i386 exists too
+#if defined(__x86_64) || defined(__x86_64__)
+#include <xmmintrin.h>
+#endif
 
 #ifdef __cpp_lib_stacktrace
 #include <stacktrace>
@@ -32,6 +36,16 @@ const std::string & task_deferral::get_name() const {
 #endif
 
 [[noreturn]] void panic(const std::string& msg) {
+    static std::atomic_flag panicking = false;
+
+    // busy wait if there's already a thread panicking, this way we don't spit
+    // out multiple traces at a time and interleave them.
+    while (panicking.test_and_set(std::memory_order_acq_rel)) {
+#if defined(__x86_64) || defined(__x86_64__)
+        _mm_pause();
+#endif
+    }
+
     std::cerr << "\n\e[1;91m============ [PANIC] ============\n";
     std::cerr << msg << "\n\n";
     std::cerr << "Traceback (most recent call first):" << "\n";
