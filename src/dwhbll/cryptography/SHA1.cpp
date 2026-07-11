@@ -160,4 +160,12 @@ namespace dwhbll::cryptography {
         // erase all state
         initialize();
     }
+
+    size_t SHA1::digest_size() const {
+        return HLEN;
+    }
+
+    size_t SHA1::block_size() const {
+        return BLEN;
+    }
 }

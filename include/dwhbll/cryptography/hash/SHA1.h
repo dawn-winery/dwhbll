@@ -30,5 +30,9 @@ namespace dwhbll::cryptography {
         void update(const std::span<const std::uint8_t> &in) override;
 
         void finalize(std::span<std::uint8_t> output) override;
+
+        [[nodiscard]] size_t digest_size() const override;
+
+        [[nodiscard]] size_t block_size() const override;
     };
 }
