@@ -56,5 +56,10 @@ namespace dwhbll::async::net {
         [[nodiscard]] concurrency::coroutine::task<stl_ext::Result<stl_ext::UNIT, int>> flush() override {
             return super_->flush();
         }
+
+        // TODO: there are better ways :xdd:
+        [[nodiscard]] concurrency::coroutine::task<stl_ext::Result<stl_ext::UNIT, int>> write_str(const std::string &str) {
+            return write(std::span{reinterpret_cast<const std::uint8_t*>(str.data()), str.size()});
+        }
     };
 }
