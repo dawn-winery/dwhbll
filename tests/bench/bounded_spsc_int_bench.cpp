@@ -8,7 +8,7 @@
 #include <dwhbll/concurrency/queues/bounded_spsc_queue.h>
 #include <dwhbll/console/debug.h>
 #include <dwhbll/console/logging.h>
-#include <dwhbll/utils/threading.h>
+#include <dwhbll/concurrency/threading.h>
 
 // TODO: Make a benchmark harness and do this correctly!
 bool bounded_spsc_int_bench(std::optional<std::string> _) {
@@ -23,11 +23,11 @@ bool bounded_spsc_int_bench(std::optional<std::string> _) {
         std::size_t x = 1;
 
         if (threads > 2)
-            dwhbll::utils::pin_thread_to_core(2);
+            dwhbll::concurrency::pin_thread_to_core(2);
         else if (threads == 2)
-            dwhbll::utils::pin_thread_to_core(1);
+            dwhbll::concurrency::pin_thread_to_core(1);
         else
-            dwhbll::utils::pin_thread_to_core(0);
+            dwhbll::concurrency::pin_thread_to_core(0);
 
         waiter.arrive_and_wait();
 
@@ -38,7 +38,7 @@ bool bounded_spsc_int_bench(std::optional<std::string> _) {
         channel.put(0xFFFFFFFFFFFFFFFF);
     });
 
-    dwhbll::utils::pin_thread_to_core(0);
+    dwhbll::concurrency::pin_thread_to_core(0);
 
     waiter.arrive_and_wait();
 

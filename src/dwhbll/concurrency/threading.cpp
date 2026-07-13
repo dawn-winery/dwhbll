@@ -1,4 +1,4 @@
-#include <dwhbll/utils/threading.h>
+#include <dwhbll/concurrency/threading.h>
 
 #include <cstring>
 
@@ -6,7 +6,7 @@
 
 #include <dwhbll/console/debug.h>
 
-namespace dwhbll::utils {
+namespace dwhbll::concurrency {
     void pin_thread_to_core(int core) {
         auto num_cores = sysconf(_SC_NPROCESSORS_ONLN);
         if (core < 0 || core >= num_cores)
