@@ -3,7 +3,7 @@
 #include <dwhbll/console/debug.h>
 #include <dwhbll/console/logging.h>
 #include <dwhbll/utils/utils.h>
-#include <dwhbll/utils/string.h>
+#include <dwhbll/stl_ext/string.h>
 
 #include <charconv>
 #include <sstream>
@@ -43,7 +43,7 @@ std::string json::format_literal() const {
     if(is_null())
         return "null";
     if(is_string())
-        return "\"" + utils::escape_string(as_string()) + "\"";
+        return "\"" + stl_ext::escape_string(as_string()) + "\"";
     if(is_number()) {
         auto val = as_number();
         if (std::isinf(val) || std::isnan(val))
@@ -82,7 +82,7 @@ std::string json::format_internal(int indentation = -1, int cur_indentation = 0)
         while(it != members.end()) {
             if(pretty)
                 ss << ind;
-            ss << "\"" << utils::escape_string(it->first) << "\"" 
+            ss << "\"" << stl_ext::escape_string(it->first) << "\""
                 << (pretty ? ": " : ":") << it->second.format_internal(indentation, cur_indentation);
 
             ++it;

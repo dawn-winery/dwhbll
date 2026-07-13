@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace dwhbll::utils {
+namespace dwhbll::stl_ext {
     std::string escape_non_printable(const std::string& string);
 
     constexpr std::string replace_all(std::string_view str, std::string_view from, std::string_view to) {

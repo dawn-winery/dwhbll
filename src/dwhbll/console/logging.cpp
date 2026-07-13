@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <dwhbll/sanify/types.h>
 #include <dwhbll/utils/stacktrace.h>
-#include <dwhbll/utils/string.h>
+#include <dwhbll/stl_ext/string.h>
 #include <dwhbll/utils/utils.h>
 
 namespace dwhbll::console {
@@ -99,7 +99,7 @@ namespace dwhbll::console {
 
     void censoring_log_filter::process(std::string &str) {
         for (const auto& [from, to] : replacements)
-            str = utils::replace_all(str, from, to);
+            str = stl_ext::replace_all(str, from, to);
     }
 
     void censoring_log_filter::addBlacklist(const std::string &str) {
