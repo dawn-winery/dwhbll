@@ -7,7 +7,7 @@
 #include <dwhbll/concurrency/recycling_concurrent_stack.h>
 #include <dwhbll/console/debug.h>
 #include <dwhbll/console/logging.h>
-#include <dwhbll/utils/threading.h>
+#include <dwhbll/concurrency/threading.h>
 
 // TODO: Make a benchmark harness and do this correctly!
 bool recycling_concurrent_stack_bench(std::optional<std::string> _) {
@@ -29,7 +29,7 @@ bool recycling_concurrent_stack_bench(std::optional<std::string> _) {
             std::size_t x = 1;
 
             // take evens
-            dwhbll::utils::pin_thread_to_core(i);
+            dwhbll::concurrency::pin_thread_to_core(i);
 
             waiter.arrive_and_wait();
 
@@ -46,7 +46,7 @@ bool recycling_concurrent_stack_bench(std::optional<std::string> _) {
             std::size_t total = 0;
 
             // take odds
-            dwhbll::utils::pin_thread_to_core(available_cores == 1 ? 0 : i + count);
+            dwhbll::concurrency::pin_thread_to_core(available_cores == 1 ? 0 : i + count);
 
             waiter.arrive_and_wait();
 

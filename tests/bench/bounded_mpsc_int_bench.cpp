@@ -8,7 +8,7 @@
 #include <dwhbll/concurrency/queues/bounded_mpsc_queue.h>
 #include <dwhbll/console/debug.h>
 #include <dwhbll/console/logging.h>
-#include <dwhbll/utils/threading.h>
+#include <dwhbll/concurrency/threading.h>
 
 // TODO: Make a benchmark harness and do this correctly!
 bool bounded_mpsc_int_bench(std::optional<std::string> _) {
@@ -28,7 +28,7 @@ bool bounded_mpsc_int_bench(std::optional<std::string> _) {
         threads.emplace_back([&] {
             std::size_t x = 1;
 
-            // dwhbll::utils::pin_thread_to_core(i * 2);
+            // dwhbll::concurrency::pin_thread_to_core(i * 2);
 
             waiter.arrive_and_wait();
 
@@ -39,7 +39,7 @@ bool bounded_mpsc_int_bench(std::optional<std::string> _) {
         });
     }
 
-    // dwhbll::utils::pin_thread_to_core(producer_count);
+    // dwhbll::concurrency::pin_thread_to_core(producer_count);
 
     waiter.arrive_and_wait();
 
