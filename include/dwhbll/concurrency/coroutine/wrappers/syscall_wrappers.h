@@ -4,7 +4,7 @@
 #include <sys/types.h>
 
 #include <dwhbll/concurrency/coroutine/task.h>
-#include <dwhbll/sanify/types.hpp>
+#include <dwhbll/sanify/types.h>
 
 namespace dwhbll::concurrency::coroutine::wrappers::calls {
     task<> nop();

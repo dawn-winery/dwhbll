@@ -1,6 +1,6 @@
 #include <dwhbll/concurrency/coroutine/detached_task.h>
 
-#include <dwhbll/console/debug.hpp>
+#include <dwhbll/console/debug.h>
 
 namespace dwhbll::concurrency::coroutine {
     DetachedTask DetachedTask::promise_type::get_return_object() noexcept {

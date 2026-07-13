@@ -1,6 +1,6 @@
 #include <dwhbll/utils/perf.h>
 
-#include <dwhbll/console/Logging.h>
+#include <dwhbll/console/logging.h>
 
 namespace dwhbll::utils {
     auto perf_level = console::Level::WARN;

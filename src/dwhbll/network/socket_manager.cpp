@@ -1,4 +1,4 @@
-#include <dwhbll/network/SocketManager.h>
+#include <dwhbll/network/socket_manager.h>
 
 #include <cstring>
 #include <stdexcept>
@@ -9,7 +9,7 @@
 #include <thread>
 #include <unistd.h>
 #include <dwhbll/concurrency/coroutine/wrappers/syscall_wrappers.h>
-#include <dwhbll/sanify/coroutines.hpp>
+#include <dwhbll/sanify/coroutines.h>
 
 namespace dwhbll::network {
     Socket::~Socket() {

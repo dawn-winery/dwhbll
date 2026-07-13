@@ -6,7 +6,7 @@
 
 #include <dwhbll/concurrency/coroutine/wrappers/syscall_wrappers.h>
 #include <dwhbll/network/address.h>
-#include <dwhbll/sanify/coroutines.hpp>
+#include <dwhbll/sanify/coroutines.h>
 #include <dwhbll/sanify/stl_ext.h>
 
 namespace dwhbll::async::net {

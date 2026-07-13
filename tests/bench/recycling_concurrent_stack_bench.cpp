@@ -5,8 +5,8 @@
 #include <thread>
 
 #include <dwhbll/concurrency/recycling_concurrent_stack.h>
-#include <dwhbll/console/debug.hpp>
-#include <dwhbll/console/Logging.h>
+#include <dwhbll/console/debug.h>
+#include <dwhbll/console/logging.h>
 #include <dwhbll/utils/threading.h>
 
 // TODO: Make a benchmark harness and do this correctly!

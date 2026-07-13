@@ -2,7 +2,7 @@
 
 #include <chrono>
 #include <string>
-#include <dwhbll/console/Logging.h>
+#include <dwhbll/console/logging.h>
 
 namespace dwhbll::utils {
     void set_perf_level(console::Level level);

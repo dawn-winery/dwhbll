@@ -1,6 +1,6 @@
 #pragma once
 
-#include "dwhbll/sanify/types.hpp"
+#include "dwhbll/sanify/types.h"
 #include <cassert>
 #include <cstdint>
 #include <cstring>

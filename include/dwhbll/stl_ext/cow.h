@@ -6,7 +6,7 @@
 #include <dwhbll/stl_ext/packs.h>
 
 #ifdef BUILD_HARDEN
-#include <dwhbll/console/debug.hpp>
+#include <dwhbll/console/debug.h>
 #endif
 
 namespace dwhbll::stl_ext {

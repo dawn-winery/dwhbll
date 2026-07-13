@@ -5,7 +5,7 @@
 #include <version>
 
 #include <cxxabi.h>
-#include <dwhbll/utils/stacktrace.hpp>
+#include <dwhbll/utils/stacktrace.h>
 
 namespace dwhbll::exceptions {
     void prettyprint_rtexcept(std::stringstream& ss, const rt_exception_base& exception);

@@ -3,7 +3,7 @@
 #include <version>
 
 #ifndef __cpp_lib_stacktrace
-#include <dwhbll/utils/stacktrace.hpp>
+#include <dwhbll/utils/stacktrace.h>
 #else
 #include <stacktrace>
 #endif

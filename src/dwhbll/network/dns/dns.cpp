@@ -5,7 +5,7 @@
 #include <iostream>
 #include <numeric>
 
-#include <dwhbll/console/Logging.h>
+#include <dwhbll/console/logging.h>
 
 namespace dwhbll::network::dns {
     Resolver default_resolver;

@@ -19,7 +19,7 @@ namespace dwhbll::stacktrace {
 // LLVM's libc++ does not have <stacktrace> yet
 #ifndef __cpp_lib_stacktrace
 
-#include <dwhbll/sanify/types.hpp>
+#include <dwhbll/sanify/types.h>
 #include <optional>
 #include <execinfo.h>
 #include <elfutils/libdwfl.h>

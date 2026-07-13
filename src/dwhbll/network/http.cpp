@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include <dwhbll/console/Logging.h>
+#include <dwhbll/console/logging.h>
 #include <dwhbll/exceptions/rt_exception_base.h>
 
 #define CRLF "\r\n"

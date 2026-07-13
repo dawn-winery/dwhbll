@@ -3,7 +3,7 @@
 #include <cstring>
 #include <fcntl.h>
 
-#include <dwhbll/console/debug.hpp>
+#include <dwhbll/console/debug.h>
 #include <dwhbll/exceptions/rt_exception_base.h>
 
 namespace dwhbll::platform::linux_wrappers {

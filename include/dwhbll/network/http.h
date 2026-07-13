@@ -1,7 +1,7 @@
 #pragma once
 
 #include <dwhbll/network/buffered_socket.h>
-#include <dwhbll/network/SocketManager.h>
+#include <dwhbll/network/socket_manager.h>
 #include <dwhbll/network/http/methods.h>
 
 namespace dwhbll::network {

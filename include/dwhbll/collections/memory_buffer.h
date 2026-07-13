@@ -5,7 +5,7 @@
 #include <dwhbll/collections/ring.h>
 #include <dwhbll/concurrency/spinlock.h>
 #include <dwhbll/concurrency/coroutine/task.h>
-#include <dwhbll/sanify/types.hpp>
+#include <dwhbll/sanify/types.h>
 
 namespace dwhbll::collections {
     /**
