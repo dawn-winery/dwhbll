@@ -1,6 +1,6 @@
 #include <chrono>
 #include <csignal>
-#include <dwhbll/console/Logging.h>
+#include <dwhbll/console/logging.h>
 #include <dwhbll/exceptions/timeout_exception.h>
 #include <dwhbll/subprocess/pipe_wrapper.h>
 #include <dwhbll/subprocess/process.h>
@@ -9,7 +9,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <vector>
-#include <dwhbll/console/debug.hpp>
+#include <dwhbll/console/debug.h>
 
 namespace dwhbll::subprocess {
     process::process(const std::initializer_list<std::string> &args) {

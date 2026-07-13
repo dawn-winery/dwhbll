@@ -1,8 +1,8 @@
 #pragma once
 
-#include <dwhbll/sanify/types.hpp>
-#include <dwhbll/console/debug.hpp>
-#include <dwhbll/utils/utils.hpp>
+#include <dwhbll/sanify/types.h>
+#include <dwhbll/console/debug.h>
+#include <dwhbll/utils/utils.h>
 #include <cassert>
 #include <concepts>
 #include <map>

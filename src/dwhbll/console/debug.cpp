@@ -1,5 +1,5 @@
-#include <dwhbll/console/debug.hpp>
-#include <dwhbll/utils/stacktrace.hpp>
+#include <dwhbll/console/debug.h>
+#include <dwhbll/utils/stacktrace.h>
 #include <iostream>
 #include <format>
 #include <fstream>

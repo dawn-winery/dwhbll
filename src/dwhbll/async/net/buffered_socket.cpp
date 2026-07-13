@@ -1,6 +1,6 @@
 #include <dwhbll/async/net/buffered_socket.h>
 
-#include <dwhbll/sanify/coroutines.hpp>
+#include <dwhbll/sanify/coroutines.h>
 #include <dwhbll/sanify/stl_ext.h>
 
 namespace dwhbll::async::net {

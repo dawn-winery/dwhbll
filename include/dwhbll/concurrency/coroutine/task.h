@@ -4,7 +4,7 @@
 #include <expected>
 
 #include <dwhbll/concurrency/coroutine/cancellable_base.h>
-#include <dwhbll/console/debug.hpp>
+#include <dwhbll/console/debug.h>
 #include <dwhbll/exceptions/concurrency_exception.h>
 
 namespace dwhbll::concurrency::coroutine {
