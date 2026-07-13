@@ -1,9 +1,9 @@
-#include <dwhbll/utils/string.h>
+#include <dwhbll/stl_ext/string.h>
 
 #include <format>
 #include <ranges>
 
-namespace dwhbll::utils {
+namespace dwhbll::stl_ext {
     std::string escape_non_printable(const std::string &string) {
         std::string result;
         result.reserve(string.size());

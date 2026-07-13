@@ -82,9 +82,10 @@ set(DWHBLL_SOURCES
     src/dwhbll/subprocess/pipe_wrapper.cpp
     src/dwhbll/utils/json.cpp
     src/dwhbll/utils/perf.cpp
-    src/dwhbll/utils/string.cpp
+    src/dwhbll/stl_ext/string.cpp
     src/dwhbll/utils/threading.cpp
     src/dwhbll/utils/uuid.cpp
+    src/dwhbll/math/vec4.cpp
 
     include/dwhbll/async/net/buffered_socket.h
     include/dwhbll/async/net/decorated_socket.h
@@ -179,7 +180,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/utils/format.hpp
     include/dwhbll/utils/json.h
     include/dwhbll/utils/stacktrace.h
-    include/dwhbll/utils/string.h
+    include/dwhbll/stl_ext/string.h
     include/dwhbll/utils/utils.h
     include/dwhbll/utils/perf.h
     include/dwhbll/utils/threading.h
