@@ -1,8 +1,8 @@
 #include <dwhbll/network/buffered_socket.h>
 
-#include <dwhbll/console/debug.hpp>
+#include <dwhbll/console/debug.h>
 #include <dwhbll/exceptions/rt_exception_base.h>
-#include <dwhbll/sanify/coroutines.hpp>
+#include <dwhbll/sanify/coroutines.h>
 
 namespace dwhbll::network {
     inbound_network_buffer::inbound_network_buffer(memory::Pool<Socket>::ObjectWrapper &socket) : socket(socket), ParseUtils() {}

@@ -13,7 +13,7 @@
 #include <concepts>
 
 #include <dwhbll/network/http/methods.h>
-#include <dwhbll/console/Logging.h>
+#include <dwhbll/console/logging.h>
 
 namespace dwhbll::network::http_server {
 enum class Version {

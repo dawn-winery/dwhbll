@@ -5,9 +5,9 @@
 #include <unistd.h>
 #include <sys/poll.h>
 #include <dwhbll/concurrency/coroutine/wrappers/syscall_wrappers.h>
-#include <dwhbll/console/debug.hpp>
-#include <dwhbll/console/Logging.h>
-#include <dwhbll/sanify/coroutines.hpp>
+#include <dwhbll/console/debug.h>
+#include <dwhbll/console/logging.h>
+#include <dwhbll/sanify/coroutines.h>
 
 namespace dwhbll::concurrency::coroutine::wrappers {
     int file::compute_openmode_flags(std::ios::openmode mode) {

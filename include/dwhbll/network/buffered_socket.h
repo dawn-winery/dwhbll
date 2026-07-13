@@ -2,7 +2,7 @@
 
 #include <dwhbll/files/parse_utils.h>
 #include <dwhbll/memory/pool.h>
-#include <dwhbll/network/SocketManager.h>
+#include <dwhbll/network/socket_manager.h>
 
 namespace dwhbll::network {
     class inbound_network_buffer : public files::ParseUtils {

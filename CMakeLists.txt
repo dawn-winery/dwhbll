@@ -54,10 +54,10 @@ set(DWHBLL_SOURCES
     src/dwhbll/concurrency/coroutine/wrappers/file.cpp
     src/dwhbll/concurrency/coroutine/wrappers/syscall_wrappers.cpp
     src/dwhbll/concurrency/spinlock.cpp
-    src/dwhbll/console/Logging.cpp
+    src/dwhbll/console/logging.cpp
     src/dwhbll/console/debug.cpp
     src/dwhbll/cryptography/arc4/arc4.cpp
-    src/dwhbll/cryptography/SHA1.cpp
+    src/dwhbll/cryptography/sha1.cpp
     src/dwhbll/exceptions/rt_exception_base.cpp
     src/dwhbll/files/executables/mz.cpp
     src/dwhbll/files/filejar/file.cpp
@@ -75,7 +75,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/network/buffered_socket.cpp
     src/dwhbll/network/dns/dns.cpp
     src/dwhbll/network/http.cpp
-    src/dwhbll/network/SocketManager.cpp
+    src/dwhbll/network/socket_manager.cpp
     src/dwhbll/platform/linux_wrappers/ptrace.cpp
     src/dwhbll/sanify/deferred.cpp
     src/dwhbll/subprocess/process.cpp
@@ -95,7 +95,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/collections/memory_buffer.h
     include/dwhbll/collections/ring.h
     include/dwhbll/collections/sorted_linked_list.h
-    include/dwhbll/collections/streams.hpp
+    include/dwhbll/collections/streams.h
     include/dwhbll/concurrency/backoff/backoff_policy.h
     include/dwhbll/concurrency/backoff/policy_exponential.h
     include/dwhbll/concurrency/backoff/policy_linear.h
@@ -117,13 +117,15 @@ set(DWHBLL_SOURCES
     include/dwhbll/concurrency/queues/bounded_spsc_queue.h
     include/dwhbll/concurrency/recycling_concurrent_stack.h
     include/dwhbll/concurrency/spinlock.h
-    include/dwhbll/console/ansi_escape.h
     include/dwhbll/console/debug.hpp
     include/dwhbll/console/Logging.h
+    include/dwhbll/console/ansi_escape.h
+    include/dwhbll/console/debug.h
+    include/dwhbll/console/logging.h
     include/dwhbll/cryptography/arc4/arc4.h
     include/dwhbll/cryptography/hmac.h
     include/dwhbll/cryptography/ihash.h
-    include/dwhbll/cryptography/hash/SHA1.h
+    include/dwhbll/cryptography/hash/sha1.h
     include/dwhbll/exceptions/concurrency_exception.h
     include/dwhbll/exceptions/rt_exception_base.h
     include/dwhbll/exceptions/sys_error.h
@@ -154,17 +156,17 @@ set(DWHBLL_SOURCES
     include/dwhbll/network/http/methods.h
     include/dwhbll/network/http/versions.h
     include/dwhbll/network/http.h
-    include/dwhbll/network/http_server.hpp
-    include/dwhbll/network/SocketManager.h
+    include/dwhbll/network/http_server.h
+    include/dwhbll/network/socket_manager.h
     include/dwhbll/platform/linux_wrappers/ptrace.h
     include/dwhbll/sanify/all.h
-    include/dwhbll/sanify/coroutines.hpp
+    include/dwhbll/sanify/coroutines.h
     include/dwhbll/sanify/deferred.h
     include/dwhbll/sanify/lang_ext.h
     include/dwhbll/sanify/stl_ext.h
     include/dwhbll/sanify/sugar/all.h
     include/dwhbll/sanify/sugar/ranges.h
-    include/dwhbll/sanify/types.hpp
+    include/dwhbll/sanify/types.h
     include/dwhbll/stl_ext/common_helpers.h
     include/dwhbll/stl_ext/cow.h
     include/dwhbll/stl_ext/get_set.h
@@ -175,10 +177,10 @@ set(DWHBLL_SOURCES
     include/dwhbll/subprocess/pipe_wrapper.h
     include/dwhbll/subprocess/process.h
     include/dwhbll/utils/format.hpp
-    include/dwhbll/utils/json.hpp
-    include/dwhbll/utils/stacktrace.hpp
+    include/dwhbll/utils/json.h
+    include/dwhbll/utils/stacktrace.h
     include/dwhbll/utils/string.h
-    include/dwhbll/utils/utils.hpp
+    include/dwhbll/utils/utils.h
     include/dwhbll/utils/perf.h
     include/dwhbll/utils/threading.h
     include/dwhbll/utils/uuid.h

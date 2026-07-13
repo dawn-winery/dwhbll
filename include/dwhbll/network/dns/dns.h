@@ -11,7 +11,7 @@
 #include <netinet/ip.h>
 
 #include <dwhbll/collections/ring.h>
-#include <dwhbll/network/SocketManager.h>
+#include <dwhbll/network/socket_manager.h>
 
 namespace dwhbll::network::dns {
     /*

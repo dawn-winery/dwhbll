@@ -4,7 +4,7 @@
 
 #include <unistd.h>
 
-#include <dwhbll/console/debug.hpp>
+#include <dwhbll/console/debug.h>
 
 namespace dwhbll::utils {
     void pin_thread_to_core(int core) {

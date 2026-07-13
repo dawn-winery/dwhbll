@@ -1,12 +1,12 @@
-#include <dwhbll/console/Logging.h>
+#include <dwhbll/console/logging.h>
 
 #include <iostream>
 #include <sstream>
 #include <unordered_map>
-#include <dwhbll/sanify/types.hpp>
-#include <dwhbll/utils/stacktrace.hpp>
+#include <dwhbll/sanify/types.h>
+#include <dwhbll/utils/stacktrace.h>
 #include <dwhbll/utils/string.h>
-#include <dwhbll/utils/utils.hpp>
+#include <dwhbll/utils/utils.h>
 
 namespace dwhbll::console {
     namespace detail {

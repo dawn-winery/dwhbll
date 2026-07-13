@@ -1,7 +1,7 @@
 #include <cstring>
 #include <optional>
 #include <string>
-#include <dwhbll/console/Logging.h>
+#include <dwhbll/console/logging.h>
 
 #include <dwhbll/cryptography/arc4/arc4.h>
 
