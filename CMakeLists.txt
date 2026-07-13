@@ -73,7 +73,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/utils/json.cpp
     src/dwhbll/utils/perf.cpp
     src/dwhbll/stl_ext/string.cpp
-    src/dwhbll/utils/threading.cpp
+    src/dwhbll/concurrency/threading.cpp
     src/dwhbll/utils/uuid.cpp
     src/dwhbll/math/vec4.cpp
 
@@ -158,7 +158,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/stl_ext/string.h
     include/dwhbll/utils/utils.h
     include/dwhbll/utils/perf.h
-    include/dwhbll/utils/threading.h
+    include/dwhbll/concurrency/threading.h
     include/dwhbll/utils/uuid.h
     include/dwhbll/math/vec4.h
     include/dwhbll/concurrency/owning_spinlock.h
