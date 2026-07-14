@@ -1,6 +1,6 @@
 #include <dwhbll/math/vec4.h>
 
-#include <dwhbll/console/debug.h>
+#include <dwhbll/debug/debug.h>
 
 namespace dwhbll::math {
     Vec4::Vec4() : _w(), _x(), _y(), _z() {}

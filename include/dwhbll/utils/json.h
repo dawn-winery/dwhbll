@@ -1,7 +1,7 @@
 #pragma once
 
 #include <dwhbll/sanify/types.h>
-#include <dwhbll/console/debug.h>
+#include <dwhbll/debug/debug.h>
 #include <dwhbll/utils/utils.h>
 #include <cassert>
 #include <concepts>

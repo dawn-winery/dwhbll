@@ -4,7 +4,7 @@
 #include <string>
 #include <dwhbll/console/logging.h>
 
-namespace dwhbll::utils {
+namespace dwhbll::debug {
     void set_perf_level(console::Level level);
 
     struct time {
