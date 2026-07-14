@@ -55,7 +55,9 @@ set(DWHBLL_SOURCES
     src/dwhbll/concurrency/coroutine/wrappers/syscall_wrappers.cpp
     src/dwhbll/concurrency/spinlock.cpp
     src/dwhbll/console/logging.cpp
-    src/dwhbll/console/debug.cpp
+    src/dwhbll/debug/debug.cpp
+    src/dwhbll/debug/panic.cpp
+    src/dwhbll/debug/perf.cpp
     src/dwhbll/cryptography/arc4/arc4.cpp
     src/dwhbll/cryptography/sha1.cpp
     src/dwhbll/exceptions/rt_exception_base.cpp
@@ -81,7 +83,6 @@ set(DWHBLL_SOURCES
     src/dwhbll/subprocess/process.cpp
     src/dwhbll/subprocess/pipe_wrapper.cpp
     src/dwhbll/utils/json.cpp
-    src/dwhbll/utils/perf.cpp
     src/dwhbll/stl_ext/string.cpp
     src/dwhbll/concurrency/threading.cpp
     src/dwhbll/utils/uuid.cpp
@@ -118,10 +119,10 @@ set(DWHBLL_SOURCES
     include/dwhbll/concurrency/queues/bounded_spsc_queue.h
     include/dwhbll/concurrency/recycling_concurrent_stack.h
     include/dwhbll/concurrency/spinlock.h
-    include/dwhbll/console/debug.hpp
-    include/dwhbll/console/Logging.h
     include/dwhbll/console/ansi_escape.h
-    include/dwhbll/console/debug.h
+    include/dwhbll/debug/debug.h
+    include/dwhbll/debug/panic.h
+    include/dwhbll/debug/perf.h
     include/dwhbll/console/logging.h
     include/dwhbll/cryptography/arc4/arc4.h
     include/dwhbll/cryptography/hmac.h
@@ -182,7 +183,6 @@ set(DWHBLL_SOURCES
     include/dwhbll/utils/stacktrace.h
     include/dwhbll/stl_ext/string.h
     include/dwhbll/utils/utils.h
-    include/dwhbll/utils/perf.h
     include/dwhbll/concurrency/threading.h
     include/dwhbll/utils/uuid.h
     include/dwhbll/math/vec4.h

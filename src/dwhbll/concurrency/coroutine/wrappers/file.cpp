@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <sys/poll.h>
 #include <dwhbll/concurrency/coroutine/wrappers/syscall_wrappers.h>
-#include <dwhbll/console/debug.h>
+#include <dwhbll/debug/debug.h>
 #include <dwhbll/console/logging.h>
 #include <dwhbll/sanify/coroutines.h>
 

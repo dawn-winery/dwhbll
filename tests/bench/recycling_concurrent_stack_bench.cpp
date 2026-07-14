@@ -5,7 +5,7 @@
 #include <thread>
 
 #include <dwhbll/concurrency/recycling_concurrent_stack.h>
-#include <dwhbll/console/debug.h>
+#include <dwhbll/debug/debug.h>
 #include <dwhbll/console/logging.h>
 #include <dwhbll/concurrency/threading.h>
 

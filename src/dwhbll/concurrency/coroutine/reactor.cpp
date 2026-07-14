@@ -8,7 +8,7 @@
 #include <dwhbll/concurrency/coroutine/detached_task.h>
 #include <dwhbll/concurrency/coroutine/uring_promise.h>
 #include <dwhbll/concurrency/coroutine/uring_sqe_awaitable.h>
-#include <dwhbll/console/debug.h>
+#include <dwhbll/debug/debug.h>
 #include <dwhbll/console/logging.h>
 #include <dwhbll/exceptions/rt_exception_base.h>
 #include <dwhbll/stl_ext/utilities.h>
