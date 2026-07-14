@@ -43,43 +43,13 @@ namespace dwhbll::exceptions {
     }();
 
     void rt_exception_base::populate_trace() {
-#ifdef __cpp_lib_stacktrace
         trace = std::stacktrace::current();
-#else
-        trace = dwhbll::stacktrace::current_nodemangle();
-#endif
     }
 
     std::string rt_exception_base::get_prettyprint_trace() const {
         std::stringstream stream;
         stream << "Traceback (most recent call first):" << "\n";
-        #ifndef __cpp_lib_stacktrace
-        using namespace dwhbll::stacktrace;
-        std::vector<Entry> trace = current(1);
-        for(auto& entry : trace) {
-            const auto function = entry.symbol_name.has_value() ? entry.symbol_name.value() : "???";
 
-            std::string sourcePosition;
-            if (entry.path.has_value()) {
-                if(entry.line.has_value()) {
-                    sourcePosition = std::format(
-                        "{} at {}:{}",
-                        function, entry.path.value(), entry.line.value());
-                }
-                else {
-                    sourcePosition = std::format(
-                        "{} at {}", function.data(), entry.path.value());
-                }
-            } else {
-                sourcePosition = function;
-            }
-
-            const auto info = std::format(
-                    "[{:#018x}] {}\n",
-                    reinterpret_cast<std::uintptr_t>(entry.address), sourcePosition.data());
-            stream << (info);
-        }
-        #else
         for(auto& entry : trace) {
             const auto function = entry.description().substr(0, entry.description().find("("));
 
@@ -108,7 +78,6 @@ namespace dwhbll::exceptions {
                     reinterpret_cast<std::uintptr_t>(entry.native_handle()), sourcePosition.data());
             stream << (info);
         }
-        #endif
 
         return stream.str();
     }

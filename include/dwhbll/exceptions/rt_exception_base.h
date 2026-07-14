@@ -1,22 +1,11 @@
 #pragma once
 
-#include <version>
-
-#ifndef __cpp_lib_stacktrace
-#include <dwhbll/utils/stacktrace.h>
-#else
 #include <stacktrace>
-#endif
-
 #include <stdexcept>
 
 namespace dwhbll::exceptions {
     class rt_exception_base : public std::runtime_error {
-#ifndef __cpp_lib_stacktrace
-        dwhbll::stacktrace::trace trace;
-#else
         std::stacktrace trace;
-#endif
 
         void populate_trace();
 
