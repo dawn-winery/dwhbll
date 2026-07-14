@@ -1,7 +1,7 @@
 #include <dwhbll/cryptography/hash/sha1.h>
 
 #include <cstring>
-#include <dwhbll/console/debug.h>
+#include <dwhbll/debug/debug.h>
 
 namespace dwhbll::cryptography {
     void SHA1::digest_chunk() {

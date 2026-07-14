@@ -4,7 +4,7 @@
 #include <functional>
 #include <dwhbll/collections/streams.h>
 
-#include <dwhbll/console/debug.h>
+#include <dwhbll/debug/debug.h>
 #include <dwhbll/stl_ext/common_helpers.h>
 
 // TODO: Spend 5 afternoons reading the C++ spec and figuring out how to optimize this garbage to be more user friendly.

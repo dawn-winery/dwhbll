@@ -1,7 +1,7 @@
 #pragma once
 
-#include <format>
-#include <utility>
+#include <dwhbll/debug/panic.h>
+#include <vector>
 
 #ifdef NDEBUG
     #define ASSERT(cond, ...) ((void)0)
@@ -35,31 +35,12 @@ public:
     const std::string& get_name() const;
 };
 
+const std::vector<task_deferral*>& running_tasks();
+
 // TODO: to minimize cost we could probably just store FMT args and format on demand.
 #define WITH_CONTEXT(fmt, ...) auto _ = ::dwhbll::debug::task_deferral(std::format(fmt __VA_OPT__(,) __VA_ARGS__))
 #endif
 
-// I would add a skip parameter here to avoid printing internal stack
-// frames, but if I do that overload resolution shits itself
-[[noreturn]] void panic(const std::string& msg);
-
-[[noreturn]] void panic();
-
-template <typename... Args>
-requires (sizeof...(Args) != 0)
-[[noreturn]] void panic(const std::string& msg, Args&&... args) {
-    panic(std::vformat(msg, std::make_format_args(args...)));
-}
-
-template <typename... Args>
-void cond_assert(bool condition, const std::string& msg, Args&&... args) {
-    if (!condition)
-        panic(std::vformat(msg, std::make_format_args(args...)));
-}
-
-void cond_assert(bool condition);
-
-bool is_being_debugged();
 
 template <typename... Args>
 [[noreturn]] inline void assert_internal(std::string_view cond, std::string_view fmt, Args... args) {
@@ -70,6 +51,18 @@ template <typename... Args>
 [[noreturn]] inline void assert_internal(std::string_view cond) {
     panic("Assertion Failed\nCondition: {}", cond);
 }
+
+
+template <typename... Args>
+void cond_assert(bool condition, const std::string& msg, Args&&... args) {
+    if (!condition)
+        panic(std::vformat(msg, std::make_format_args(args...)));
+}
+
+void cond_assert(bool condition);
+
+
+bool is_being_debugged();
 
 [[noreturn]] inline void unreachable() {
 #ifdef NDEBUG

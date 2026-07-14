@@ -6,7 +6,7 @@
 
 #include <dwhbll/concurrency/backoff/policy_exponential.h>
 #include <dwhbll/concurrency/queues/bounded_spsc_queue.h>
-#include <dwhbll/console/debug.h>
+#include <dwhbll/debug/debug.h>
 #include <dwhbll/console/logging.h>
 #include <dwhbll/concurrency/threading.h>
 

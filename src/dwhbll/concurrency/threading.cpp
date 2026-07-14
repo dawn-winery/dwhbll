@@ -4,7 +4,7 @@
 
 #include <unistd.h>
 
-#include <dwhbll/console/debug.h>
+#include <dwhbll/debug/debug.h>
 
 namespace dwhbll::concurrency {
     void pin_thread_to_core(int core) {

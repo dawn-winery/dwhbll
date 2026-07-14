@@ -9,7 +9,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <vector>
-#include <dwhbll/console/debug.h>
+#include <dwhbll/debug/debug.h>
 
 namespace dwhbll::subprocess {
     process::process(const std::initializer_list<std::string> &args) {
