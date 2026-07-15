@@ -151,6 +151,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/stl_ext/option.h
     include/dwhbll/stl_ext/packs.h
     include/dwhbll/stl_ext/result.h
+    include/dwhbll/stl_ext/templates.h
     include/dwhbll/subprocess/pipe_wrapper.h
     include/dwhbll/subprocess/process.h
     include/dwhbll/utils/format.hpp
