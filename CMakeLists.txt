@@ -59,6 +59,8 @@ set(DWHBLL_SOURCES
     src/dwhbll/cryptography/arc4/arc4.cpp
     src/dwhbll/cryptography/SHA1.cpp
     src/dwhbll/exceptions/rt_exception_base.cpp
+    src/dwhbll/files/filejar/file.cpp
+    src/dwhbll/files/filejar/file_mgr.cpp
     src/dwhbll/files/parse_utils.cpp
     src/dwhbll/graphics/bitmap.cpp
     src/dwhbll/lang/c/tokenize.cpp
@@ -118,6 +120,8 @@ set(DWHBLL_SOURCES
     include/dwhbll/exceptions/rt_exception_base.h
     include/dwhbll/exceptions/sys_error.h
     include/dwhbll/exceptions/timeout_exception.h
+    include/dwhbll/files/filejar/file.h
+    include/dwhbll/files/filejar/file_mgr.h
     include/dwhbll/files/parse_utils.h
     include/dwhbll/graphics/bitmap/bitmap.h
     include/dwhbll/graphics/bitmap/file_header.h
