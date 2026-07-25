@@ -10,6 +10,7 @@ extern bool ring_test(std::optional<std::string> test_to_run);
 extern bool cache_test(std::optional<std::string> test_to_run);
 extern bool stream_test(std::optional<std::string> test_to_run);
 extern bool bitmap_test(std::optional<std::string> test_to_run);
+extern bool c_lang_test(std::optional<std::string> test_to_run);
 
 // cryptography
 extern bool crypto_arc4_test(std::optional<std::string> test_to_run);
@@ -34,6 +35,7 @@ std::unordered_map<std::string, TestFunc> module_dispatch{
     {"bench/recycling_concurrent_stack", recycling_concurrent_stack_bench},
 
     {"crypto/arc4", crypto_arc4_test},
+    {"lang/c", c_lang_test},
 };
 
 int main(int argc, char **argv) {
