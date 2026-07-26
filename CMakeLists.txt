@@ -110,6 +110,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/concurrency/queues/bounded_spsc_queue.h
     include/dwhbll/concurrency/recycling_concurrent_stack.h
     include/dwhbll/concurrency/spinlock.h
+    include/dwhbll/console/ansi_escape.h
     include/dwhbll/console/debug.hpp
     include/dwhbll/console/Logging.h
     include/dwhbll/cryptography/arc4/arc4.h
