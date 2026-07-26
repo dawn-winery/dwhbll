@@ -61,6 +61,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/exceptions/rt_exception_base.cpp
     src/dwhbll/files/parse_utils.cpp
     src/dwhbll/graphics/bitmap.cpp
+    src/dwhbll/lang/c/tokenize.cpp
     src/dwhbll/network/address.cpp
     src/dwhbll/network/buffered_socket.cpp
     src/dwhbll/network/dns/dns.cpp
@@ -122,6 +123,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/graphics/bitmap/file_header.h
     include/dwhbll/graphics/bitmap/info_header.h
     include/dwhbll/graphics/pixel.h
+    include/dwhbll/lang/c/tokenize.h
     include/dwhbll/linalg/matrix.h
     include/dwhbll/math/pad_box.h
     include/dwhbll/math/rect.h
@@ -270,6 +272,7 @@ if (DWHBLL_TESTS)
         tests/collections/ring.cpp
         tests/collections/streams.cpp
         tests/graphics/bitmap.cpp
+        tests/lang/c/tokenizer_test.cpp
         tests/bench/bounded_spsc_int_bench.cpp
         tests/bench/bounded_mpsc_int_bench.cpp
         tests/bench/recycling_concurrent_stack_bench.cpp
