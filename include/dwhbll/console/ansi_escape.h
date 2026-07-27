@@ -111,7 +111,7 @@ namespace dwhbll::console::ansi_escape {
      * @return Data
      */
     constexpr std::string make_rgb(Graphics type, std::uint8_t r, std::uint8_t g, std::uint8_t b) {
-        return std::format("\033[{};2;{}m", static_cast<int>(type), r, g, b);
+        return std::format("\033[{};2;{};{};{}m", static_cast<int>(type), r, g, b);
     }
 
     template <typename... Args>
