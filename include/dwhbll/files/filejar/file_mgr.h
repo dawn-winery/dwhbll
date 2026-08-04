@@ -21,7 +21,31 @@ namespace dwhbll::files::filejar {
      * @brief Represents one file, requires the correct file_mgr instance to be of any use.
      */
     struct fileid {
-        const std::uint64_t id;
+        std::uint64_t id;
+
+        [[nodiscard]] explicit fileid(std::uint64_t id)
+            : id(id) {
+        }
+
+        fileid(const fileid &other) = default;
+
+        fileid(fileid &&other) noexcept
+            : id(other.id) {
+        }
+
+        fileid & operator=(const fileid &other) {
+            if (this == &other)
+                return *this;
+            id = other.id;
+            return *this;
+        }
+
+        fileid & operator=(fileid &&other) noexcept {
+            if (this == &other)
+                return *this;
+            id = other.id;
+            return *this;
+        }
 
         [[nodiscard]] constexpr std::strong_ordering operator<=>(const fileid &other) const noexcept {
             return id <=> other.id;
