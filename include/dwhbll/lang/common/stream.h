@@ -78,6 +78,31 @@ namespace dwhbll::lang::common {
             prepare_ring();
         }
 
+        stream(const stream &other) = delete;
+
+        stream(stream &&other) noexcept
+            : head(other.head),
+              tail(other.tail),
+              avail(other.avail) {
+            other.head = nullptr;
+            other.tail = nullptr;
+            other.avail = 0;
+        }
+
+        stream & operator=(const stream &other) = delete;
+
+        stream & operator=(stream &&other) noexcept {
+            if (this == &other)
+                return *this;
+            head = other.head;
+            tail = other.tail;
+            avail = other.avail;
+            other.head = nullptr;
+            other.tail = nullptr;
+            other.avail = 0;
+            return *this;
+        }
+
         constexpr bool has_next() {
             if (avail != 0)
                 return true;
