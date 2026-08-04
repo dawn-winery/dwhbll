@@ -64,6 +64,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/files/binary_file.cpp
     src/dwhbll/files/parse_utils.cpp
     src/dwhbll/graphics/bitmap.cpp
+    src/dwhbll/lang/common/file_stream.cpp
     src/dwhbll/lang/c/tokenize.cpp
     src/dwhbll/network/address.cpp
     src/dwhbll/network/buffered_socket.cpp
@@ -131,6 +132,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/graphics/bitmap/info_header.h
     include/dwhbll/graphics/pixel.h
     include/dwhbll/lang/c/tokenize.h
+    include/dwhbll/lang/common/file_stream.h
     include/dwhbll/lang/common/stream.h
     include/dwhbll/lang/common.h
     include/dwhbll/linalg/matrix.h
