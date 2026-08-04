@@ -41,7 +41,7 @@ namespace dwhbll::lang::common {
         void destroy_ring() {
             for (std::size_t i = 0; i < PeekCount; i++) {
                 auto* cur = head;
-                head->next = head;
+                head = head->next;
                 delete cur;
             }
         }
