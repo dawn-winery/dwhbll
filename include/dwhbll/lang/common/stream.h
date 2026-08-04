@@ -11,7 +11,7 @@ namespace dwhbll::lang::common {
      * @tparam PeekCount Number of available lookahead tokens
      */
     template <typename T, std::size_t PeekCount>
-    class Stream {
+    class stream {
         struct RingObject {
             RingObject *next;
             std::optional<T> obj;
@@ -70,11 +70,11 @@ namespace dwhbll::lang::common {
         }
 
     public:
-        virtual ~Stream() {
+        virtual ~stream() {
             destroy_ring();
         }
 
-        Stream() {
+        stream() {
             prepare_ring();
         }
 
@@ -102,12 +102,12 @@ namespace dwhbll::lang::common {
             return std::move(val);
         }
 
-        struct PeekTool {
+        struct peek_tool {
             Stream* parent;
             RingObject* head;
             std::size_t avail;
 
-            explicit PeekTool(Stream* parent) : parent(parent) {
+            explicit peek_tool(Stream* parent) : parent(parent) {
                 parent->_refill();
 
                 head = parent->head;
@@ -181,7 +181,7 @@ namespace dwhbll::lang::common {
             }
         };
 
-        constexpr PeekTool get_tool() {
+        constexpr peek_tool get_peeker() {
             return PeekTool(this);
         }
     };
