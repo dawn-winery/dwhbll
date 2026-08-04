@@ -64,8 +64,9 @@ set(DWHBLL_SOURCES
     src/dwhbll/files/binary_file.cpp
     src/dwhbll/files/parse_utils.cpp
     src/dwhbll/graphics/bitmap.cpp
-    src/dwhbll/lang/common/file_stream.cpp
     src/dwhbll/lang/c/tokenize.cpp
+    src/dwhbll/lang/common/file_stream.cpp
+    src/dwhbll/lang/common.cpp
     src/dwhbll/network/address.cpp
     src/dwhbll/network/buffered_socket.cpp
     src/dwhbll/network/dns/dns.cpp
