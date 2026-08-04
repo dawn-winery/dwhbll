@@ -103,11 +103,11 @@ namespace dwhbll::lang::common {
         }
 
         struct peek_tool {
-            Stream* parent;
+            stream* parent;
             RingObject* head;
             std::size_t avail;
 
-            explicit peek_tool(Stream* parent) : parent(parent) {
+            explicit peek_tool(stream* parent) : parent(parent) {
                 parent->_refill();
 
                 head = parent->head;
