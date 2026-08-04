@@ -132,7 +132,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/graphics/pixel.h
     include/dwhbll/lang/c/tokenize.h
     include/dwhbll/lang/common/stream.h
-    include/dwhbll/lang/common.hstr
+    include/dwhbll/lang/common.h
     include/dwhbll/linalg/matrix.h
     include/dwhbll/math/pad_box.h
     include/dwhbll/math/rect.h
