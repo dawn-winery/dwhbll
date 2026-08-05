@@ -127,6 +127,13 @@ namespace dwhbll::lang::common {
             return std::move(val);
         }
 
+        constexpr T peek() {
+            if (!has_next())
+                debug::panic("No more available tokens!");
+
+            return head->obj.value();
+        }
+
         struct peek_tool {
             stream* parent;
             RingObject* head;
