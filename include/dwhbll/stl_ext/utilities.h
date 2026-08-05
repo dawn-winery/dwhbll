@@ -1,4 +1,5 @@
 #pragma once
+
 #include <dwhbll/sanify/deferred.h>
 
 namespace dwhbll::stl_ext {
@@ -17,5 +18,12 @@ namespace dwhbll::stl_ext {
         return sanify::deferred([tmp = std::move(tmp), &storage]() -> void {
             storage = std::move(tmp);
         });
+    }
+
+    template <typename T>
+    [[nodiscard]] constexpr auto take(std::optional<T>& value) -> T {
+        T tmp = std::move(value.value());
+        value.reset();
+        return std::move(tmp);
     }
 }
