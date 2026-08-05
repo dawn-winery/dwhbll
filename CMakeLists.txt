@@ -67,6 +67,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/lang/c/tokenize.cpp
     src/dwhbll/lang/common/file_stream.cpp
     src/dwhbll/lang/common.cpp
+    src/dwhbll/lang/cpp/cpp_raw_stream.cpp
     src/dwhbll/network/address.cpp
     src/dwhbll/network/buffered_socket.cpp
     src/dwhbll/network/dns/dns.cpp
@@ -136,6 +137,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/lang/common/file_stream.h
     include/dwhbll/lang/common/stream.h
     include/dwhbll/lang/common.h
+    include/dwhbll/lang/cpp/cpp_raw_stream.h
     include/dwhbll/linalg/matrix.h
     include/dwhbll/math/pad_box.h
     include/dwhbll/math/rect.h
