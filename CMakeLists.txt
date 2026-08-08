@@ -137,6 +137,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/lang/common/file_stream.h
     include/dwhbll/lang/common/stream.h
     include/dwhbll/lang/common.h
+    include/dwhbll/lang/cpp/common.h
     include/dwhbll/lang/cpp/cpp_raw_stream.h
     include/dwhbll/linalg/matrix.h
     include/dwhbll/math/pad_box.h
