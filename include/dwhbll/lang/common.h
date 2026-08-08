@@ -30,6 +30,7 @@ namespace dwhbll::lang {
     };
 
     class span {
+    public:
         files::filejar::fileid file;
         std::size_t line_begin{};
         std::size_t line_end{};
