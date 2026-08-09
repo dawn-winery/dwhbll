@@ -69,6 +69,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/lang/common.cpp
     src/dwhbll/lang/cpp/cpp_raw_stream.cpp
     src/dwhbll/lang/cpp/preprocess/line_splice_stream.cpp
+    src/dwhbll/math/vec4.cpp
     src/dwhbll/network/address.cpp
     src/dwhbll/network/buffered_socket.cpp
     src/dwhbll/network/dns/dns.cpp
@@ -180,7 +181,6 @@ set(DWHBLL_SOURCES
     include/dwhbll/utils/threading.h
     include/dwhbll/utils/uuid.h
     include/dwhbll/math/vec4.h
-    src/dwhbll/math/vec4.cpp
     include/dwhbll/concurrency/owning_spinlock.h
     include/dwhbll/stl_ext/ranges.h
     include/dwhbll/stl_ext/utilities.h
