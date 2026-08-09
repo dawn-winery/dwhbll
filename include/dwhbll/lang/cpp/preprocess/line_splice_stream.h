@@ -12,7 +12,7 @@ namespace dwhbll::lang::cpp::preprocess {
     };
 
     struct line_splice_helper : common::stream<ls_token, 16> {
-        std::unique_ptr<stream<char32_t, 16>>& _source;
+        std::unique_ptr<stream<char32_t, 16>> _source;
 
         cursor _head;
 
@@ -26,6 +26,6 @@ namespace dwhbll::lang::cpp::preprocess {
         ls_token next0() override;
 
     public:
-        explicit line_splice_helper(const files::filejar::fileid &file, std::unique_ptr<stream<char32_t, 16>> &source);
+        explicit line_splice_helper(const files::filejar::fileid &file, std::unique_ptr<stream<char32_t, 16>> &&source);
     };
 }

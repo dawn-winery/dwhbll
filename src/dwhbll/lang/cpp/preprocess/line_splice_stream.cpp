@@ -69,6 +69,6 @@ namespace dwhbll::lang::cpp::preprocess {
 
     line_splice_helper::line_splice_helper(
         const files::filejar::fileid &file,
-        std::unique_ptr<stream<char32_t, 16>> &source) : _source(source), _head(file) {
+        std::unique_ptr<stream<char32_t, 16>> &&source) : _source(std::move(source)), _head(file) {
     }
 }
