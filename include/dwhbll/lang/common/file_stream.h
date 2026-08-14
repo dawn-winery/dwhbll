@@ -6,6 +6,10 @@
 #include <dwhbll/lang/common/stream.h>
 
 namespace dwhbll::lang::common {
+    /**
+     * @brief Stream providing char32_t for consumers.
+     * Automatically strips potential leading byte order mark.
+     */
     class file_stream : public stream<char32_t, 16> {
         std::vector<char> contents;
 
