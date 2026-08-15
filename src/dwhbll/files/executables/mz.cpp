@@ -9,6 +9,10 @@ namespace dwhbll::files::executables {
         // TODO: technically the MZ header can be smaller for non PE files
         // but that's a problem for future me.
         e_magic = read_u16_le(file);
+
+        if (e_magic != 0x5A4D)
+            debug::panic("File Header did not match expected string 'MZ'! (Maybe not PE or DOS file?)");
+
         e_cblp = read_u16_le(file);
         e_cp = read_u16_le(file);
         e_crlc = read_u16_le(file);
