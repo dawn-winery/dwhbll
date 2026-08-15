@@ -24,8 +24,8 @@ namespace dwhbll::files {
 
         binary_file & operator=(binary_file &&other) noexcept;
 
-        [[nodiscard]] constexpr uint8_t* get_file() const {
-            return file;
+        [[nodiscard]] constexpr std::span<uint8_t> get_file() const {
+            return std::span{file, file + len};
         }
 
         [[nodiscard]] constexpr std::size_t get_len() const {
