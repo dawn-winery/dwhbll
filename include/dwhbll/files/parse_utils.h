@@ -58,4 +58,23 @@ namespace dwhbll::files {
 
         return static_cast<uint64_t>(first) | (static_cast<uint64_t>(second) << 32);
     }
+
+    constexpr void write_u8(std::ostream &stream, uint8_t value) {
+        stream.put(static_cast<char>(value));
+    }
+
+    constexpr void write_u16_le(std::ostream &stream, uint16_t value) {
+        write_u8(stream, static_cast<uint8_t>(value & 0xFF));
+        write_u8(stream, static_cast<uint8_t>(value >> 8));
+    }
+
+    constexpr void write_u32_le(std::ostream &stream, uint32_t value) {
+        write_u16_le(stream, static_cast<uint16_t>(value & 0xFFFF));
+        write_u16_le(stream, static_cast<uint16_t>(value >> 16));
+    }
+
+     constexpr void write_u64_le(std::ostream &stream, uint64_t value) {
+        write_u32_le(stream, static_cast<uint32_t>(value & 0xFFFFFFFF));
+        write_u32_le(stream, static_cast<uint32_t>(value >> 32));
+    }
 }

@@ -1,11 +1,13 @@
 #pragma once
 
+#include <list>
 #include <string>
-#include <variant>
 #include <vector>
-#include <dwhbll/console/debug.hpp>
 
+#include <dwhbll/console/debug.hpp>
 #include <dwhbll/files/executables/mz.h>
+
+// TODO: the parser should probably be improved to not panic everywhere :xdd:
 
 namespace dwhbll::files::executables {
     enum class MACHINE_TYPE : uint16_t {
@@ -78,6 +80,12 @@ namespace dwhbll::files::executables {
         COFF_FILE_HEADER() = default;
 
         explicit COFF_FILE_HEADER(std::span<uint8_t> &file);
+
+        /**
+         * @brief Write to the file
+         * @param stream Output stream
+         */
+        void write(std::ostream &stream) const;
     };
 
     enum class WINDOWS_SUBSYSTEM : uint16_t {
@@ -127,7 +135,32 @@ namespace dwhbll::files::executables {
         explicit DATA_DIRECTORY(std::span<uint8_t> &view);
 
         void fill_data_view(std::span<uint8_t> image_base, const PE_SECTION_TABLE &sections);
+
+        /**
+         * @brief Write the header
+         * @param stream Output stream
+         */
+        void write(std::ostream &stream) const;
     };
+
+    enum class DATA_DIRECTORY_TYPE {
+        EXPORT = 0,
+        IMPORT = 1,
+        RESOURCE = 2,
+        EXCEPTION = 3,
+        SECURITY = 4,
+        BASERELOC = 5,
+        DEBUG = 6,
+        ARCHITECTURE = 7,
+        GLOBALPTR = 8,
+        TLS = 9,
+        LOAD_CONFIG = 10,
+        BOUND_IMPORT = 11,
+        IAT = 12,
+        DELAY_IMPORT = 13,
+        COM_DESCRIPTOR = 14,
+        RESERVED = 15,
+      };
 
     struct OPTIONAL_HEADER {
         uint16_t magic{};
@@ -167,12 +200,30 @@ namespace dwhbll::files::executables {
 
         explicit OPTIONAL_HEADER(std::span<uint8_t> &file, std::uint64_t header_size_limit);
 
+        /**
+         * @brief Write the header
+         * @param stream Output stream
+         */
+        void write(std::ostream &stream);
+
         [[nodiscard]] constexpr bool is_pe32() const {
             if (magic == 0x010B)
                 return true; // PE32
             if (magic == 0x020B)
                 return false; // PE32+
             debug::panic("Unknown PE magic {:#x}", magic);
+        }
+
+        [[nodiscard]] constexpr bool has_directory(DATA_DIRECTORY_TYPE type) const {
+            return directories.size() > static_cast<uint16_t>(type) &&
+                directories[static_cast<uint16_t>(type)].virtual_address != 0 &&
+                directories[static_cast<uint16_t>(type)].size != 0;
+        }
+
+        [[nodiscard]] constexpr DATA_DIRECTORY &get_directory(DATA_DIRECTORY_TYPE type) {
+            ASSERT(has_directory(type));
+
+            return directories[static_cast<uint16_t>(type)];
         }
     };
 
@@ -185,6 +236,12 @@ namespace dwhbll::files::executables {
         NT_HEADER() = default;
 
         explicit NT_HEADER(std::span<uint8_t> &file);
+
+        /**
+         * @brief Write the header
+         * @param stream Output stream
+         */
+        void write(std::ostream &stream);
     };
 
     enum class SECTION_CHARACTERISTICS : uint32_t {
@@ -225,8 +282,12 @@ namespace dwhbll::files::executables {
         MEM_SHARED = 0x10000000,
         MEM_EXECUTE = 0x20000000,
         MEM_READ = 0x40000000,
-        MEM_WRITE = 0x80000000,
+        MEM_WRITE = 0x80000000
     };
+
+    constexpr uint32_t operator&(SECTION_CHARACTERISTICS lhs, SECTION_CHARACTERISTICS rhs) {
+        return static_cast<uint32_t>(lhs) & static_cast<uint32_t>(rhs);
+    }
 
     struct PE_SECTION {
         std::string name{};
@@ -247,6 +308,12 @@ namespace dwhbll::files::executables {
         explicit PE_SECTION(std::span<uint8_t> &file);
 
         void fill_data_view(std::span<uint8_t> file_view);
+
+        /**
+         * @brief Write the header
+         * @param stream Output stream
+         */
+        void write(std::ostream &stream);
     };
 
     struct PE_SECTION_TABLE {
@@ -262,12 +329,42 @@ namespace dwhbll::files::executables {
             return sections;
         }
 
+        [[nodiscard]] constexpr std::size_t size() const {
+            return sections.size();
+        }
+
         // std::span<uint8_t> view_of_va(std::uint64_t addr);
 
         [[nodiscard]] std::optional<uint64_t> resolve_phys_addr(uint64_t RVA) const;
 
         [[nodiscard]] PE_SECTION& get_section(uint64_t RVA);
+
+        /**
+         * @brief Write the header
+         * @param stream Output stream
+         */
+        void write(std::ostream &stream);
     };
+
+    enum class RELOC_TYPE {
+        ABSOLUTE = 0,
+        HIGH = 1,
+        LOW = 2,
+        HIGHLOW = 3,
+        HIGHADJ = 4,
+        MIPS_JMPADDR = 5, // only valid on MIPS
+        ARM_MOV32 = 5,    // only valid on ARM/Thumb
+        RISCV_HIGH20 = 5, // only valid on RISC-V
+        RESERVED = 6,
+        THUMB_MOV32 = 7,         // only valid on Thumb
+        RISCV_LOW32I = 7,        // only valid on RISC-V
+        RISCV_LOW12S = 8,        // only valid on RISC-V
+        LOONGARCH32_MARK_LA = 8, // only valid on LoongArch 32
+        LOONGARCH64_MARK_LA = 8, // only valid on LoongArch 64
+        MIPS_JMPADDR16 = 9,      // only valid on MIPS
+        IA64_IMM64 = 9,
+        DIR64 = 10
+      };
 
     /**
      * @brief PE image
@@ -276,6 +373,14 @@ namespace dwhbll::files::executables {
      * @warning This also won't stop you from doing dumb things with the rest of the binary!
      */
     struct PE_IMAGE {
+        struct reloc {
+            uint64_t addr;
+            RELOC_TYPE type;
+        };
+
+        /// @note Changes to reloc table will **NOT** be reflected if written out!
+        std::vector<reloc> relocs;
+
         std::span<uint8_t> file_view;
 
         DOS_IMAGE dos_image{};
@@ -284,8 +389,38 @@ namespace dwhbll::files::executables {
 
         PE_SECTION_TABLE sections{};
 
+        std::list<std::vector<uint8_t>> adopted_buffers;
+
+        PE_SECTION & get_section_va(uint64_t VA);
+
+        void load_relocs();
+
         PE_IMAGE() = default;
 
         explicit PE_IMAGE(std::span<uint8_t> file);
+
+        std::vector<uint8_t>& adopt(std::vector<uint8_t> &&buffer);
+
+        /**
+         * @brief Write the file, fixing up some fields like section data to the new buffer.
+         * @param stream Output stream, must be empty
+         */
+        void write_fixup(std::ostream &stream);
+
+        [[nodiscard]] constexpr uint64_t image_base() const {
+            return nt_header.optional_header.image_base;
+        }
+
+        [[nodiscard]] constexpr uint64_t entrypoint_rva() const {
+            return nt_header.optional_header.address_of_entry_point;
+        }
+
+        [[nodiscard]] constexpr uint64_t entrypoint_va() const {
+            return image_base() + entrypoint_rva();
+        }
+
+        [[nodiscard]] uint64_t va_to_phys(uint64_t VA) const;
+
+        [[nodiscard]] uint64_t rva_to_phys(uint64_t RVA) const;
     };
 }

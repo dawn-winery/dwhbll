@@ -53,5 +53,6 @@ namespace dwhbll::files::executables {
         end -= begin;
 
         data = file.subspan(begin, end);
+        header_raw = file.subspan(0, begin + end);
     }
 }

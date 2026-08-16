@@ -41,6 +41,7 @@ namespace dwhbll::files::executables {
         DOS_HEADER header{};
 
         std::span<uint8_t> data{};
+        std::span<uint8_t> header_raw{};
 
         DOS_IMAGE();
 
