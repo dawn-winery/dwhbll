@@ -27,7 +27,8 @@ namespace dwhbll::files::executables {
         const auto addr = sections.resolve_phys_addr(virtual_address);
 
         if (!addr.has_value()) {
-            console::warn("data directory entry has unresolvable data!");
+            console::warn("data directory entry has unresolvable data! (RVA: {:#x})", virtual_address);
+            console::info("Maybe an uninit region?");
             return;
         }
 
@@ -126,8 +127,10 @@ namespace dwhbll::files::executables {
 
             if (c != 0)
                 str += static_cast<char>(c);
-            else
+            else {
+                file = file.subspan(8 - i);
                 break;
+            }
         }
 
         name = str;
@@ -138,8 +141,8 @@ namespace dwhbll::files::executables {
         pointer_to_raw_data = read_u32_le(file);
         pointer_to_relocations = read_u32_le(file);
         pointer_to_line_numbers = read_u32_le(file);
-        number_of_relocations = read_u32_le(file);
-        number_of_line_numbers = read_u32_le(file);
+        number_of_relocations = read_u16_le(file);
+        number_of_line_numbers = read_u16_le(file);
         characteristics = static_cast<SECTION_CHARACTERISTICS>(read_u32_le(file));
 
         if (size_of_raw_data + pointer_to_raw_data < pointer_to_raw_data)
