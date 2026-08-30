@@ -17,6 +17,10 @@ namespace dwhbll::lang::cpp::preprocess {
         auto n = _source->next();
         if (n != '\\') {
             _head.next_col();
+
+            if (n == '\n')
+                _head.next_line();
+
             tokens.emplace_back(false, span{begin, _head}, n);
             return;
         }

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <list>
+#include <variant>
+
 #include <dwhbll/lang/common.h>
 #include <dwhbll/lang/common/stream.h>
 
