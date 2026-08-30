@@ -167,5 +167,7 @@ namespace dwhbll::unicode {
     namespace properties {
         extern table<empty_struct> XID_Start;
         extern table<empty_struct> XID_Continue;
+        extern table<empty_struct> ID_Compat_Math_Start;
+        extern table<empty_struct> ID_Compat_Math_Continue;
     }
 }
