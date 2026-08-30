@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <stdexcept>
+#include <unordered_map>
+
 #include <dwhbll/debug/debug.h>
 
 namespace dwhbll::unicode {
@@ -168,5 +170,9 @@ namespace dwhbll::unicode {
         extern table<empty_struct> XID_Continue;
         extern table<empty_struct> ID_Compat_Math_Start;
         extern table<empty_struct> ID_Compat_Math_Continue;
+    }
+
+    namespace aliases {
+        extern std::unordered_map<std::string, char32_t> name_aliases_to_codepoint;
     }
 }
