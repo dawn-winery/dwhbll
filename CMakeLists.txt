@@ -235,13 +235,20 @@ add_custom_command(
 
     COMMAND
     "${Python3_EXECUTABLE}"
-    "${GENERATE_UNICODE}"
+    "-m"
+    "script.unicode.generate_tables"
     "${UCD_ZIP}"
     "${UNICODE_TABLES}"
 
+    WORKING_DIRECTORY
+    "${CMAKE_SOURCE_DIR}"
+
     DEPENDS
     "${UCD_ZIP}"
-    "${GENERATE_UNICODE}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/script/codegen/__init__.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/script/codegen/file.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/script/codegen/namespace.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/script/unicode/generate_tables.py"
 
     COMMENT
     "Generating Unicode tables"
