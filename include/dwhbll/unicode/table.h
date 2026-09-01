@@ -175,4 +175,8 @@ namespace dwhbll::unicode {
     namespace aliases {
         extern std::unordered_map<std::string, char32_t> name_aliases_to_codepoint;
     }
+
+    namespace base {
+        extern table<int> canonical_combining_class;
+    }
 }
