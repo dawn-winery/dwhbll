@@ -95,7 +95,7 @@ namespace dwhbll::unicode {
             }
 
             decltype(auto) operator->(this auto &&self) {
-                return self.head.operator->();
+                return self.head;
             }
 
             friend bool operator==(const const_iterator &lhs,
