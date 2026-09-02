@@ -182,13 +182,13 @@ set(DWHBLL_SOURCES
     include/dwhbll/utils/json.h
     include/dwhbll/utils/stacktrace.h
     include/dwhbll/stl_ext/string.h
-    include/dwhbll/utils/utils.h
     include/dwhbll/concurrency/threading.h
     include/dwhbll/utils/uuid.h
     include/dwhbll/math/vec4.h
     include/dwhbll/concurrency/owning_spinlock.h
     include/dwhbll/stl_ext/ranges.h
     include/dwhbll/stl_ext/utilities.h
+    include/dwhbll/stl_ext/try.h
     include/dwhbll/unicode/table.h
 )
 
