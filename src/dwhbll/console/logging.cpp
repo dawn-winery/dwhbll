@@ -6,7 +6,6 @@
 #include <dwhbll/sanify/types.h>
 #include <dwhbll/utils/stacktrace.h>
 #include <dwhbll/stl_ext/string.h>
-#include <dwhbll/utils/utils.h>
 
 namespace dwhbll::console {
     namespace detail {
