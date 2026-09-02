@@ -59,7 +59,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/debug/panic.cpp
     src/dwhbll/debug/perf.cpp
     src/dwhbll/cryptography/arc4/arc4.cpp
-    src/dwhbll/cryptography/sha1.cpp
+    src/dwhbll/cryptography/hash/sha1.cpp
     src/dwhbll/exceptions/rt_exception_base.cpp
     src/dwhbll/files/executables/mz.cpp
     src/dwhbll/files/filejar/file.cpp

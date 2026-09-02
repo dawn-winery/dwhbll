@@ -2,7 +2,6 @@
 
 #include <concepts>
 #include <functional>
-#include <dwhbll/collections/streams.h>
 
 #include <dwhbll/debug/debug.h>
 #include <dwhbll/stl_ext/common_helpers.h>
@@ -13,6 +12,10 @@ namespace dwhbll::stl_ext {
     template <typename T, typename E>
     requires (!std::same_as<T, void> && !std::same_as<E, void>)
     class Result;
+
+    template <typename T>
+    requires (!std::same_as<T, void>)
+    class Option;
 
     namespace __detail {
         template<typename T>
