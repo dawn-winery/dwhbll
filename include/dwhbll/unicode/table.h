@@ -1,8 +1,10 @@
 #pragma once
 
 #include <algorithm>
+#include <functional>
 #include <stdexcept>
 #include <unordered_map>
+#include <vector>
 
 #include <dwhbll/console/debug.hpp>
 
@@ -178,5 +180,47 @@ namespace dwhbll::unicode {
 
     namespace base {
         extern table<int> canonical_combining_class;
+
+        using decomposition = std::vector<char32_t>;
+
+        struct composition {
+            char32_t second;
+            char32_t composed;
+        };
+
+        using compositions = std::pair<composition*, composition*>;
+
+        // TODO: both of these can probably be specialized to save memory.
+        extern table<decomposition> decomposition_table;
+        extern table<decomposition> compat_decomposition_table;
+        extern table<compositions> composition_table;
+    }
+
+    namespace normalization {
+        /// Normalization form C Quick Check data
+        enum class QC_VAL : uint8_t {
+            YES,
+            NO,
+            MAYBE
+        };
+
+        /// Tables are negatives, only NO and MAYBE are contained. Not in table means YES
+        extern table<QC_VAL> nfc_qc;
+        extern table<QC_VAL> nfkc_qc;
+        extern table<QC_VAL> nfd_qc;
+        extern table<QC_VAL> nfkd_qc;
+    }
+
+    /// Hangul constants
+    namespace hangul {
+        constexpr char32_t LBASE = 0x1100;
+        constexpr char32_t SBASE = 0xAC00;
+        constexpr char32_t VBASE = 0x1161;
+        constexpr char32_t TBASE = 0x11A7;
+        constexpr uint32_t LCOUNT = 19;
+        constexpr uint32_t TCOUNT = 28;
+        constexpr uint32_t VCOUNT = 21;
+        constexpr uint32_t NCOUNT = VCOUNT * TCOUNT;
+        constexpr uint32_t SCOUNT = LCOUNT * NCOUNT;
     }
 }
