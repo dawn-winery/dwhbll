@@ -3,6 +3,7 @@
 #include <dwhbll/files/filejar/file_mgr.h>
 
 #include <utility>
+#include <dwhbll/console/debug.hpp>
 
 namespace dwhbll::lang {
     struct cursor {
@@ -47,6 +48,13 @@ namespace dwhbll::lang {
 
         [[nodiscard]] constexpr cursor end() const {
             return cursor{file, line_end, column_end};
+        }
+
+        constexpr void new_end(const cursor &end) {
+            ASSERT(end.file == file);
+
+            line_end = end.line;
+            column_end = end.column;
         }
     };
 }
