@@ -3,21 +3,13 @@
 #include <version>
 
 #if __cpp_impl_reflection >= 202506L
+
 #include <meta>
 #include <string>
 #include <algorithm>
 #include <vector>
 
-namespace dwhbll::utils {
-
-consteval bool has_annotation(std::meta::info r, std::meta::info type) {
-    for (auto a : annotations_of(r)) {
-        if(std::meta::dealias(std::meta::type_of(a)) == type) {
-            return true;
-        }
-    }
-    return false;
-}
+namespace dwhbll::meta {
 
 template<typename E, bool Enumerable = std::meta::is_enumerable_type(^^E)>
 requires std::is_enum_v<E>
@@ -29,6 +21,7 @@ constexpr std::string_view enum_to_string(E value) {
         }
     }
 
+    // Maybe return some kind of error/exception at compile time?
     return "<unnamed>";
 }
 
@@ -47,5 +40,5 @@ constexpr std::optional<E> string_to_enum(std::string_view name) {
     return std::nullopt;
 }
 
-} // namespace dwhbll::utils
+} // namespace dwhbll::meta
 #endif
