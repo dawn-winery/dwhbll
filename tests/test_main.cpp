@@ -20,6 +20,9 @@ extern bool bounded_spsc_int_bench(std::optional<std::string> test_to_run);
 extern bool bounded_mpsc_int_bench(std::optional<std::string> test_to_run);
 extern bool recycling_concurrent_stack_bench(std::optional<std::string> test_to_run);
 
+// unicode testing
+extern bool unicode_norm_test(std::optional<std::string> norm_file);
+
 // The optional string argument is for the subtests to run
 using TestFunc = std::function<bool(std::optional<std::string>)>;
 
@@ -36,6 +39,8 @@ std::unordered_map<std::string, TestFunc> module_dispatch{
 
     {"crypto/arc4", crypto_arc4_test},
     {"lang/c", c_lang_test},
+
+    {"unicode/norm", unicode_norm_test}
 };
 
 int main(int argc, char **argv) {

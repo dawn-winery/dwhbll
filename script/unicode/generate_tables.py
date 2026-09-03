@@ -212,7 +212,7 @@ def merge_to_ranges(points: list[tuple[int, int, int]]) -> list[tuple[int, int, 
     for start, end, data in points[1:]:
         prev_start, prev_end, prev_data = merged[-1]
 
-        if start == prev_end + 1 and prev_data == data:
+        if start <= prev_end + 1 and prev_data == data:
             merged[-1] = (prev_start, end, data)
         else:
             merged.append((start, end, data))
@@ -220,10 +220,14 @@ def merge_to_ranges(points: list[tuple[int, int, int]]) -> list[tuple[int, int, 
     return merged
 
 
-def generate_compositions(comp_exclusions: set[int], data: list[tuple[int, int, str, str, int, str, tuple[str, list[int]], str, str, str, bool, str, int, int, int]]) -> tuple[list[tuple[int, str, list[int]]], dict[int, dict[int, int]]]:
+def generate_compositions(comp_exclusions: set[int], data: list[tuple[int, int, str, str, int, str, tuple[str, list[int]], str, str, str, bool, str, int, int, int]]) -> tuple[list[tuple[int, str, list[int]]], list[tuple[int, str, list[int]]], dict[int, dict[int, int]]]:
     decompositions = {}
+    compat_decompositions = {}
+    ccc = {}
 
     for entry in data:
+        ccc[entry[0]] = entry[4]
+
         if not entry[6][1]:
             continue
 
@@ -233,7 +237,9 @@ def generate_compositions(comp_exclusions: set[int], data: list[tuple[int, int, 
         if entry[0] in decompositions:
             raise Exception(f"Multiple decompositions found for point 0x{entry[0]:06x}")
 
-        decompositions[entry[0]] = entry[6]
+        compat_decompositions[entry[0]] = entry[6]
+        if not entry[6][0]:
+            decompositions[entry[0]] = entry[6]
 
     compositions = {}
 
@@ -249,6 +255,12 @@ def generate_compositions(comp_exclusions: set[int], data: list[tuple[int, int, 
 
         if key in comp_exclusions:
             # excluded from composition
+            continue
+
+        # Non-starter decompositions do not apply
+        if value[1][0] in ccc and ccc[value[1][0]] != 0:
+            continue
+        if key in ccc and ccc[key] != 0:
             continue
 
         if value[1][0] in compositions and value[1][1] in compositions[value[1][0]]:
@@ -268,17 +280,42 @@ def generate_compositions(comp_exclusions: set[int], data: list[tuple[int, int, 
             head = points.popleft()
 
             if head in decompositions:
-                points.extendleft(decompositions[head][1][::-1])
+                compat, decomp = decompositions[head]
+                points.extendleft(decomp[::-1])
             else:
                 expanded.append(head)
 
         decompositions[entry] = (value[0], expanded)
 
-    return [(key, *value) for key, value in decompositions.items()], compositions
+    for entry in compat_decompositions:
+        value = compat_decompositions[entry]
+        expanded = []
+        points = deque(value[1])
+
+        while len(points) > 0:
+            head = points.popleft()
+
+            if head in compat_decompositions:
+                compat, decomp = compat_decompositions[head]
+                points.extendleft(decomp[::-1])
+            else:
+                expanded.append(head)
+
+        compat_decompositions[entry] = (value[0], expanded)
+
+    return [(key, *value) for key, value in decompositions.items()], [(key, *value) for key, value in compat_decompositions.items()], compositions
 
 
 def cpp_table(body_type: str, name: str, entries_fmt: str, entries: list[tuple]) -> list[str]:
+    last_key = 0
+
     lines = [f"static table<{body_type}>::elem {name}_ranges[] = {{"]
+
+    for entry in entries:
+        if last_key > entry[0]:
+            raise Exception(f"Expected entry[0]({entry[0]}) > last_key({last_key})")
+
+        last_key = entry[0]
 
     fmtstr = f"    {entries_fmt}, "
     lines.extend([fmtstr.format(*entry) for entry in entries])
@@ -327,7 +364,7 @@ def main() -> None:
 
     canonical_combining_class = merge_to_ranges([(x[0], x[1], x[4]) for x in parsed_unicode_data])
 
-    decompositions, compositions = generate_compositions(parsed_comp_exclusions, parsed_unicode_data)
+    decompositions, compat_decompositions, compositions = generate_compositions(parsed_comp_exclusions, parsed_unicode_data)
 
     name_aliases = parse_name_aliases(data)
 
@@ -342,6 +379,7 @@ def main() -> None:
     print(f"Compositions: {len(compositions)} entries")
     print(f"Composition Exclusions: {len(parsed_comp_exclusions)} entries")
     print(f"Decompositions: {len(decompositions)} entries")
+    print(f"Compat Decomposition: {len(compat_decompositions)} entries")
 
     properties = {
         "XID_Start": xid_start,
@@ -366,33 +404,38 @@ def main() -> None:
 
             with GeneratedNamespace(unicode_ns, "base") as base:
                 base.append_lines(cpp_table("int", "canonical_combining_class", "{{0x{:06X}, 0x{:06X}, {}}}", canonical_combining_class))
-                base.append_lines(cpp_table("decomposition", "decomposition_table", "{{0x{:06X}, 0x{:06X}, {{{}}}}}", [
+                base.append_lines(cpp_table("decomposition", "decomposition_table", "{{0x{:06X}, 0x{:06X}, {{{}}}}}", sorted([
                     (val, val, ', '.join([f"0x{decomp:06X}" for decomp in decomposed]))
                     for val, compat, decomposed in decompositions
                     if not compat
-                ]))
+                ])))
+
+                base.append_lines(cpp_table("decomposition", "compat_decomposition_table", "{{0x{:06X}, 0x{:06X}, {{{}}}}}", sorted([
+                    (val, val, ', '.join([f"0x{decomp:06X}" for decomp in decomposed]))
+                    for val, compat, decomposed in compat_decompositions
+                ])))
 
                 for key in compositions:
                     lines = [f"static composition composition_u{key:06x}_ranges[] = {{"]
                     lines.extend([
-                        f"    {{0x{val:06X}, 0x{composed:06X}}}," for val, composed in compositions[key].items()
+                        f"    {{0x{val:06X}, 0x{composed:06X}}}," for val, composed in sorted(list(compositions[key].items()))
                     ])
                     lines.append("};")
                     lines.append("")
 
                     base.append_lines(lines)
 
-                base.append_lines(cpp_table("compositions", "composition_table", "{{0x{:06X}, 0x{:06X}, {}}}", [
+                base.append_lines(cpp_table("compositions", "composition_table", "{{0x{:06X}, 0x{:06X}, {}}}", sorted([
                     (key, key, f"{{composition_u{key:06x}_ranges, composition_u{key:06x}_ranges + std::size(composition_u{key:06x}_ranges)}}") for key in compositions
-                ]))
+                ])))
 
             with GeneratedNamespace(unicode_ns, "normalization") as norm:
                 # TODO: handle range merging
                 for type in ["NFC_QC", "NFD_QC", "NFKC_QC", "NFKD_QC"]:
-                    norm.append_lines(cpp_table("QC_VAL", type.lower(), "{{0x{:06X}, 0x{:06X}, {}}}", [
+                    norm.append_lines(cpp_table("QC_VAL", type.lower(), "{{0x{:06X}, 0x{:06X}, {}}}", sorted([
                         (*parse_codepoint(data[0]), "QC_VAL::NO" if data[2] == "N" else ("QC_VAL::MAYBE" if data[2] == "M" else "???")) for
                         data in derived_normalization_props if data[1] == type
-                    ]))
+                    ])))
 
     print(f"Generated {sfile}")
 

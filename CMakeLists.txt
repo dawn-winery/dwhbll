@@ -81,6 +81,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/sanify/deferred.cpp
     src/dwhbll/subprocess/process.cpp
     src/dwhbll/subprocess/pipe_wrapper.cpp
+    src/dwhbll/unicode/helpers.cpp
     src/dwhbll/utils/json.cpp
     src/dwhbll/utils/perf.cpp
     src/dwhbll/utils/string.cpp
@@ -188,6 +189,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/concurrency/owning_spinlock.h
     include/dwhbll/stl_ext/ranges.h
     include/dwhbll/stl_ext/utilities.h
+    include/dwhbll/unicode/helpers.h
     include/dwhbll/unicode/table.h
 )
 
@@ -247,6 +249,7 @@ add_custom_command(
 
     DEPENDS
     "${UCD_ZIP}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/script/__init__.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/script/codegen/__init__.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/script/codegen/file.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/script/codegen/namespace.py"
@@ -254,6 +257,30 @@ add_custom_command(
 
     COMMENT
     "Generating Unicode tables"
+    VERBATIM
+)
+
+add_custom_command(
+    OUTPUT
+    "${CMAKE_CURRENT_BINARY_DIR}/data/NormalizationTest.txt"
+
+    COMMAND
+    "${Python3_EXECUTABLE}"
+    "-m"
+    "script.unicode.extract_test"
+    "${UCD_ZIP}"
+    "${CMAKE_CURRENT_BINARY_DIR}/data/NormalizationTest.txt"
+
+    WORKING_DIRECTORY
+    "${CMAKE_SOURCE_DIR}"
+
+    DEPENDS
+    "${UCD_ZIP}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/script/__init__.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/script/unicode/extract_test.py"
+
+    COMMENT
+    "Extracting Unicode Test Data"
     VERBATIM
 )
 
@@ -370,13 +397,22 @@ if (DWHBLL_TESTS)
         tests/bench/bounded_mpsc_int_bench.cpp
         tests/bench/recycling_concurrent_stack_bench.cpp
         tests/cryptography/arc4.cpp
+        tests/unicode/unicode_tests.cpp
     )
 
     add_executable(dwhbll_test ${DWHBLL_TEST_CXX_SOURCES})
 
-
     target_link_libraries(dwhbll_test PRIVATE dwhbll)
     target_include_directories(dwhbll_test PRIVATE include)
+
+    add_custom_target(GenerateNormalizationTest
+        DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/data/NormalizationTest.txt"
+    )
+    add_dependencies(dwhbll_test GenerateNormalizationTest)
+
+    include(CTest)
+
+    add_test(NAME TestUnicodeNormalization COMMAND dwhbll_test "unicode/norm" "${CMAKE_CURRENT_BINARY_DIR}/data/NormalizationTest.txt")
 endif()
 
 add_executable(http_server_test tests/http_server_test.cpp)
