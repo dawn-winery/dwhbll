@@ -27,4 +27,10 @@ namespace dwhbll::lang::cpp {
             unicode::properties::XID_Continue.contains(c) ||
             unicode::properties::ID_Compat_Math_Continue.contains(c);
     }
+
+    static constexpr bool cpp_is_basic_char(char32_t c) {
+        return c == U'\u0000' ||
+            (c >= U'\u0007' && c <= U'\u000D') ||
+            (c >= U'\u0020' && c <= U'\u007E');
+    }
 }
