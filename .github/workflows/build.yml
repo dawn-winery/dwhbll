@@ -26,3 +26,7 @@ jobs:
         run: |
           CC=gcc-16 CXX=g++-16 cmake -B build . -DCMAKE_BUILD_TYPE=Debug -DDWHBLL_TESTS=ON -G Ninja
           cmake --build build
+
+      - name: Test
+        run: |
+          ctest --test-dir build
