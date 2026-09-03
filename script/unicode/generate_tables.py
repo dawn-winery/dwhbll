@@ -403,6 +403,9 @@ def main() -> None:
                 aliases.append_lines(["};"])
 
             with GeneratedNamespace(unicode_ns, "base") as base:
+                base.append_lines(cpp_table("empty_struct", "valid_ranges", "{{0x{:06X}, 0x{:06X}}}", merge_ranges([
+                    (x[0], x[1]) for x in parsed_unicode_data
+                ])))
                 base.append_lines(cpp_table("int", "canonical_combining_class", "{{0x{:06X}, 0x{:06X}, {}}}", canonical_combining_class))
                 base.append_lines(cpp_table("decomposition", "decomposition_table", "{{0x{:06X}, 0x{:06X}, {{{}}}}}", sorted([
                     (val, val, ', '.join([f"0x{decomp:06X}" for decomp in decomposed]))
