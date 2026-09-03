@@ -82,10 +82,10 @@ set(DWHBLL_SOURCES
     src/dwhbll/sanify/deferred.cpp
     src/dwhbll/subprocess/process.cpp
     src/dwhbll/subprocess/pipe_wrapper.cpp
-    src/dwhbll/utils/json.cpp
+    src/dwhbll/json/json.cpp
     src/dwhbll/stl_ext/string.cpp
     src/dwhbll/concurrency/threading.cpp
-    src/dwhbll/utils/uuid.cpp
+    src/dwhbll/uuid/uuid.cpp
     src/dwhbll/math/vec4.cpp
 
     include/dwhbll/async/net/buffered_socket.h
@@ -180,10 +180,10 @@ set(DWHBLL_SOURCES
     include/dwhbll/subprocess/pipe_wrapper.h
     include/dwhbll/subprocess/process.h
     include/dwhbll/utils/format.hpp
-    include/dwhbll/utils/json.h
+    include/dwhbll/json/json.h
     include/dwhbll/stl_ext/string.h
     include/dwhbll/concurrency/threading.h
-    include/dwhbll/utils/uuid.h
+    include/dwhbll/uuid/uuid.h
     include/dwhbll/math/vec4.h
     include/dwhbll/concurrency/owning_spinlock.h
     include/dwhbll/stl_ext/ranges.h

@@ -3,9 +3,8 @@
 #include <array>
 #include <cstdint>
 #include <string>
-#include <vector>
 
-namespace dwhbll::utils {
+namespace dwhbll::uuid {
     class UUID {
         std::array<std::uint8_t, 16> _data{};
 

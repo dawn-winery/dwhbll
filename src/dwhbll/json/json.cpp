@@ -1,4 +1,4 @@
-#include <dwhbll/utils/json.h>
+#include <dwhbll/json/json.h>
 
 #include <dwhbll/debug/debug.h>
 #include <dwhbll/console/logging.h>
@@ -23,7 +23,6 @@ const json& json::operator[](size_t index) const {
     return std::get<json_array>(value).at(index);
 }
 
-// Object key access
 json& json::operator[](std::string_view key) {
     ASSERT(is_object());
     return std::get<json_object>(value)[std::string(key)];

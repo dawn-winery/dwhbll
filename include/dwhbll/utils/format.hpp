@@ -4,7 +4,7 @@
 
 #if __cpp_impl_reflection >= 202506L
 
-#include <dwhbll/utils/json.h>
+#include <dwhbll/json/json.h>
 #include <dwhbll/console/logging.h>
 #include <cassert>
 #include <meta>
