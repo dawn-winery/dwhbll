@@ -10,7 +10,7 @@ General list of library components:
   - notably contains clones of Rust `Result<>` and `Option<>`
     - Including sugar for `Ok()`, `Err()`, `Some()`, and `None()`
     - Check `src/dwhbll/concurrency/coroutine/wrappers/sycall_wrappers.cpp` for usage
-    - `sanify/types.hpp` or `sanify/stl_ext.h` includes relevant using namespace to avoid typing the leading namespace.
+    - `sanify/types.h` or `sanify/stl_ext.h` includes relevant using namespace to avoid typing the leading namespace.
 - Opinionated sanify library
   - Adds u8, i8 types, check sanify headers for specifics.
 - Async runtime (WIP, c++20 coroutine, io_uring backend)

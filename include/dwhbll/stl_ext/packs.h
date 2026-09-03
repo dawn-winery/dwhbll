@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstdint>
+#include <cstddef>
 
 namespace dwhbll::stl_ext {
     namespace __detail {

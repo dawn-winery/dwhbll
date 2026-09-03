@@ -1,7 +1,8 @@
 #pragma once
 
 #include <expected>
-#include <memory>
+#include <optional>
+#include <span>
 #include <vector>
 
 namespace dwhbll::subprocess {

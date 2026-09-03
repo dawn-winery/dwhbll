@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 namespace dwhbll::graphics::bitmap {
     struct __attribute__((packed)) info_header {
         uint32_t size = 40;

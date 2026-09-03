@@ -10,11 +10,11 @@ namespace dwhbll::concurrency::coroutine {
         class semaphore_awaitable;
 
     private:
-        std::int32_t permits_;
+        int32_t permits_;
         collections::Ring<std::pair<semaphore_awaitable*, std::coroutine_handle<>>> waiting;
 
     public:
-        explicit async_semaphore(std::int32_t initial);
+        explicit async_semaphore(int32_t initial);
 
         async_semaphore(const async_semaphore&) = delete;
         async_semaphore& operator=(const async_semaphore&) = delete;

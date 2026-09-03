@@ -1,7 +1,6 @@
 #include <dwhbll/stl_ext/string.h>
 
 #include <format>
-#include <ranges>
 
 namespace dwhbll::stl_ext {
     std::string escape_non_printable(const std::string &string) {

@@ -1,5 +1,6 @@
 #include <dwhbll/platform/linux_wrappers/ptrace.h>
 
+#include <csignal>
 #include <cstring>
 #include <fcntl.h>
 

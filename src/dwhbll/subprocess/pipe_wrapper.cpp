@@ -1,5 +1,4 @@
 #include <cstring>
-#include <iostream>
 #include <dwhbll/exceptions/sys_error.h>
 
 #ifdef __linux__

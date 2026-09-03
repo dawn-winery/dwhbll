@@ -1,6 +1,5 @@
 #include <dwhbll/concurrency/coroutine/reactor.h>
 
-#include <thread>
 #include <liburing.h>
 
 #include <dwhbll/concurrency/coroutine/cancellable_base.h>

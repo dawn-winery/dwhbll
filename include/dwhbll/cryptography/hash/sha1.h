@@ -1,7 +1,5 @@
 #pragma once
 
-#include <array>
-
 #include <dwhbll/cryptography/ihash.h>
 
 namespace dwhbll::cryptography {

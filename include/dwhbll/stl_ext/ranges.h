@@ -1,4 +1,6 @@
 #pragma once
+
+#include <algorithm>
 #include <ranges>
 
 namespace dwhbll::stl_ext {

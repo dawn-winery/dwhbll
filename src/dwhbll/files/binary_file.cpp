@@ -1,7 +1,7 @@
 #include <dwhbll/files/binary_file.h>
 
-#include <dwhbll/console/debug.hpp>
-#include <dwhbll/console/Logging.h>
+#include <dwhbll/debug/debug.h>
+#include <dwhbll/console/logging.h>
 
 #include <fcntl.h>
 #include <sys/stat.h>
