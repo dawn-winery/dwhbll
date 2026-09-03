@@ -4,8 +4,9 @@
 
 #include <cxxabi.h>
 #include <memory>
+#include <string>
 
-namespace dwhbll::stacktrace {
+namespace dwhbll::debug {
 
 inline std::string demangle(const char* name) {
     int status = 0;
@@ -16,4 +17,4 @@ inline std::string demangle(const char* name) {
     return (status == 0) ? res.get() : name;
 }
 
-}
+} // namespace dwhbll::debug

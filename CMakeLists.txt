@@ -123,6 +123,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/debug/debug.h
     include/dwhbll/debug/panic.h
     include/dwhbll/debug/perf.h
+    include/dwhbll/debug/stacktrace.h
     include/dwhbll/console/logging.h
     include/dwhbll/cryptography/arc4/arc4.h
     include/dwhbll/cryptography/hmac.h
@@ -180,7 +181,6 @@ set(DWHBLL_SOURCES
     include/dwhbll/subprocess/process.h
     include/dwhbll/utils/format.hpp
     include/dwhbll/utils/json.h
-    include/dwhbll/utils/stacktrace.h
     include/dwhbll/stl_ext/string.h
     include/dwhbll/concurrency/threading.h
     include/dwhbll/utils/uuid.h

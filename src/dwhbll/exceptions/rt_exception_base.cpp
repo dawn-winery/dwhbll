@@ -5,13 +5,13 @@
 #include <version>
 
 #include <cxxabi.h>
-#include <dwhbll/utils/stacktrace.h>
+#include <dwhbll/debug/stacktrace.h>
 
 namespace dwhbll::exceptions {
     void prettyprint_rtexcept(std::stringstream& ss, const rt_exception_base& exception);
 
     void prettyprint_stdexcept(std::stringstream& ss, const std::exception& exception) {
-        ss << stacktrace::demangle(typeid(exception).name()) << ": " << exception.what() << std::endl;
+        ss << debug::demangle(typeid(exception).name()) << ": " << exception.what() << std::endl;
         try {
             std::rethrow_if_nested(exception);
         } catch (const rt_exception_base& base) {
@@ -24,7 +24,7 @@ namespace dwhbll::exceptions {
     }
 
     void prettyprint_rtexcept(std::stringstream& ss, const rt_exception_base& exception) {
-        ss << stacktrace::demangle(typeid(exception).name()) << ": " << exception.what() << std::endl;
+        ss << debug::demangle(typeid(exception).name()) << ": " << exception.what() << std::endl;
         ss << exception.get_prettyprint_trace();
         try {
             std::rethrow_if_nested(exception);
