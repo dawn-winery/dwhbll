@@ -1,6 +1,7 @@
 #pragma once
 
 #include <dwhbll/sanify/deferred.h>
+#include <optional>
 
 namespace dwhbll::stl_ext {
     /**

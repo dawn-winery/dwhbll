@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include <dwhbll/console/debug.hpp>
+#include <dwhbll/debug/debug.h>
 #include <dwhbll/files/executables/mz.h>
 
 // TODO: the parser should probably be improved to not panic everywhere :xdd:

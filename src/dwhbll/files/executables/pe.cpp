@@ -1,7 +1,7 @@
 #include <dwhbll/concurrency/coroutine/wrappers/file.h>
 #include <dwhbll/files/executables/pe.h>
 
-#include <dwhbll/console/Logging.h>
+#include <dwhbll/console/logging.h>
 #include <dwhbll/files/parse_utils.h>
 #include <dwhbll/files/filejar/file.h>
 
@@ -226,7 +226,7 @@ namespace dwhbll::files::executables {
 
         for (int i = 0; i < 8; i++)
             buf[i] = static_cast<char>(read_u8(file));
-        buf[9] = 0;
+        buf[8] = 0;
 
         name = std::string((char*)buf);
 

@@ -2,7 +2,7 @@
 
 #include <cstddef>
 #include <optional>
-#include <dwhbll/console/debug.hpp>
+#include <dwhbll/debug/debug.h>
 
 namespace dwhbll::lang::common {
     /**

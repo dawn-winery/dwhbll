@@ -1,4 +1,4 @@
-#include <dwhbll/console/debug.hpp>
+#include <dwhbll/debug/debug.h>
 #include <dwhbll/files/filejar/file_mgr.h>
 
 #include <dwhbll/files/filejar/file.h>

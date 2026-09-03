@@ -1,6 +1,6 @@
 #include <dwhbll/lang/common.h>
 
-#include <dwhbll/console/debug.hpp>
+#include <dwhbll/debug/debug.h>
 
 namespace dwhbll::lang {
     cursor::cursor(const files::filejar::fileid &id): file(id) {}

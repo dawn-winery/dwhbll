@@ -1,7 +1,5 @@
 #include <dwhbll/network/http.h>
 
-#include <iostream>
-
 #include <dwhbll/console/logging.h>
 #include <dwhbll/exceptions/rt_exception_base.h>
 

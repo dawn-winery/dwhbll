@@ -2,7 +2,6 @@
 #include <dwhbll/collections/cache.h>
 
 #include <mutex>
-#include <thread>
 #include <unordered_set>
 
 namespace dwhbll::collections {

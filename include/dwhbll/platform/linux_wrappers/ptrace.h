@@ -2,7 +2,6 @@
 
 #include <span>
 #include <sched.h>
-#include <csignal>
 #include <sys/ptrace.h>
 #include <sys/user.h>
 
