@@ -13,8 +13,11 @@ General list of library components:
     - `sanify/types.h` or `sanify/stl_ext.h` includes relevant using namespace to avoid typing the leading namespace.
 - Opinionated sanify library
   - Adds u8, i8 types, check sanify headers for specifics.
+- Entire WIP C++26/29 compiler (dwcc-dev branch)
 - Async runtime (WIP, c++20 coroutine, io_uring backend)
 - Usable memory pool (needs work)
+- Unicode library components, more are implemented on an as necessary basis, currently have just enough for
+normalization required by the c++ standard.
 - Collection of networking related things
 - Some platform specific wrappers (notably linux ptrace)
 - Subprocess tooling (similar to python popen) 
