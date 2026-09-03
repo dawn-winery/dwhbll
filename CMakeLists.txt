@@ -23,6 +23,13 @@ option(DWHBLL_GPU_ENABLED "Toggle GPU acceleration" ON)
 option(DWHBLL_SANIFY_EXPORT "Export Sanification directly to the global namespace" OFF)
 option(DWHBLL_SUGAR_EXPORT "Export sugar directly to the global namespace" OFF)
 option(DWHBLL_UNICODE_SUPPORT "Build with unicode support (requires internet connection to pull UCD.zip from unicode.org)" ON)
+option(DWHBLL_DWCC_CPP "Build DWCC C++ compiler" ON)
+
+if (DWHBLL_DWCC_CPP AND NOT DWHBLL_UNICODE_SUPPORT)
+    message(FATAL_ERROR
+        "DWHBLL_DWCC_CPP requires DWHBLL_UNICODE_SUPPORT!"
+    )
+endif()
 
 set(LINALG_GPU_THRESHOLD_VALUE 2048 CACHE STRING "Select the threshold for GPU delegation")
 
@@ -80,8 +87,6 @@ set(DWHBLL_SOURCES
     src/dwhbll/lang/c/tokenize.cpp
     src/dwhbll/lang/common/file_stream.cpp
     src/dwhbll/lang/common.cpp
-    src/dwhbll/lang/cpp/cpp_raw_stream.cpp
-    src/dwhbll/lang/cpp/preprocess/line_splice_stream.cpp
     src/dwhbll/math/vec4.cpp
     src/dwhbll/network/address.cpp
     src/dwhbll/network/buffered_socket.cpp
@@ -159,10 +164,6 @@ set(DWHBLL_SOURCES
     include/dwhbll/lang/c/tokenize.h
     include/dwhbll/lang/common/file_stream.h
     include/dwhbll/lang/common/stream.h
-    include/dwhbll/lang/common.h
-    include/dwhbll/lang/cpp/common.h
-    include/dwhbll/lang/cpp/cpp_raw_stream.h
-    include/dwhbll/lang/cpp/preprocess/line_splice_stream.h
     include/dwhbll/linalg/matrix.h
     include/dwhbll/math/pad_box.h
     include/dwhbll/math/rect.h
@@ -315,11 +316,25 @@ else()
     set(DWHBLL_UNICODE_SOURCES )
 endif()
 
+if (DWHBLL_DWCC_CPP)
+    set(DWHBLL_DWCC_CPP_SOURCES
+        src/dwhbll/lang/cpp/cpp_raw_stream.cpp
+        src/dwhbll/lang/cpp/preprocess/line_splice_stream.cpp
+
+        include/dwhbll/lang/common.h
+        include/dwhbll/lang/cpp/common.h
+        include/dwhbll/lang/cpp/cpp_raw_stream.h
+        include/dwhbll/lang/cpp/preprocess/line_splice_stream.h
+    )
+else()
+    set(DWHBLL_DWCC_CPP_SOURCES )
+endif()
+
 # Main target
 add_library(dwhbll INTERFACE)
 
 # Core library, contains most things
-add_library(dwhbll_core STATIC ${DWHBLL_SOURCES} ${DWHBLL_UNICODE_SOURCES})
+add_library(dwhbll_core STATIC ${DWHBLL_SOURCES} ${DWHBLL_UNICODE_SOURCES} ${DWHBLL_DWCC_CPP_SOURCES})
 set_target_properties(dwhbll_core PROPERTIES LINKER_LANGUAGE CXX)
 target_include_directories(dwhbll_core
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -425,7 +440,6 @@ if (DWHBLL_TESTS)
         tests/bench/recycling_concurrent_stack_bench.cpp
         tests/cryptography/arc4.cpp
         tests/cli.cpp
-        tests/unicode/unicode_tests.cpp
     )
 
     if (DWHBLL_UNICODE_SUPPORT)
