@@ -191,6 +191,7 @@ namespace dwhbll::unicode {
 
     namespace base {
         extern table<int> canonical_combining_class;
+        extern table<empty_struct> valid_ranges;
 
         using decomposition = std::vector<char32_t>;
 
