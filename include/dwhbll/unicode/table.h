@@ -159,6 +159,17 @@ namespace dwhbll::unicode {
             return it->data;
         }
 
+        // TODO: figure out how best to do this.
+        template <typename TV>
+        T at_or_default(this auto &&self, char32_t val, TV&& def) {
+            auto it = self.find(val);
+
+            if (it == self.end())
+                return def;
+
+            return it->data;
+        }
+
         [[nodiscard]] bool contains(this auto &&self, char32_t c) {
             auto it = self.find(c);
             return it != self.end();
