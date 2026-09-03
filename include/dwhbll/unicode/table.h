@@ -186,7 +186,7 @@ namespace dwhbll::unicode {
     }
 
     namespace aliases {
-        extern std::unordered_map<std::string, char32_t> name_aliases_to_codepoint;
+        extern std::unordered_map<std::u32string, char32_t> name_aliases_to_codepoint;
     }
 
     namespace base {
