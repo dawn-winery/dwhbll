@@ -398,8 +398,8 @@ def main() -> None:
                     props.append_lines(cpp_table("empty_struct", name, "{{0x{:06X}, 0x{:06X}}}", body))
 
             with GeneratedNamespace(unicode_ns, "aliases") as aliases:
-                aliases.append_lines(["std::unordered_map<std::string, char32_t> name_aliases_to_codepoint {"])
-                aliases.append_lines([f"    {{\"{name}\", 0x{codepoint:06X}}}," for name, codepoint in name_aliases])
+                aliases.append_lines(["std::unordered_map<std::u32string, char32_t> name_aliases_to_codepoint {"])
+                aliases.append_lines([f"    {{U\"{name}\", 0x{codepoint:06X}}}," for name, codepoint in name_aliases])
                 aliases.append_lines(["};"])
 
             with GeneratedNamespace(unicode_ns, "base") as base:
