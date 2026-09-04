@@ -15,7 +15,7 @@
 
 namespace dwhbll::debug {
 
-[[noreturn]] void panic(const std::string& msg) {
+[[noreturn]] void panic(std::string_view msg) {
     static std::atomic_flag panicking = false;
 
     // busy wait if there's already a thread panicking, this way we don't spit
