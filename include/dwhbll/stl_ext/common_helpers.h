@@ -18,9 +18,6 @@ namespace dwhbll::stl_ext {
             T value;
         };
 
-        struct result_none_helper {
-        };
-
         template <typename T>
         struct result_some_helper {
             T value;
@@ -28,43 +25,49 @@ namespace dwhbll::stl_ext {
 
         struct err_value_helper {
             template <typename T>
-            result_err_helper<T> operator()(T&& data) {
-                return result_err_helper<T>(std::forward<T>(data));
+            constexpr result_err_helper<std::decay_t<T>> operator()(T&& data) const {
+                return { std::forward<T>(data) };
             }
-            result_err_helper<UNIT> operator()() const {
+            constexpr result_err_helper<UNIT> operator()() const {
                 return {};
             }
         };
 
         struct ok_value_helper {
             template <typename T>
-            result_ok_helper<T> operator()(T&& data) {
-                return result_ok_helper<T>(std::forward<T>(data));
+            constexpr result_ok_helper<std::decay_t<T>> operator()(T&& data) const {
+                return { std::forward<T>(data) };
             }
-            result_ok_helper<UNIT> operator()() const {
+            constexpr result_ok_helper<UNIT> operator()() const {
                 return {};
             }
         };
 
         struct none_value_helper {
-            result_none_helper operator()() const {
+            constexpr none_value_helper operator()() const {
                 return {};
             }
         };
 
         struct some_value_helper {
             template <typename T>
-            result_some_helper<T> operator()(T&& data) {
-                return result_some_helper<T>(std::forward<T>(data));
+            constexpr result_some_helper<std::decay_t<T>> operator()(T&& data) const {
+                return { std::forward<T>(data) };
             }
-            result_some_helper<UNIT> operator()() const {
+            constexpr result_some_helper<UNIT> operator()() const {
                 return {};
             }
         };
+
+        template <typename T>
+        struct is_some_helper : std::false_type {};
+
+        template <typename T>
+        struct is_some_helper<result_some_helper<T>> : std::true_type {};
     }
 
-    inline __detail::err_value_helper Err;
-    inline __detail::ok_value_helper Ok;
-    inline __detail::none_value_helper None;
-    inline __detail::some_value_helper Some;
+    inline constexpr __detail::err_value_helper Err;
+    inline constexpr __detail::ok_value_helper Ok;
+    inline constexpr __detail::none_value_helper None;
+    inline constexpr __detail::some_value_helper Some;
 }
