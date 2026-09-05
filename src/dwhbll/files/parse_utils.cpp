@@ -14,7 +14,7 @@ namespace dwhbll::files {
     }
 
     void ParseUtils::expect(const std::string &data) {
-        for (int i = 0; i < data.size(); i++) {
+        for (std::size_t i = 0; i < data.size(); i++) {
             check_refill();
 
             char c = read_u8();

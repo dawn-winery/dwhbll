@@ -11,7 +11,7 @@
 #include <dwhbll/concurrency/threading.h>
 
 // TODO: Make a benchmark harness and do this correctly!
-bool bounded_spsc_int_bench(std::optional<std::string> _) {
+bool bounded_spsc_int_bench(std::optional<std::string>) {
     const std::size_t count = 2000000000;
     dwhbll::concurrency::queues::BoundedSPSCQueue<std::size_t, 8192, false, dwhbll::concurrency::backoff::PolicyExponential> channel;
 

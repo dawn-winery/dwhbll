@@ -7,7 +7,7 @@ struct poolStruct {
     int f[1024];
 };
 
-bool pool_test(std::optional<std::string> test_to_run) {
+bool pool_test(std::optional<std::string>) {
     bool failed = false;
     {
         dwhbll::memory::Pool<poolStruct> testPool;

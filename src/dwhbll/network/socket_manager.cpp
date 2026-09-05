@@ -31,25 +31,22 @@ namespace dwhbll::network {
      * @throws std::runtime_error when socket connection failed.
      */
     void Socket::connect(in_addr addr, unsigned short port) const {
-        sockaddr_in a = {
-            AF_INET,
-            htons(port),
-            addr
-        };
+        sockaddr_in a{};
+        a.sin_family = AF_INET;
+        a.sin_port = htons(port);
+        a.sin_addr = addr;
         auto res = ::connect(fd, reinterpret_cast<sockaddr *>(&a), sizeof(a));
         if (res == -1) {
             // failure
-            auto e = errno;
             throw std::runtime_error("Failed to connect to socket");
         }
     }
 
     task<> Socket::connect_async(in_addr addr, unsigned short port) const {
-        sockaddr_in a = {
-            AF_INET,
-            htons(port),
-            addr
-        };
+        sockaddr_in a{};
+        a.sin_family = AF_INET;
+        a.sin_port = htons(port);
+        a.sin_addr = addr;
 
         co_await calls::connect(fd, reinterpret_cast<sockaddr *>(&a), sizeof(a));
     }
@@ -132,27 +129,27 @@ namespace dwhbll::network {
 
     task<Socket> Socket::accept() const {
         auto f = (co_await calls::accept(fd, nullptr, nullptr, 0)).unwrap();
-        co_return std::move(Socket{f, CONNECT});
+        co_return Socket{f, CONNECT};
     }
 
     SocketManager::socket_t SocketManager::getIPv4TCPSocket(in_addr addr, unsigned short port) {
         auto tcp = pool.acquire(::socket(AF_INET, SOCK_STREAM, 0), Socket::CONNECT);
         tcp->connect(addr, port);
-        return std::move(tcp);
+        return tcp;
     }
 
     task<SocketManager::socket_t> SocketManager::getIPv4TCPSocket_async(in_addr addr,
     unsigned short port) {
         auto tcp = pool.acquire(::socket(AF_INET, SOCK_STREAM, 0), Socket::CONNECT);
         co_await tcp->connect_async(addr, port);
-        co_return std::move(tcp);
+        co_return tcp;
     }
 
     SocketManager::socket_t SocketManager::getIPv4UDPSocket(in_addr addr, unsigned short port) {
         auto i = ::socket(AF_INET, SOCK_DGRAM, 0);
         auto udp = pool.acquire(i, Socket::CONNECT);
         udp->connect(addr, port);
-        return std::move(udp);
+        return udp;
     }
 
     task<SocketManager::socket_t> SocketManager::getIPv4UDPSocket_async(in_addr addr,
@@ -160,21 +157,20 @@ namespace dwhbll::network {
         auto i = ::socket(AF_INET, SOCK_DGRAM, 0);
         auto udp = pool.acquire(i, Socket::CONNECT);
         co_await udp->connect_async(addr, port);
-        co_return std::move(udp);
+        co_return udp;
     }
 
     SocketManager::socket_t SocketManager::listenTCP(in_addr_t addr, unsigned short port) {
         auto i = ::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
         auto tcp = pool.acquire(i, Socket::LISTEN);
-        struct sockaddr_in a = {
-            .sin_family = AF_INET,
-            .sin_port   = htons(8080),
-            .sin_addr   = { .s_addr = addr }
-        };
+        struct sockaddr_in a{};
+        a.sin_family = AF_INET;
+        a.sin_port   = htons(port);
+        a.sin_addr.s_addr = addr;
         ASSERT(::bind(i, (struct sockaddr *)&a, sizeof(a)) == 0);
         listen(i, 64);
 
-        return std::move(tcp);
+        return tcp;
     }
 
     void SocketManager::offer(Socket *s) {

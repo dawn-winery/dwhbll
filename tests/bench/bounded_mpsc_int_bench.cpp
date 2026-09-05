@@ -11,7 +11,7 @@
 #include <dwhbll/concurrency/threading.h>
 
 // TODO: Make a benchmark harness and do this correctly!
-bool bounded_mpsc_int_bench(std::optional<std::string> _) {
+bool bounded_mpsc_int_bench(std::optional<std::string>) {
     constexpr std::size_t count = 50000000;
 
     dwhbll::concurrency::queues::BoundedMPSCQueue<std::size_t, 8192, false, dwhbll::concurrency::backoff::PolicyExponential> channel;
@@ -24,7 +24,7 @@ bool bounded_mpsc_int_bench(std::optional<std::string> _) {
 
     std::vector<std::thread> threads;
 
-    for (int i = 0; i < producer_count; i++) {
+    for (uint32_t i = 0; i < producer_count; i++) {
         threads.emplace_back([&] {
             std::size_t x = 1;
 

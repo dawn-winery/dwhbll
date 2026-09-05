@@ -226,7 +226,7 @@ class Matrix {
             {
                 std::vector<std::jthread> threads;
 
-                for(int i = 0; i < num_threads; i++) {
+                for(size_t i = 0; i < num_threads; i++) {
                     size_t start_row = i * row_per_threads;
                     size_t end_row = start_row + row_per_threads;
 

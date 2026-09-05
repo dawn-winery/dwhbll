@@ -345,7 +345,7 @@ namespace dwhbll::network::dns {
         }
     }
 
-    void ResourceRecord::pack(MemoryStream &stream) const {
+    void ResourceRecord::pack(MemoryStream &) const {
         console::fatal("packing of ResourceRecords not currently supported!!!");
         std::terminate();
     }
@@ -740,10 +740,8 @@ namespace dwhbll::network::dns {
                     auto& target = std::get<ResourceRecordInner::DOMAIN_RECORD>(authority.rdata);
 
                     // search for the ip of the given authoritative NS.
-                    bool has = false;
                     for (const auto& additional : result.additionals) {
                         if (additional.type == QTYPE::A && target.name == additional.name) {
-                            has = true;
                             console::trace("querying the next NS: {}", additional.name.to_string());
                             resultAddr = query_dns(htonl(std::get<ResourceRecordInner::A>(additional.rdata).address), domain);
                             if (resultAddr.has_value())
@@ -803,10 +801,10 @@ namespace dwhbll::network::dns {
 
         void HINFO::unpack(MemoryStream &stream) {
             std::size_t size = stream.get_uint8();
-            for (int i = 0; i < size; i++)
+            for (std::size_t i = 0; i < size; i++)
                 cpu += stream.get_uint8();
             size = stream.get_uint8();
-            for (int i = 0; i < size; i++)
+            for (std::size_t i = 0; i < size; i++)
                 os += stream.get_uint8();
         }
 
@@ -854,15 +852,15 @@ namespace dwhbll::network::dns {
         std::string NUL::to_string() const {
             std::string result = "NUL: {\n";
 
-            int i;
+            std::size_t i;
             for (i = 0; i < data.size() / 16; i++) {
-                for (int j = 0; j < 16; j++)
+                for (std::size_t j = 0; j < 16; j++)
                     result += std::format("{:#x}", data[i * 16 + j]) + ",";
                 result += "\n";
             }
 
             // outstanding bytes
-            for (int j = 0; j < data.size() % 16; j++)
+            for (std::size_t j = 0; j < data.size() % 16; j++)
                 result += std::format("{:#x}", data[i * 16 + j]) + ",";
             result += "\n}";
             return result;

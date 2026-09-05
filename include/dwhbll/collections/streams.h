@@ -177,7 +177,7 @@ public:
             return std::unexpected(Error::GenericError);
         }
         
-        assert(pos_ == file_.tellg());
+        assert(static_cast<std::streamoff>(pos_) == file_.tellg());
 
         auto rem = remaining();
         if (!rem)

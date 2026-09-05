@@ -105,7 +105,7 @@ namespace dwhbll::memory {
 		explicit Pool(const std::size_t default_size = 16) {
 			available = default_size * BlockSize;
 			objects = objectsBack = new Obj;
-			for (int i = 1; size < available; i++) {
+			while (size < available) {
 				makeNew();
 			}
 			available = size;
@@ -131,7 +131,7 @@ namespace dwhbll::memory {
 						current = current->next;
 						continue;
 					}
-					for (int i = 0; i < BlockSize; i++) {
+					for (std::size_t i = 0; i < BlockSize; i++) {
 						if (!current->used[i]) {
 							obj = current;
 							index = i;
@@ -148,7 +148,7 @@ namespace dwhbll::memory {
 			--obj->blockAvailable;
 			obj->used[index] = true;
 			auto* f = obj->object;
-			auto* newobj = new(f + index)T(std::forward<Args>(args)...);
+			new(f + index)T(std::forward<Args>(args)...);
 			returning[f + index] = {obj, index};
 			return ObjectWrapper(this, f + index);
 		}
@@ -157,7 +157,7 @@ namespace dwhbll::memory {
 			auto _dfd = _lock.lock();
 			Obj* current = objects;
 			while (current != nullptr) {
-				for (int i = 0; i < BlockSize; i++) {
+				for (std::size_t i = 0; i < BlockSize; i++) {
 					if (!current->used[i])
 						continue;
 					if (current->object[i] == value) {

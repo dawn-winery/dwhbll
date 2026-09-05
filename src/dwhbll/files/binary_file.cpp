@@ -11,11 +11,19 @@
 namespace dwhbll::files {
     void binary_file::load(const std::filesystem::path &path) {
         if (file) {
+#if __cpp_lib_format_path >= 202506L
+            console::warn("There is already a file loaded?! Unloading before loading {}", path.display_string());
+#else
             console::warn("There is already a file loaded?! Unloading before loading {}", path.string());
+#endif
             unload();
         }
 
+#if __cpp_lib_format_path >= 202506L
+        auto fname = path.display_string();
+#else
         auto fname = path.string();
+#endif
         int fd = open(fname.c_str(), O_RDONLY);
 
         if (fd == -1) {

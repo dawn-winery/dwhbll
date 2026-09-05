@@ -140,7 +140,8 @@ public:
 
     sockaddr_in sock_addr = {.sin_family = AF_INET,
                              .sin_port = htons(port),
-                             .sin_addr = {.s_addr = htonl(address)}};
+                             .sin_addr = {.s_addr = htonl(address)},
+                             .sin_zero = {}};
 
     int status = ::bind(fd, (sockaddr *)&sock_addr, sizeof(sock_addr));
 
@@ -177,15 +178,12 @@ class Socket {
   pollfd send_event;
 
 public:
-  void assign_socket(int socket) {
+  void assign_socket(int fd) {
     dwhbll::console::info("assign socket");
-    this->socket = socket;
+    this->socket = fd;
 
-    int value;
-    socklen_t size = sizeof(value);
-
-    recv_event = {.fd = socket, .events = POLLIN};
-    send_event = {.fd = socket, .events = POLLOUT};
+    recv_event = {.fd = fd, .events = POLLIN,  .revents = 0};
+    send_event = {.fd = fd, .events = POLLOUT, .revents = 0};
 
     recv_readpos = 0;
     recv_size = 0;
@@ -525,8 +523,6 @@ public:
   }
 
   int listen_to(const uint32_t address, const uint16_t port) {
-    const bool enable_bool = 1;
-    int status;
 
     if (server_fd != -1) {
       console::error("Server already bound.");
@@ -552,7 +548,7 @@ public:
   }
 
   int listen(const size_t worker_count = std::thread::hardware_concurrency(),
-             const uint32_t pending_queue_size = SOMAXCONN) {
+             const uint32_t /* pending_queue_size */ = SOMAXCONN) {
     const int status = ::listen(server_fd, 5);
 
     if (status == -1) {

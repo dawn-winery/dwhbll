@@ -45,9 +45,9 @@ bool matrix_init()
             std::println(std::cerr, "[Init list] Failed to allocated enough storage");
 
 
-        for(int i = 0; i < 3; i++) {
-            for(int j = 0; j < 3; j++) {
-                test_failed |= mat[i,j] != i * mat.rows() + j;
+        for(size_t i = 0; i < 3; i++) {
+            for(size_t j = 0; j < 3; j++) {
+                test_failed |= mat[i,j] != static_cast<int>(i * mat.rows() + j);
             }
         }
 
@@ -93,8 +93,8 @@ bool matrix_mul() {
                 res.rows(), res.cols()
             );
 
-        for(int i = 0; i < res.rows(); i++) {
-            for(int j = 0; j < res.cols(); j++) {
+        for(size_t i = 0; i < res.rows(); i++) {
+            for(size_t j = 0; j < res.cols(); j++) {
                 bool failed = (res[i,j] != expected[i,j]);
                 test_failed |= failed;
                 if(failed)
@@ -112,8 +112,8 @@ bool matrix_mul() {
         std::mt19937_64 generator(rd());
         std::uniform_int_distribution<int> distrib(0, 128);
 
-        for(auto i = 0; i < SIZE; i++) {
-            for(auto j = 0; j < SIZE; j++) {
+        for(size_t i = 0; i < SIZE; i++) {
+            for(size_t j = 0; j < SIZE; j++) {
                 m1[i,j] = distrib(generator);
                 m2[i,j] = distrib(generator); 
             }
@@ -134,8 +134,8 @@ bool matrix_mul() {
         bool correct = true;
         float tolerance = 1e-5;
 
-        for(int i = 0; i < SIZE; i++) {
-            for(int j = 0; j < SIZE; j++) {
+        for(size_t i = 0; i < SIZE; i++) {
+            for(size_t j = 0; j < SIZE; j++) {
                 bool diff = std::abs(res[i,j] - res2[i,j]) > tolerance;
                 if(diff) {
                     std::println(std::cerr, "Mismatch @ [{},{}]: GPU={}, CPU={}", i,j, res[i,j], res2[i,j]);

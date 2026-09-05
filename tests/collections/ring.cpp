@@ -1,12 +1,12 @@
 #include <iostream>
 #include <dwhbll/collections/ring.h>
 
-bool ring_test(std::optional<std::string> test_to_run) {
+bool ring_test(std::optional<std::string>) {
     dwhbll::collections::Ring<int> ringBuffer;
 
     std::size_t before = ringBuffer.size();
 
-    for (int i = 0; i < ringBuffer.capacity(); i++) {
+    for (std::size_t i = 0; i < ringBuffer.capacity(); i++) {
         // fill the entire current ring buffer size
         ringBuffer.push_back(i);
     }

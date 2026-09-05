@@ -136,7 +136,7 @@ namespace dwhbll::files::executables {
         if (extraneous_size != 0)
             console::warn("Remaining length of optional header is not a multiple of data dir size!");
 
-        for (int i  = 0; i < size_of_dirs; i += DATA_DIRECTORY::SIZE_PER_DIR)
+        for (std::size_t i = 0; i < size_of_dirs; i += DATA_DIRECTORY::SIZE_PER_DIR)
             directories.emplace_back(file);
 
         // consume extraneous size
@@ -361,7 +361,7 @@ namespace dwhbll::files::executables {
             for (std::size_t i = 0; i < count; i++) {
                 auto reloc = read_u16_le(spn);
 
-                auto offt = reloc & 0xFFF + page_rva + image_base();
+                auto offt = (reloc & 0xFFF) + page_rva + image_base();
                 auto type = static_cast<RELOC_TYPE>((reloc >> 12) & 0xF);
 
                 relocs.emplace_back(offt, type);

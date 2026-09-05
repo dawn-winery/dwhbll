@@ -6,8 +6,10 @@
 namespace dwhbll::cryptography {
     void SHA1::digest_chunk() {
         for (std::uint8_t i = 0; i < 64; i += 4)
-            w[i / 4] = (static_cast<std::uint32_t>(block[i]) << 24) & 0xFF000000 | (static_cast<std::uint32_t>(block[i + 1]) << 16) & 0x00FF0000 |
-                       (static_cast<std::uint32_t>(block[i + 2]) << 8) & 0x0000FF00 | (static_cast<std::uint32_t>(block[i + 3])) & 0x000000FF;
+            w[i / 4] = ((static_cast<std::uint32_t>(block[i]) << 24) & 0xFF000000) |
+                       ((static_cast<std::uint32_t>(block[i + 1]) << 16) & 0x00FF0000) |
+                       ((static_cast<std::uint32_t>(block[i + 2]) << 8) & 0x0000FF00) |
+                       (static_cast<std::uint32_t>(block[i + 3]) & 0x000000FF);
 
         for (std::uint8_t i = 16; i < 80; i++)
             w[i] = std::rotl<std::uint32_t>(w[i - 3] ^ w[i - 8] ^ w[i - 14] ^ w[i - 16], 1);

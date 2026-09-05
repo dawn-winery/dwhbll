@@ -6,7 +6,7 @@
 #include <dwhbll/sanify/coroutines.h>
 
 namespace dwhbll::network {
-    inbound_network_buffer::inbound_network_buffer(memory::Pool<Socket>::ObjectWrapper &socket) : socket(socket), ParseUtils() {}
+    inbound_network_buffer::inbound_network_buffer(memory::Pool<Socket>::ObjectWrapper &socket) : ParseUtils(), socket(socket) {}
 
     void inbound_network_buffer::refill_buffer() {
         // TODO: zero copy this part in the future

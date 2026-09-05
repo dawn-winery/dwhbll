@@ -8,6 +8,14 @@ find_package(PkgConfig REQUIRED)
 set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
+# Maybe only in debug builds?
+add_compile_options(
+    -Wall
+    -Wextra
+    -Wnon-virtual-dtor
+    -Wno-interference-size
+)
+
 option(DWHBLL_TESTS "Build tests" OFF)
 option(BUILD_HARDEN "enable hardening on the library." OFF)
 option(BUILD_HARDEN_EXPENSIVE "enable expensive hardening features on the library." OFF)

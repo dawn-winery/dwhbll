@@ -34,7 +34,7 @@ namespace dwhbll::concurrency::queues {
             head = 0;
             tail.store(0, std::memory_order_relaxed);
 
-            for (int i = 0; i < N; i++)
+            for (size_t i = 0; i < N; i++)
                 buffer[i].seq.store(i, std::memory_order_relaxed);
 
             std::atomic_thread_fence(std::memory_order_release);

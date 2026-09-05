@@ -3,7 +3,7 @@
 #include <dwhbll/network/address.h>
 
 struct Handler {
-  void handle(dwhbll::network::http_server::Request &request,
+  void handle(dwhbll::network::http_server::Request &,
               dwhbll::network::http_server::Response &response) {
     response.code = "418";
     response.reason = "I'm a teapot";

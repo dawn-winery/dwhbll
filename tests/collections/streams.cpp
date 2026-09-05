@@ -115,7 +115,7 @@ bool test_memory_buffer() {
         assert(seek_result.error() == Error::InvalidPositionError);
         
         // Invalid skip
-        buffer.seek(test_string.size() - 1);
+        (void)buffer.seek(test_string.size() - 1);
         auto skip_result = buffer.skip(2);
         assert(!skip_result.has_value());
         assert(skip_result.error() == Error::InvalidPositionError);
@@ -212,7 +212,7 @@ bool test_file_buffer() {
         
         // Test reading beyond EOF
         {
-            buffer.seek(test_content.size() - 5);
+            (void)buffer.seek(test_content.size() - 5);
             std::array<uint8_t, 10> read_buffer;
             auto result = buffer.read_raw_bytes(read_buffer);
             assert(result.has_value());
@@ -315,7 +315,7 @@ bool test_stream_reader() {
     
     // Test peeking
     {
-        reader.seek(0);
+        (void)reader.seek(0);
         
         auto peek_result = reader.peek_byte();
         assert(peek_result.has_value());
@@ -347,7 +347,7 @@ bool test_stream_reader() {
     
     // Test reading until delimiter without consuming
     {
-        reader.seek(0);
+        (void)reader.seek(0);
         auto result = reader.read_until('\n', false);
         assert(result.has_value());
         std::string read_str(result.value().begin(), result.value().end());
@@ -361,7 +361,7 @@ bool test_stream_reader() {
     
     // Test error conditions
     {
-        reader.seek(test_data.size());
+        (void)reader.seek(test_data.size());
         auto result = reader.read_byte();
         assert(!result.has_value());
         assert(result.error() == Error::EndOfData);
@@ -426,7 +426,7 @@ bool test_cached_reader() {
     
     // Test reading until delimiter
     {
-        reader.seek(0);
+        (void)reader.seek(0);
         auto result = reader.read_until('\n');
         assert(result.has_value());
         std::string read_str(result.value().begin(), result.value().end());
@@ -436,7 +436,7 @@ bool test_cached_reader() {
     // Test reading string
     {
         // Add a null-terminated string to the data
-        reader.seek(100);
+        (void)reader.seek(100);
         auto buffer2 = std::make_unique<MemoryBuffer>(std::string("Test\0String", 11));
         CachedReader reader2(std::move(buffer2), 64);
         
@@ -447,7 +447,7 @@ bool test_cached_reader() {
     
     // Test peeking
     {
-        reader.seek(0);
+        (void)reader.seek(0);
         
         auto peek_result = reader.peek_byte();
         assert(peek_result.has_value());
@@ -480,7 +480,7 @@ bool test_cached_reader() {
     
     // Test skipping
     {
-        reader.seek(0);
+        (void)reader.seek(0);
         auto skip_result = reader.skip(6);
         assert(skip_result.has_value());
         
@@ -492,7 +492,7 @@ bool test_cached_reader() {
     
     // Test cross-cache boundary reading
     {
-        reader.seek(1020); // Near cache boundary
+        (void)reader.seek(1020); // Near cache boundary
         auto result = reader.read_bytes(10); // Read across boundary
         assert(result.has_value());
         assert(result.value().size() == 10);
@@ -508,7 +508,7 @@ bool test_cached_reader() {
         assert(!seek_result.has_value());
         assert(seek_result.error() == Error::InvalidPositionError);
         
-        reader.seek(large_data.size() - 1);
+        (void)reader.seek(large_data.size() - 1);
         auto result = reader.read_bytes(10);
         assert(result.has_value());
         assert(result.value().size() == 1); // Only 1 byte available

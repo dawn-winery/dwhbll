@@ -169,7 +169,7 @@ namespace dwhbll::collections {
     }
 
     sanify::deferred MemBuf::lock() {
-        return std::move(_lock->lock());
+        return _lock->lock();
     }
 
     void MemBuf::refill_buffer() {

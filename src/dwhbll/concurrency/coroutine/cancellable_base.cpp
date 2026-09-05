@@ -15,7 +15,7 @@ namespace dwhbll::concurrency::coroutine {
         debug::panic("Unimplemented!");
     }
 
-    void cancellable_base::await_suspend(std::coroutine_handle<> h) const noexcept {
+    void cancellable_base::await_suspend(std::coroutine_handle<>) const noexcept {
         debug::panic("Unimplemented!");
     }
 

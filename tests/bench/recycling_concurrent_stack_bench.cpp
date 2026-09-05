@@ -10,7 +10,7 @@
 #include <dwhbll/concurrency/threading.h>
 
 // TODO: Make a benchmark harness and do this correctly!
-bool recycling_concurrent_stack_bench(std::optional<std::string> _) {
+bool recycling_concurrent_stack_bench(std::optional<std::string>) {
     constexpr std::size_t items = 500000000;
 
     dwhbll::concurrency::RecyclingConcurrentStack<int> stack;
@@ -24,7 +24,7 @@ bool recycling_concurrent_stack_bench(std::optional<std::string> _) {
 
     std::latch waiter(count * 2);
 
-    for (int i = 0; i < count; i++) {
+    for (uint32_t i = 0; i < count; i++) {
         threads.emplace_back([&] {
             std::size_t x = 1;
 
@@ -40,7 +40,7 @@ bool recycling_concurrent_stack_bench(std::optional<std::string> _) {
 
     std::vector<std::size_t> totals(count);
 
-    for (int i = 0; i < count; i++) {
+    for (uint32_t i = 0; i < count; i++) {
         threads.emplace_back([=, &stack, &totals, &waiter] {
             std::size_t x = 0;
             std::size_t total = 0;

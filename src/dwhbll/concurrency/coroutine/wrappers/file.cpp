@@ -138,7 +138,7 @@ namespace dwhbll::concurrency::coroutine::wrappers {
             co_return result;
         }
 
-        if (rdbuf.size() > n) {
+        if (rdbuf.size() > static_cast<std::size_t>(n)) {
             // we already have enough data
             auto buf2 = rdbuf.read_vector(n);
             co_return std::vector<char>{buf2.begin(), buf2.end()};
@@ -149,7 +149,7 @@ namespace dwhbll::concurrency::coroutine::wrappers {
         std::vector<char> result = std::vector<char>{buf2.begin(), buf2.end()};
         result.resize(n);
 
-        if (n - b2s > batch_read_count) {
+        if (static_cast<std::size_t>(n - b2s) > batch_read_count) {
             auto read = co_await calls::read(fd, result.data() + b2s, n - b2s, read_head);
             read_head += read;
 
@@ -164,7 +164,7 @@ namespace dwhbll::concurrency::coroutine::wrappers {
             auto read = co_await calls::read(fd, buffer, batch_read_count, read_head);
             read_head += read;
 
-            if (n - b2s > read) {
+            if (static_cast<ssize_t>(n - b2s) > read) {
                 std::memcpy(result.data() + b2s, buffer, read);
             } else {
                 std::memcpy(result.data() + b2s, buffer, n - b2s);
@@ -196,11 +196,11 @@ namespace dwhbll::concurrency::coroutine::wrappers {
         std::vector<char> result = std::vector<char>{buf2.begin(), buf2.end()};
         result.resize(n);
 
-        int read = co_await calls::read(fd, result.data() + buf2.size(), n - buf2.size(), read_head);
+        ssize_t read = co_await calls::read(fd, result.data() + buf2.size(), n - buf2.size(), read_head);
         if (read != 0)
             read_head += read;
 
-        if (read != n - buf2.size())
+        if (read != static_cast<ssize_t>(n - buf2.size()))
             throw exceptions::rt_exception_base("file reached eof before finishing the read!");
 
         co_return result;
@@ -213,11 +213,11 @@ namespace dwhbll::concurrency::coroutine::wrappers {
         auto result = co_await try_flush_wrbuf();
 
         if (result) {
-            int wrote = co_await calls::write(fd, data.data(), data.size(), write_head);
+            ssize_t wrote = co_await calls::write(fd, data.data(), data.size(), write_head);
 
             write_head += wrote;
 
-            if (wrote != data.size())
+            if (wrote != static_cast<ssize_t>(data.size()))
                 wrbuf.write_vector(std::span{(sanify::u8*)data.data() + wrote, (sanify::u8*)data.data() + data.size()});
         } else
             wrbuf.write_vector(std::span{(sanify::u8*)data.data(), (sanify::u8*)data.data() + data.size()});
@@ -257,6 +257,6 @@ namespace dwhbll::concurrency::coroutine::wrappers {
         std::string p = path;
         const int fd = co_await calls::open(p.c_str(), compute_openmode_flags(mode));
 
-        co_return std::move(file{fd});
+        co_return file{fd};
     }
 }

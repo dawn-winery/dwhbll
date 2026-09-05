@@ -29,7 +29,7 @@ namespace dwhbll::concurrency::coroutine {
 
         struct timer_task {
             std::chrono::steady_clock::time_point time;
-            user_data* data;
+            user_data* data = nullptr;
 
             auto operator<=>(const timer_task& other) const {
                 return time <=> other.time;
@@ -42,7 +42,7 @@ namespace dwhbll::concurrency::coroutine {
         struct user_data {
             job* parent = nullptr;
             cancellable_base* promise = nullptr;
-            std::coroutine_handle<> handle;
+            std::coroutine_handle<> handle{};
             bool is_uring = false;
         };
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cstring>
 #include <stdexcept>
 #include <vector>
@@ -74,11 +75,11 @@ namespace dwhbll::collections {
             // put it all in order
             if (tail >= head) {
                 // it's actually already in order.
-                std::memcpy(newData.data(), _M_data.data() + head, sz * sizeof(T));
+                std::copy(_M_data.data() + head, _M_data.data() + head + sz, newData.data());
             } else {
                 // it's not quite in order
-                std::memcpy(newData.data(), _M_data.data() + head, (_M_data.size() - head) * sizeof(T));
-                std::memcpy(newData.data() + (_M_data.size() - head), _M_data.data(), tail * sizeof(T));
+                std::copy(_M_data.data() + head, _M_data.data() + _M_data.size(), newData.data());
+                std::copy(_M_data.data(), _M_data.data() + tail, newData.data() + (_M_data.size() - head));
             }
             _M_data = std::move(newData);
             head = 0;
@@ -153,11 +154,11 @@ namespace dwhbll::collections {
             // put it all in order
             if (tail >= head) {
                 // it's actually already in order.
-                std::memcpy(newData.data(), _M_data.data() + head, sz * sizeof(T));
+                std::copy(_M_data.data() + head, _M_data.data() + head + sz, newData.data());
             } else {
                 // it's not quite in order
-                std::memcpy(newData.data(), _M_data.data() + head, (_M_data.size() - head) * sizeof(T));
-                std::memcpy(newData.data() + (_M_data.size() - head), _M_data.data(), tail * sizeof(T));
+                std::copy(_M_data.data() + head, _M_data.data() + _M_data.size(), newData.data());
+                std::copy(_M_data.data(), _M_data.data() + tail, newData.data() + (_M_data.size() - head));
             }
             _M_data = std::move(newData);
             head = 0;
@@ -180,22 +181,23 @@ namespace dwhbll::collections {
                 // put it all in order
                 if (tail >= head) {
                     // it's actually already in order.
-                    std::memcpy(newData.data(), _M_data.data() + head, sz * sizeof(T));
+                    std::copy(_M_data.data() + head, _M_data.data() + head + sz, newData.data());
                 } else {
                     // it's not quite in order
-                    std::memcpy(newData.data(), _M_data.data() + head, (_M_data.size() - head) * sizeof(T));
-                    std::memcpy(newData.data() + (_M_data.size() - head), _M_data.data(), tail * sizeof(T));
+                    std::copy(_M_data.data() + head, _M_data.data() + _M_data.size(), newData.data());
+                    std::copy(_M_data.data(), _M_data.data() + tail, newData.data() + (_M_data.size() - head));
                 }
             } else {
                 // we gonna run out of space, chop off the end
                 if (tail >= head) {
                     // it's actually already in order.
-                    std::memcpy(newData.data(), _M_data.data() + head, target * sizeof(T));
+                    std::copy(_M_data.data() + head, _M_data.data() + head + target, newData.data());
                 } else {
                     // it's not quite in order
-                    std::memcpy(newData.data(), _M_data.data() + head, std::min((_M_data.size() - head), target) * sizeof(T));
+                    std::size_t first_part = std::min((_M_data.size() - head), target);
+                    std::copy(_M_data.data() + head, _M_data.data() + head + first_part, newData.data());
                     if (target > _M_data.size() - head)
-                        std::memcpy(newData.data() + (_M_data.size() - head), _M_data.data(), (target - (_M_data.size() - head)) * sizeof(T));
+                        std::copy(_M_data.data(), _M_data.data() + (target - (_M_data.size() - head)), newData.data() + (_M_data.size() - head));
                 }
             }
             _M_data = std::move(newData);
@@ -248,9 +250,9 @@ namespace dwhbll::collections {
                 iterator n = *this;
                 n.index += count;
                 if (n.index < 0)
-                    n.index += parent->_M_data.size();
-                if (n.index > parent->_M_data.size())
-                    n.index -= parent->_M_data.size();
+                    n.index += static_cast<long long>(parent->_M_data.size());
+                if (n.index > static_cast<long long>(parent->_M_data.size()))
+                    n.index -= static_cast<long long>(parent->_M_data.size());
                 return n;
             }
 
@@ -287,23 +289,23 @@ namespace dwhbll::collections {
 
             iterator& operator++() {
                 index += 1;
-                if (index >= parent->_M_data.size())
-                    index -= parent->_M_data.size();
+                if (index >= static_cast<long long>(parent->_M_data.size()))
+                    index -= static_cast<long long>(parent->_M_data.size());
                 return *this;
             }
 
             iterator operator++(int) {
                 iterator tmp = *this;
                 index += 1;
-                if (index >= parent->_M_data.size())
-                    index -= parent->_M_data.size();
+                if (index >= static_cast<long long>(parent->_M_data.size()))
+                    index -= static_cast<long long>(parent->_M_data.size());
                 return tmp;
             }
 
             iterator& operator--() {
                 index -= 1;
                 if (index < 0)
-                    index += parent->_M_data.size();
+                    index += static_cast<long long>(parent->_M_data.size());
                 return *this;
             }
 
@@ -311,7 +313,7 @@ namespace dwhbll::collections {
                 iterator tmp = *this;
                 index -= 1;
                 if (index < 0)
-                    index += parent->_M_data.size();
+                    index += static_cast<long long>(parent->_M_data.size());
                 return tmp;
             }
 
@@ -344,9 +346,9 @@ namespace dwhbll::collections {
                 reverse_iterator n = *this;
                 n.index += count;
                 if (n.index < 0)
-                    n.index += parent->_M_data.size();
-                if (n.index > parent->_M_data.size())
-                    n.index -= parent->_M_data.size();
+                    n.index += static_cast<long long>(parent->_M_data.size());
+                if (n.index > static_cast<long long>(parent->_M_data.size()))
+                    n.index -= static_cast<long long>(parent->_M_data.size());
                 return n;
             }
 
@@ -384,23 +386,23 @@ namespace dwhbll::collections {
 
             reverse_iterator& operator--() {
                 index += 1;
-                if (index >= parent->_M_data.size())
-                    index -= parent->_M_data.size();
+                if (index >= static_cast<long long>(parent->_M_data.size()))
+                    index -= static_cast<long long>(parent->_M_data.size());
                 return *this;
             }
 
             reverse_iterator operator--(int) {
                 reverse_iterator tmp = *this;
                 index += 1;
-                if (index >= parent->_M_data.size())
-                    index -= parent->_M_data.size();
+                if (index >= static_cast<long long>(parent->_M_data.size()))
+                    index -= static_cast<long long>(parent->_M_data.size());
                 return tmp;
             }
 
             reverse_iterator& operator++() {
                 index -= 1;
                 if (index < 0)
-                    index += parent->_M_data.size();
+                    index += static_cast<long long>(parent->_M_data.size());
                 return *this;
             }
 
@@ -408,7 +410,7 @@ namespace dwhbll::collections {
                 reverse_iterator tmp = *this;
                 index -= 1;
                 if (index < 0)
-                    index += parent->_M_data.size();
+                    index += static_cast<long long>(parent->_M_data.size());
                 return tmp;
             }
 
@@ -442,9 +444,9 @@ namespace dwhbll::collections {
                 const_iterator n = *this;
                 n.index += count;
                 if (n.index < 0)
-                    n.index += parent->_M_data.size();
-                if (n.index > parent->_M_data.size())
-                    n.index -= parent->_M_data.size();
+                    n.index += static_cast<long long>(parent->_M_data.size());
+                if (n.index > static_cast<long long>(parent->_M_data.size()))
+                    n.index -= static_cast<long long>(parent->_M_data.size());
                 return n;
             }
 
@@ -481,23 +483,23 @@ namespace dwhbll::collections {
 
             const_iterator& operator++() {
                 index += 1;
-                if (index >= parent->_M_data.size())
-                    index -= parent->_M_data.size();
+                if (index >= static_cast<long long>(parent->_M_data.size()))
+                    index -= static_cast<long long>(parent->_M_data.size());
                 return *this;
             }
 
             const_iterator operator++(int) {
                 const_iterator tmp = *this;
                 index += 1;
-                if (index >= parent->_M_data.size())
-                    index -= parent->_M_data.size();
+                if (index >= static_cast<long long>(parent->_M_data.size()))
+                    index -= static_cast<long long>(parent->_M_data.size());
                 return tmp;
             }
 
             const_iterator& operator--() {
                 index -= 1;
                 if (index < 0)
-                    index += parent->_M_data.size();
+                    index += static_cast<long long>(parent->_M_data.size());
                 return *this;
             }
 
@@ -505,7 +507,7 @@ namespace dwhbll::collections {
                 const_iterator tmp = *this;
                 index -= 1;
                 if (index < 0)
-                    index += parent->_M_data.size();
+                    index += static_cast<long long>(parent->_M_data.size());
                 return tmp;
             }
 
@@ -539,9 +541,9 @@ namespace dwhbll::collections {
                 const_reverse_iterator n = *this;
                 n.index += count;
                 if (n.index < 0)
-                    n.index += parent->_M_data.size();
-                if (n.index > parent->_M_data.size())
-                    n.index -= parent->_M_data.size();
+                    n.index += static_cast<long long>(parent->_M_data.size());
+                if (n.index > static_cast<long long>(parent->_M_data.size()))
+                    n.index -= static_cast<long long>(parent->_M_data.size());
                 return n;
             }
 
@@ -579,23 +581,23 @@ namespace dwhbll::collections {
 
             const_reverse_iterator& operator--() {
                 index += 1;
-                if (index >= parent->_M_data.size())
-                    index -= parent->_M_data.size();
+                if (index >= static_cast<long long>(parent->_M_data.size()))
+                    index -= static_cast<long long>(parent->_M_data.size());
                 return *this;
             }
 
             const_reverse_iterator operator--(int) {
                 const_reverse_iterator tmp = *this;
                 index += 1;
-                if (index >= parent->_M_data.size())
-                    index -= parent->_M_data.size();
+                if (index >= static_cast<long long>(parent->_M_data.size()))
+                    index -= static_cast<long long>(parent->_M_data.size());
                 return tmp;
             }
 
             const_reverse_iterator& operator++() {
                 index -= 1;
                 if (index < 0)
-                    index += parent->_M_data.size();
+                    index += static_cast<long long>(parent->_M_data.size());
                 return *this;
             }
 
@@ -603,7 +605,7 @@ namespace dwhbll::collections {
                 const_reverse_iterator tmp = *this;
                 index -= 1;
                 if (index < 0)
-                    index += parent->_M_data.size();
+                    index += static_cast<long long>(parent->_M_data.size());
                 return tmp;
             }
 

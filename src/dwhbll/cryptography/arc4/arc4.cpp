@@ -42,7 +42,7 @@ namespace dwhbll::cryptography::arc4 {
         for (std::size_t i = 0; i < data.size(); i++)
             result[i] = data[i] ^ keystream_next();
 
-        return std::move(result);
+        return result;
     }
 
     void arc4::crypt_inplace(std::vector<std::uint8_t> &data) {

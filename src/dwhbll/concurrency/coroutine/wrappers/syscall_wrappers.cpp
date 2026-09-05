@@ -21,7 +21,7 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
 
         SUBMIT
 
-        co_await promise;
+        (void)co_await promise;
     }
 
     task<int> open(const char *fptr, int flags, mode_t mode) {

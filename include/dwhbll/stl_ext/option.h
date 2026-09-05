@@ -318,7 +318,6 @@ namespace dwhbll::stl_ext {
         template <typename F>
         requires std::invocable<F&&>
         constexpr auto ok_or_else(this auto&& self, F&& err) {
-            using E = std::decay_t<std::invoke_result_t<F&&>>;
             if (self.type == state::none)
                 return Err(std::invoke(std::forward<F>(err)));
             return Ok(std::forward<decltype(self)>(self).data.SOME_VALUE);

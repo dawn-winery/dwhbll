@@ -166,7 +166,6 @@ namespace dwhbll::subprocess {
         if (input.has_value())
             stdin_buffer = input.value();
 
-        size_t stdin_head = 0;
         size_t stdin_remaining = stdin_buffer.size();
 
         std::optional<pipe_wrapper> in = stdin_.has_value() ? std::optional(get_stdin_pipe()) : std::nullopt;
@@ -184,7 +183,6 @@ namespace dwhbll::subprocess {
         while (!stdin_done || !stdout_done || !stderr_done) {
             if (input.has_value() && !stdin_done) {
                 auto write_size = in.value().ll_write(stdin_buffer);
-                stdin_head += write_size;
                 stdin_remaining -= write_size;
                 if (stdin_remaining > 0)
                     stdin_buffer = stdin_buffer.subspan(write_size);

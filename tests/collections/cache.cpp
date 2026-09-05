@@ -2,7 +2,7 @@
 #include <dwhbll/collections/cache.h>
 #include <thread>
 
-bool cache_test(std::optional<std::string> test_to_run) {
+bool cache_test(std::optional<std::string>) {
     dwhbll::collections::cache<std::string, std::string> cache;
 
     auto* k = cache.addEntry(std::chrono::system_clock::now() + std::chrono::seconds(1), "a", "b");

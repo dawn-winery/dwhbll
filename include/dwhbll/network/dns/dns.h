@@ -83,7 +83,7 @@ namespace dwhbll::network::dns {
         friend bool operator==(const Domain &lhs, const Domain &rhs) {
             if (lhs.labels.size() != rhs.labels.size())
                 return false;
-            for (int i = 0; i < lhs.labels.size(); i++) {
+            for (std::size_t i = 0; i < lhs.labels.size(); i++) {
                 if (lhs.labels[i] != rhs.labels[i])
                     return false;
             }

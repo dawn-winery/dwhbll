@@ -5,7 +5,7 @@
 
 #include <dwhbll/cryptography/arc4/arc4.h>
 
-bool crypto_arc4_test(std::optional<std::string> _) {
+bool crypto_arc4_test(std::optional<std::string>) {
     {
         dwhbll::cryptography::arc4::arc4 engine({'K', 'e', 'y'});
         std::uint8_t plaintext[] = "Plaintext";

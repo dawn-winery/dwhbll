@@ -35,10 +35,10 @@ namespace dwhbll::platform::linux_wrappers {
 
         auto count = read(memfd, data.data(), data.size());
 
-        if (count >= data.size())
+        if (count >= static_cast<ssize_t>(data.size()))
             debug::panic("Count >= buffer");
 
-        if (count != data.size())
+        if (count != static_cast<ssize_t>(data.size()))
             throw exceptions::rt_exception_base("Out of bounds read.");
     }
 
@@ -55,10 +55,10 @@ namespace dwhbll::platform::linux_wrappers {
 
         auto count = write(memfd, data.data(), data.size());
 
-        if (count >= data.size())
+        if (count >= static_cast<ssize_t>(data.size()))
             debug::panic("Count >= buffer");
 
-        if (count != data.size())
+        if (count != static_cast<ssize_t>(data.size()))
             throw exceptions::rt_exception_base("Out of bounds write.");
     }
 
