@@ -18,18 +18,52 @@ namespace dwhbll::stl_ext {
 
     namespace __detail {
         template<typename T>
-        struct is_option : std::false_type {};
+        struct option_like_traits {
+            static constexpr bool value = false;
+        };
 
         template<typename T>
-        struct is_option<Option<T>> : std::true_type {
+        struct option_like_traits<Option<T>> {
+            static constexpr bool value = true;
             using TYPE = T;
         };
 
-        template <typename T>
-        concept option = is_option<std::remove_cvref_t<T>>::value;
+        template<typename T>
+        struct option_like_traits<result_some_helper<T>> {
+            static constexpr bool value = true;
+            using TYPE = T;
+        };
+
+        template<typename T>
+        concept option_like = option_like_traits<std::remove_cvref_t<T>>::value;
+
+        template<typename T>
+        using option_like_value_t = typename option_like_traits<std::remove_cvref_t<T>>::TYPE;
 
         template <typename T>
-        using option_value_t = typename is_option<std::remove_cvref_t<T>>::TYPE;
+        constexpr Option<T> to_option(Option<T>&& value) {
+            return std::move(value);
+        }
+
+        template <typename T>
+        constexpr Option<T> to_option(const Option<T>& value) {
+            return value;
+        }
+
+        template <typename T>
+        constexpr Option<T> to_option(result_some_helper<T>&& value) {
+            return Some(std::move(value.value));
+        }
+
+        template <typename T>
+        constexpr Option<T> to_option(const result_some_helper<T>& value) {
+            return Some(value.value);
+        }
+
+        template <typename T>
+        constexpr Option<T> to_option(none_value_helper) {
+            return None;
+        }
     }
 
     /**
@@ -75,7 +109,7 @@ namespace dwhbll::stl_ext {
         constexpr Option(__detail::none_value_helper) noexcept {}
 
         template <typename TV>
-        requires (!__detail::is_some_helper<std::remove_cvref_t<TV>>::value) &&
+        requires (!__detail::some_helper<TV>) &&
                   std::constructible_from<T, TV&&>
         Option(TV&& value)
             noexcept(std::is_nothrow_constructible_v<T, TV&&>)
@@ -89,18 +123,20 @@ namespace dwhbll::stl_ext {
         constexpr Option(const Option &other)
             requires std::copy_constructible<T>
         {
-            type = other.type;
-            if (type == state::some)
+            if (other.type == state::some) {
                 std::construct_at(&data.SOME_VALUE, other.data.SOME_VALUE);
+                type = state::some;
+            }
         }
 
         constexpr Option(Option &&other)
             noexcept(std::is_nothrow_move_constructible_v<T>)
             requires std::move_constructible<T>
         {
-            type = other.type;
-            if (type == state::some)
+            if (other.type == state::some) {
                 std::construct_at(&data.SOME_VALUE, std::move(other.data.SOME_VALUE));
+                type = state::some;
+            }
         }
 
         // TODO: if T is not assignable, destory and reconstruct
@@ -141,7 +177,7 @@ namespace dwhbll::stl_ext {
             if (type == state::some)
                 data.SOME_VALUE = std::move(other.data.SOME_VALUE);
             else {
-                std::construct_at(&data.SOME_VALUE, other.data.SOME_VALUE);
+                std::construct_at(&data.SOME_VALUE, std::move(other.data.SOME_VALUE));
                 type = state::some;
             }
 
@@ -238,7 +274,7 @@ namespace dwhbll::stl_ext {
         requires std::invocable<F&, const T&>
         constexpr decltype(auto) inspect(this auto&& self, F&& f) {
             if (self.type == state::some)
-                std::invoke(std::forward<F>(f), std::forward<decltype(self)>(self).data.SOME_VALUE);
+                std::invoke(std::forward<F>(f), static_cast<const T&>(self.data.SOME_VALUE));
             return std::forward<decltype(self)>(self);
         }
 
@@ -289,25 +325,28 @@ namespace dwhbll::stl_ext {
         }
 
         template <typename O>
-        requires __detail::option<O>
-        constexpr std::remove_cvref_t<O> and_(this auto&& self, O&& optb) {
-            using OV = std::remove_cvref_t<O>;
+        requires __detail::option_like<O> &&
+                 std::same_as<__detail::option_like_value_t<O>, T>
+        constexpr Option<T> and_(this auto&& self, O&& optb) {
             if (self.type == state::none)
-                return OV(None);
-            return std::forward<O>(optb);
+                return None;
+            return __detail::to_option<T>(std::forward<O>(optb));
         }
 
         template <typename F>
         constexpr auto and_then(this auto&& self, F&& f) {
             using Self = decltype(self);
-            using Arg = decltype(std::forward<Self>(self).data.SOME_VALUE);
-            using R =std::invoke_result_t<F&&, Arg>;
+            using Arg = decltype((std::forward<Self>(self).data.SOME_VALUE));
+            using R = std::invoke_result_t<F&&, Arg>;
 
-            static_assert(__detail::option<R>, "Option::and_then callback must return an Option");
+            static_assert(__detail::option_like<R>, "Option::and_then callback "
+                                                    "must return Option or Some()");
 
+            using U = __detail::option_like_value_t<R>;
             if (self.type == state::none)
-                return std::remove_cvref_t<R>(None);
-            return std::invoke(std::forward<F>(f), std::forward<Self>(self).data.SOME_VALUE);
+                return Option<U>(None);
+            return __detail::to_option<U>(std::invoke(std::forward<F>(f),
+                                    std::forward<Self>(self).data.SOME_VALUE));
         }
 
         template <typename F>
@@ -322,33 +361,45 @@ namespace dwhbll::stl_ext {
         }
 
         template <typename O>
-        requires __detail::option<O> && std::same_as<__detail::option_value_t<O>, T>
-        constexpr std::remove_cvref_t<O> or_(this auto&& self, O&& optb) {
+        requires __detail::option_like<O> &&
+                 std::same_as<__detail::option_like_value_t<O>, T>
+        constexpr Option<T> or_(this auto&& self, O&& optb) {
             if (self.type == state::some)
                 return Option<T>(std::forward<decltype(self)>(self));
-            return std::forward<O>(optb);
+            return __detail::to_option<T>(std::forward<O>(optb));
         }
 
         template <typename F>
-        requires std::invocable<F&&> &&
-                 __detail::option<std::invoke_result_t<F&&>> &&
-                 std::same_as<__detail::option_value_t<std::invoke_result_t<F&&>>, T>
-        constexpr auto or_else(this auto&& self, F&& f) {
+        requires std::invocable<F&&>
+        constexpr Option<T> or_else(this auto&& self, F&& f) {
+            using R = std::invoke_result_t<F&&>;
             if (self.type == state::some)
                 return Option<T>(std::forward<decltype(self)>(self));
-            return std::invoke(std::forward<F>(f));
+
+            // TODO: Probably add None to option_like?
+            if constexpr (std::same_as<std::remove_cvref_t<R>, __detail::none_value_helper>)
+                return None;
+            else {
+                static_assert(__detail::option_like<R> &&
+                              std::same_as<__detail::option_like_value_t<R>, T>,
+                              "Option::or_else callback must return Option or Some(...)");
+
+                return __detail::to_option<T>(std::invoke(std::forward<F>(f)));
+            }
         }
 
         template <typename O>
-        requires __detail::option<O> &&
-                 std::same_as<__detail::option_value_t<O>, T>
-        constexpr Option xor_(this auto&& self, O&& optb) {
+        requires __detail::option_like<O> &&
+                 std::same_as<__detail::option_like_value_t<O>, T>
+        constexpr Option<T> xor_(this auto&& self, O&& optb) {
+            // TODO: don't do this
+            Option<T> other = __detail::to_option<T>(std::forward<O>(optb));
             const bool self_some = self.type == state::some;
-            if (self_some == optb.is_some())
-                return Option(None);
+            if (self_some == other.is_some())
+                return None;
             if (self_some)
-                return Option(std::forward<decltype(self)>(self));
-            return Option(std::forward<O>(optb));
+                return Option<T>(std::forward<decltype(self)>(self));
+            return other;
         }
 
         // TODO:
