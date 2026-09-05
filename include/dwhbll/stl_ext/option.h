@@ -73,23 +73,23 @@ namespace dwhbll::stl_ext {
     template <typename T>
     requires (!std::same_as<T, void>)
     class Option {
+        // Maybe just replace with a bool?
+        // bool has_value
         enum class state : bool {
             none,
             some,
         };
-        state type = state::none;
-        // Maybe just replace with a bool?
-        // bool has_value
 
         struct DUMMY_TYPE_NEVER{};
         union DATA {
             DUMMY_TYPE_NEVER NEVER{};
             T SOME_VALUE;
 
-            ~DATA() {}
+            constexpr ~DATA() {}
         } data;
+        state type = state::none;
 
-        void __destroy_storage() {
+        constexpr void __destroy_storage() {
             if (type == state::some) {
                 std::destroy_at(&data.SOME_VALUE);
                 type = state::none;
