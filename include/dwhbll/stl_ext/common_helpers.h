@@ -60,6 +60,24 @@ namespace dwhbll::stl_ext {
         };
 
         template <typename T>
+        inline constexpr bool is_err_helper_v = false;
+
+        template <typename T>
+        inline constexpr bool is_err_helper_v<result_err_helper<T>> = true;
+
+        template <typename T>
+        concept err_helper = is_err_helper_v<std::remove_cvref_t<T>>;
+
+        template <typename T>
+        inline constexpr bool is_ok_helper_v = false;
+
+        template <typename T>
+        inline constexpr bool is_ok_helper_v<result_ok_helper<T>> = true;
+
+        template <typename T>
+        concept ok_helper = is_ok_helper_v<std::remove_cvref_t<T>>;
+
+        template <typename T>
         inline constexpr bool is_some_helper_v = false;
 
         template <typename T>
