@@ -97,7 +97,6 @@ set(DWHBLL_SOURCES
     include/dwhbll/collections/memory_buffer.h
     include/dwhbll/collections/ring.h
     include/dwhbll/collections/sorted_linked_list.h
-    include/dwhbll/collections/streams.h
     include/dwhbll/concurrency/backoff/backoff_policy.h
     include/dwhbll/concurrency/backoff/policy_exponential.h
     include/dwhbll/concurrency/backoff/policy_linear.h
@@ -360,7 +359,6 @@ if (DWHBLL_TESTS)
         tests/matrix.cpp
         tests/collections/cache.cpp
         tests/collections/ring.cpp
-        tests/collections/streams.cpp
         tests/graphics/bitmap.cpp
         tests/lang/c/tokenizer_test.cpp
         tests/bench/bounded_spsc_int_bench.cpp
