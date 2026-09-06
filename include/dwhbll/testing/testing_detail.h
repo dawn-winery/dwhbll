@@ -25,6 +25,13 @@ struct skip {
         : reason(std::define_static_string(reason_)) {}
 };
 
+struct xfail {
+    char const* reason;
+
+    consteval explicit xfail(std::string_view reason_ = "")
+        : reason(std::define_static_string(reason_)) {}
+};
+
 struct tag {
     char const* tag_name;
 
@@ -58,6 +65,8 @@ struct entry {
     void (*fn)();
     bool skip;
     std::string_view skip_reason;
+    bool xfail;
+    std::string_view xfail_reason;
     std::vector<std::string_view> tags;
 };
 
@@ -139,6 +148,15 @@ void collect_tests() {
                     skip_reason = std::string_view(skip_val.reason);
                 }
 
+                constexpr auto xfail_ann = find_annotation(n, ^^xfail);
+                constexpr bool is_xfail = xfail_ann != info();
+                std::string_view xfail_reason;
+                if constexpr (is_xfail) {
+                    static constexpr auto xfail_val =
+                        extract<typename[: type_of(xfail_ann) :]>(xfail_ann);
+                    xfail_reason = std::string_view(xfail_val.reason);
+                }
+
                 auto tags_arr = get_tags<n>();
 
                 auto fn = extract<void(*)()>(n);
@@ -152,7 +170,7 @@ void collect_tests() {
                     }
                 }
                 if (!found)
-                    reg.push_back({ name, fn, skip, skip_reason, tags_arr });
+                    reg.push_back({ name, fn, skip, skip_reason, is_xfail, xfail_reason, tags_arr });
             }
         }
     }
