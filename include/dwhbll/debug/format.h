@@ -2,10 +2,9 @@
 
 #include <meta>
 #include <dwhbll/json/json.h>
-#include <dwhbll/console/logging.h>
 #include <cassert>
 
-namespace dwhbll::debug {
+namespace dwhbll::meta {
 
 constexpr std::string get_indentation(int depth, int step) {
     return std::string(depth * step, ' ');
@@ -103,7 +102,7 @@ constexpr std::string dbg(T const& val, int depth = 0, int step = 4, bool first_
 
 #define 🦀 dbg
 
-#if 0
+void trace(const std::string& msg);
 #define TRACE_FUNC(func) \
     constexpr std::string_view __id = std::meta::identifier_of(^^func); \
     std::string __s; \
@@ -112,6 +111,5 @@ constexpr std::string dbg(T const& val, int depth = 0, int step = 4, bool first_
         __s += std::format("{}{} = {}\n", get_indentation(2, 5), std::meta::identifier_of(__e), dbg([: std::meta::variable_of(__e) :], 2, 5, false)); \
     } \
     trace(std::format("function {}:\n{}", __id, __s));
-#endif
 
-} // namespace dwhbll::debug
+} // namespace dwhbll::meta

@@ -1,5 +1,5 @@
-#include <dwhbll/testing/testing.hpp>
-#include <dwhbll/console/debug.hpp>
+#include <dwhbll/testing/testing.h>
+#include <dwhbll/debug/debug.h>
 
 #include <print>
 #include <exception>
