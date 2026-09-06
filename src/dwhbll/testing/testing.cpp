@@ -135,7 +135,7 @@ int run_all(tag_filter const& filt) {
     std::println("{}running {} test(s) out of {}{}", color::bold, selected.size(),
                 tests.size(), color::reset);
 
-    std::size_t passed = 0, failed = 0, skipped = 0;
+    std::size_t passed = 0, failed = 0, skipped = 0, xfailed = 0, xpassed = 0;
 
     for (const auto* tp : selected) {
         const auto& t = *tp;
@@ -162,27 +162,40 @@ int run_all(tag_filter const& filt) {
         }
         detail::current_result = nullptr;
 
-        if (res.passed()) {
-            std::println("{}[ ok ]{} {}{}", color::green, color::reset, t.name, format_tags(t));
-            ++passed;
-        } else {
-            std::println("{}[FAIL]{} {}{}", color::red, color::reset, t.name, format_tags(t));
-            for (const auto& f : res.failures()) {
-                std::println("    {}{}:{}:{} {}", color::dim, f.loc.file_name(),
-                             f.loc.line(), color::reset, f.msg);
+        if (t.xfail) {
+            if (!res.passed()) {
+                if (!t.xfail_reason.empty())
+                    std::println("{}[xfail]{} {}{} ({})", color::yellow, color::reset, t.name, format_tags(t), t.xfail_reason);
+                else
+                    std::println("{}[xfail]{} {}{}", color::yellow, color::reset, t.name, format_tags(t));
+                ++xfailed;
+            } else {
+                std::println("{}[XPASS]{} {}{}", color::red, color::reset, t.name, format_tags(t));
+                ++xpassed;
             }
-            ++failed;
+        } else {
+            if (res.passed()) {
+                std::println("{}[ ok ]{} {}{}", color::green, color::reset, t.name, format_tags(t));
+                ++passed;
+            } else {
+                std::println("{}[FAIL]{} {}{}", color::red, color::reset, t.name, format_tags(t));
+                for (const auto& f : res.failures()) {
+                    std::println("    {}{}:{}:{} {}", color::dim, f.loc.file_name(),
+                                 f.loc.line(), color::reset, f.msg);
+                }
+                ++failed;
+            }
         }
     }
 
-    if (failed == 0) {
-        std::println("\n{}{} passed{}, {} skipped", color::green, passed,
-                        color::reset, skipped);
+    if (failed == 0 && xpassed == 0) {
+        std::println("\n{}{} passed{}, {} skipped, {} expected failures", color::green, passed,
+                        color::reset, skipped, xfailed);
         return 0;
     }
     else {
-        std::println("\n{}{} passed{}, {}{} failed{}, {} skipped", color::green, passed,
-                        color::reset, color::red, failed, color::reset, skipped);
+        std::println("\n{}{} passed{}, {}{} failed{}, {} skipped, {} expected failures, {}{} unexpected passes{}", color::green, passed,
+                        color::reset, color::red, failed, color::reset, skipped, xfailed, color::red, xpassed, color::reset);
         return 1;
     }
 }
