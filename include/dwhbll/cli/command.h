@@ -22,6 +22,8 @@ namespace dwhbll::cli {
 
         void insert_value(std::string id, std::string value);
         void insert_flag(std::string id, bool value);
+        void insert_subcommand(std::string name, std::unique_ptr<ArgMatches> sub_matches);
+        void clear_values(const std::string& id);
 
         [[nodiscard]] dwhbll::stl_ext::Option<std::string> get_one(const std::string& id) const;
         [[nodiscard]] std::vector<std::string> get_many(const std::string& id) const;
@@ -29,6 +31,9 @@ namespace dwhbll::cli {
 
         [[nodiscard]] bool contains_id(const std::string& id) const;
         [[nodiscard]] size_t count(const std::string& id) const;
+
+        [[nodiscard]] dwhbll::stl_ext::Option<std::string> subcommand_name() const;
+        [[nodiscard]] const ArgMatches* subcommand_matches(const std::string& name) const;
 
         template<typename T>
         [[nodiscard]] dwhbll::stl_ext::Option<T> get_one_as(const std::string& id) const;
@@ -104,5 +109,17 @@ namespace dwhbll::cli {
         ParseResult parse_args(const std::vector<std::string>& argv) const;
         void print_help() const;
         void print_version() const;
+
+        [[nodiscard]] std::string arg_display_name(const Arg& arg) const;
+        [[nodiscard]] std::pair<size_t, size_t> get_min_max_values(const Arg& arg) const;
+        [[nodiscard]] size_t count_total_values(const Arg& arg, const std::vector<std::string>& raw_values) const;
+        void insert_values_with_delimiter(const Arg& arg, ArgMatches& matches, const std::vector<std::string>& raw_values, ArgAction action) const;
+        [[nodiscard]] std::vector<std::string> collect_raw_values(const std::vector<std::string>& argv, size_t& i, size_t max_values, const std::string& initial_value) const;
+        [[nodiscard]] ParseResult validate_and_insert_values(const Arg& arg, ArgMatches& matches, const std::vector<std::string>& raw_values, const std::string& current) const;
+        void insert_default_values(ArgMatches& matches) const;
+        void insert_env_values(ArgMatches& matches) const;
+        [[nodiscard]] ParseResult check_conflicts(const ArgMatches& matches) const;
+        [[nodiscard]] ParseResult check_requires(const ArgMatches& matches) const;
+        [[nodiscard]] ParseResult check_num_args_range(const ArgMatches& matches) const;
     };
 }

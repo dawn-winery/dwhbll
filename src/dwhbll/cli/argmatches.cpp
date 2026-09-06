@@ -48,6 +48,29 @@ void ArgMatches::insert_flag(std::string id, bool value) {
     return 0;
 }
 
+void ArgMatches::insert_subcommand(std::string name, std::unique_ptr<ArgMatches> sub_matches) {
+    subcommands_[std::move(name)] = std::move(sub_matches);
+}
+
+void ArgMatches::clear_values(const std::string& id) {
+    values_.erase(id);
+}
+
+[[nodiscard]] dwhbll::stl_ext::Option<std::string> ArgMatches::subcommand_name() const {
+    if (!subcommands_.empty()) {
+        return dwhbll::stl_ext::Option<std::string>(std::string(subcommands_.begin()->first));
+    }
+    return dwhbll::stl_ext::Option<std::string>();
+}
+
+[[nodiscard]] const ArgMatches* ArgMatches::subcommand_matches(const std::string& name) const {
+    auto it = subcommands_.find(name);
+    if (it != subcommands_.end()) {
+        return it->second.get();
+    }
+    return nullptr;
+}
+
 template<typename T>
 [[nodiscard]] Option<T> ArgMatches::get_one_as(const std::string& id) const {
     auto opt = get_one(id);

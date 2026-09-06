@@ -15,6 +15,9 @@ extern bool c_lang_test(std::optional<std::string> test_to_run);
 // cryptography
 extern bool crypto_arc4_test(std::optional<std::string> test_to_run);
 
+// cli
+extern bool cli_test(std::optional<std::string> test_to_run);
+
 // benchmarks
 extern bool bounded_spsc_int_bench(std::optional<std::string> test_to_run);
 extern bool bounded_mpsc_int_bench(std::optional<std::string> test_to_run);
@@ -36,6 +39,7 @@ std::unordered_map<std::string, TestFunc> module_dispatch{
 
     {"crypto/arc4", crypto_arc4_test},
     {"lang/c", c_lang_test},
+    {"cli", cli_test},
 };
 
 int main(int argc, char **argv) {
