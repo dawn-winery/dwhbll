@@ -50,7 +50,7 @@ namespace dwhbll::network {
             return *this;
         }
 
-        Socket() : fd(0), mode(NONE) {}
+        Socket() : fd(-1), mode(NONE) {}
         Socket(const int fd, const Mode mode) : fd(fd), mode(mode) {}
 
         ~Socket();

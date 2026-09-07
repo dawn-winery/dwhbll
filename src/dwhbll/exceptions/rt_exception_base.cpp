@@ -1,11 +1,11 @@
-#include "../../../include/dwhbll/exceptions/rt_exception_base.h"
+#include <dwhbll/exceptions/rt_exception_base.h>
 
 #include <filesystem>
 #include <iostream>
 #include <version>
 
 #include <cxxabi.h>
-#include <dwhbll/debug/stacktrace.h>
+#include <dwhbll/debug/debug.h>
 
 namespace dwhbll::exceptions {
     void prettyprint_rtexcept(std::stringstream& ss, const rt_exception_base& exception);

@@ -11,25 +11,26 @@
 
 #include <dwhbll/collections/ring.h>
 #include <dwhbll/network/socket_manager.h>
+#include <dwhbll/network/address.h>
 
 namespace dwhbll::network::dns {
     /*
      * Constant data: Root Server data
      */
-    const std::vector<std::uint32_t> root_servers = {
-        BuildIPV4(198, 41, 0, 4),
-        BuildIPV4(170, 247, 170, 2),
-        BuildIPV4(192, 33, 4, 12),
-        BuildIPV4(199, 7, 91, 13),
-        BuildIPV4(192, 203, 230, 10),
-        BuildIPV4(192, 5, 5, 241),
-        BuildIPV4(192, 112, 36, 4),
-        BuildIPV4(198, 97, 190, 53),
-        BuildIPV4(192, 36, 148, 17),
-        BuildIPV4(192, 58, 128, 30),
-        BuildIPV4(193, 0, 14, 129),
-        BuildIPV4(199, 7, 83, 42),
-        BuildIPV4(202, 12, 27, 33),
+    inline constexpr std::array<std::uint32_t, 13> root_servers = {
+        conv::make_ipv4(198, 41, 0, 4),
+        conv::make_ipv4(170, 247, 170, 2),
+        conv::make_ipv4(192, 33, 4, 12),
+        conv::make_ipv4(199, 7, 91, 13),
+        conv::make_ipv4(192, 203, 230, 10),
+        conv::make_ipv4(192, 5, 5, 241),
+        conv::make_ipv4(192, 112, 36, 4),
+        conv::make_ipv4(198, 97, 190, 53),
+        conv::make_ipv4(192, 36, 148, 17),
+        conv::make_ipv4(192, 58, 128, 30),
+        conv::make_ipv4(193, 0, 14, 129),
+        conv::make_ipv4(199, 7, 83, 42),
+        conv::make_ipv4(202, 12, 27, 33),
     };
 
     std::optional<in_addr> query_dns(const std::string& domain);

@@ -32,3 +32,7 @@ using Shared = std::shared_ptr<T>;
 using namespace dwhbll::stl_ext;
 
 } // namespace dwhbll::sanify
+
+#ifdef DWHBLL_SANIFY_EXPORT
+using namespace dwhbll::sanify;
+#endif

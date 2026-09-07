@@ -4,14 +4,15 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <cstring>
+#include <utility>
+#include <netinet/tcp.h>
 
 #include <dwhbll/concurrency/coroutine/wrappers/syscall_wrappers.h>
 #include <dwhbll/network/address.h>
-#include <dwhbll/sanify/coroutines.h>
-#include <utility>
 #include <dwhbll/stl_ext/option.h>
 
-#include <netinet/tcp.h>
+#define DWHBLL_SANIFY_EXPORT
+#include <dwhbll/sanify/coroutines.h>
 
 namespace dwhbll::async::net {
     task<stl_ext::Result<std::unique_ptr<socket>, int>> socket::connect_internal(bool use_ipv6, const network::address &endpoint, int socktype) {

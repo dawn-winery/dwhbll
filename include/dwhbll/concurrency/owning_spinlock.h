@@ -14,7 +14,6 @@ namespace dwhbll::concurrency {
     public:
         template <typename... Args>
         owning_spinlock(Args&&... args) : object(std::forward<Args>(args)...), lock_t(std::make_unique<spinlock>()) {}
-
         owning_spinlock(const owning_spinlock &other) = delete;
 
         owning_spinlock(owning_spinlock &&other) noexcept

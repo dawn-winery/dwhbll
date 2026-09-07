@@ -6,6 +6,8 @@
 
 #include <dwhbll/concurrency/coroutine/wrappers/syscall_wrappers.h>
 #include <dwhbll/network/address.h>
+
+#define DWHBLL_SANIFY_EXPORT
 #include <dwhbll/sanify/coroutines.h>
 #include <dwhbll/sanify/stl_ext.h>
 

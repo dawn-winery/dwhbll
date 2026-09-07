@@ -13,7 +13,7 @@ option(BUILD_HARDEN "enable hardening on the library." OFF)
 option(BUILD_HARDEN_EXPENSIVE "enable expensive hardening features on the library." OFF)
 option(DWHBLL_GPU_ENABLED "Toggle GPU acceleration" ON)
 option(DWHBLL_SANIFY_EXPORT "Export Sanification directly to the global namespace" OFF)
-option(DWHBLL_SUGAR_EXPORT "Export Sanification directly to the global namespace" OFF)
+option(DWHBLL_SUGAR_EXPORT "Export sugar directly to the global namespace" OFF)
 
 set(LINALG_GPU_THRESHOLD_VALUE 2048 CACHE STRING "Select the threshold for GPU delegation")
 
@@ -126,7 +126,6 @@ set(DWHBLL_SOURCES
     include/dwhbll/debug/debug.h
     include/dwhbll/debug/panic.h
     include/dwhbll/debug/perf.h
-    include/dwhbll/debug/stacktrace.h
     include/dwhbll/console/logging.h
     include/dwhbll/cryptography/arc4/arc4.h
     include/dwhbll/cryptography/hmac.h

@@ -1,5 +1,6 @@
 #include <dwhbll/async/net/buffered_socket.h>
 
+#define DWHBLL_SANIFY_EXPORT
 #include <dwhbll/sanify/coroutines.h>
 #include <dwhbll/sanify/stl_ext.h>
 

@@ -16,8 +16,8 @@ namespace dwhbll::cryptography {
         void digest_chunk();
 
     public:
-        constexpr static std::size_t BLEN = 64;
-        constexpr static std::size_t HLEN = 20;
+        constexpr static std::size_t BLOCKLEN = 64;
+        constexpr static std::size_t HASHLEN = 20;
 
         SHA1();
 

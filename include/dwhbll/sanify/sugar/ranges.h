@@ -19,6 +19,6 @@ namespace dwhbll::sanify::sugar {
     }
 }
 
-#ifdef DWHBLL_SANIFY_SUGAR
+#ifdef DWHBLL_SUGAR_EXPORT
 using namespace dwhbll::sanify::sugar;
 #endif

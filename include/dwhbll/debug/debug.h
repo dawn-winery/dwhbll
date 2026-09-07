@@ -1,7 +1,10 @@
 #pragma once
 
 #include <dwhbll/debug/panic.h>
+
+#include <memory>
 #include <vector>
+#include <cxxabi.h>
 
 #ifdef NDEBUG
     #define ASSERT(cond, ...) ((void)0)
@@ -74,6 +77,16 @@ bool is_being_debugged();
 
 [[noreturn]] inline void todo() {
     panic("Not implemented!");
+}
+
+
+inline std::string demangle(const char* name) {
+    int status = 0;
+    std::unique_ptr<char, void(*)(void*)> res {
+        abi::__cxa_demangle(name, nullptr, nullptr, &status),
+        std::free
+    };
+    return (status == 0) ? res.get() : name;
 }
 
 } // namespace dwhbll::debug

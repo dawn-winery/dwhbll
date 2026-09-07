@@ -2,6 +2,7 @@
 
 #include <dwhbll/debug/debug.h>
 #include <dwhbll/exceptions/rt_exception_base.h>
+#define DWHBLL_SANIFY_EXPORT
 #include <dwhbll/sanify/coroutines.h>
 
 namespace dwhbll::network {

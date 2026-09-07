@@ -14,8 +14,8 @@ namespace dwhbll::concurrency::queues {
     template<typename T, std::size_t N, bool FailOnFull = false, typename BackoffPolicy = backoff::PolicyPause>
     requires backoff::BackoffPolicy<BackoffPolicy>
     class BoundedMPSCQueue {
-        static_assert(__builtin_popcountll(N) == 1, "BoundedSPSCQueue expects N to be a power of 2!");
-        static_assert(N > 1, "BoundedSPSCQueue has to be bigger than 1! (One entry is used to know if queue is full)");
+        static_assert(__builtin_popcountll(N) == 1, "BoundedMPSCQueue expects N to be a power of 2!");
+        static_assert(N > 1, "BoundedMPSCQueue has to be bigger than 1! (One entry is used to know if queue is full)");
 
         static constexpr std::size_t MASK = N - 1;
 

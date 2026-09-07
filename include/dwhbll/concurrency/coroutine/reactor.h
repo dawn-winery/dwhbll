@@ -16,7 +16,7 @@
 namespace dwhbll::concurrency::coroutine {
     class uring_sqe_awaitable;
     class cancellable_base;
-    struct uring_promise;
+    class uring_promise;
     class reactor;
 
     namespace detail {

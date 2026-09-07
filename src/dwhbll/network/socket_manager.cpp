@@ -7,6 +7,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <dwhbll/concurrency/coroutine/wrappers/syscall_wrappers.h>
+
+#define DWHBLL_SANIFY_EXPORT
 #include <dwhbll/sanify/coroutines.h>
 
 namespace dwhbll::network {
@@ -169,7 +171,7 @@ namespace dwhbll::network {
             .sin_port   = htons(8080),
             .sin_addr   = { .s_addr = addr }
         };
-        ::bind(i, (struct sockaddr *)&a, sizeof(a));
+        ASSERT(::bind(i, (struct sockaddr *)&a, sizeof(a)) == 0);
         listen(i, 64);
 
         return std::move(tcp);

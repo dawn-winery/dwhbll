@@ -4,7 +4,6 @@
 #include <sstream>
 #include <unordered_map>
 #include <dwhbll/sanify/types.h>
-#include <dwhbll/debug/stacktrace.h>
 #include <dwhbll/stl_ext/string.h>
 
 namespace dwhbll::console {

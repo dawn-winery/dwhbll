@@ -115,7 +115,7 @@ namespace dwhbll::cryptography {
     }
 
     void SHA1::finalize(std::span<std::uint8_t> output) {
-        if (output.size() < HLEN)
+        if (output.size() < HASHLEN)
             debug::panic("SHA-1 finalize buffer cannot fit hash!");
 
         // add the 1 bit, if this was 64 it would have already been consumed by
@@ -162,10 +162,10 @@ namespace dwhbll::cryptography {
     }
 
     size_t SHA1::digest_size() const {
-        return HLEN;
+        return HASHLEN;
     }
 
     size_t SHA1::block_size() const {
-        return BLEN;
+        return BLOCKLEN;
     }
 }
