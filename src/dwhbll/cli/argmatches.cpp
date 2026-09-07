@@ -4,6 +4,30 @@ using dwhbll::stl_ext::Option;
 
 namespace dwhbll::cli {
 
+ArgMatches::ArgMatches(const ArgMatches& other) {
+    values_ = other.values_;
+    flags_ = other.flags_;
+    for (const auto& [name, sub] : other.subcommands_) {
+        if (sub) {
+            subcommands_[name] = std::make_unique<ArgMatches>(*sub);
+        }
+    }
+}
+
+ArgMatches& ArgMatches::operator=(const ArgMatches& other) {
+    if (this != &other) {
+        values_ = other.values_;
+        flags_ = other.flags_;
+        subcommands_.clear();
+        for (const auto& [name, sub] : other.subcommands_) {
+            if (sub) {
+                subcommands_[name] = std::make_unique<ArgMatches>(*sub);
+            }
+        }
+    }
+    return *this;
+}
+
 void ArgMatches::insert_value(std::string id, std::string value) {
     values_[std::move(id)].push_back(std::move(value));
 }

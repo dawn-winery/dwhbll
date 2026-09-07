@@ -88,6 +88,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/cli/arg.cpp
     src/dwhbll/cli/argmatches.cpp
     src/dwhbll/cli/command.cpp
+    src/dwhbll/cli/parser.cpp
 
     include/dwhbll/async/net/buffered_socket.h
     include/dwhbll/async/net/decorated_socket.h
