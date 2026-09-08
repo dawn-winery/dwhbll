@@ -85,6 +85,10 @@ set(DWHBLL_SOURCES
     src/dwhbll/utils/string.cpp
     src/dwhbll/utils/threading.cpp
     src/dwhbll/utils/uuid.cpp
+    src/dwhbll/cli/arg.cpp
+    src/dwhbll/cli/argmatches.cpp
+    src/dwhbll/cli/command.cpp
+    src/dwhbll/cli/parser.cpp
 
     include/dwhbll/async/net/buffered_socket.h
     include/dwhbll/async/net/decorated_socket.h
@@ -183,6 +187,8 @@ set(DWHBLL_SOURCES
     include/dwhbll/utils/threading.h
     include/dwhbll/utils/uuid.h
     include/dwhbll/math/vec4.h
+    include/dwhbll/cli/cli.h
+    include/dwhbll/cli/command.h
     include/dwhbll/concurrency/owning_spinlock.h
     include/dwhbll/stl_ext/ranges.h
     include/dwhbll/stl_ext/utilities.h
@@ -363,6 +369,7 @@ if (DWHBLL_TESTS)
         tests/bench/bounded_mpsc_int_bench.cpp
         tests/bench/recycling_concurrent_stack_bench.cpp
         tests/cryptography/arc4.cpp
+        tests/cli.cpp
     )
 
     add_executable(dwhbll_test ${DWHBLL_TEST_CXX_SOURCES})
