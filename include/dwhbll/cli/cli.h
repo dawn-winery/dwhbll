@@ -4,7 +4,6 @@
 #include <vector>
 #include <optional>
 #include <dwhbll/stl_ext/option.h>
-#include <dwhbll/collections/streams.hpp>
 
 namespace dwhbll::cli {
 

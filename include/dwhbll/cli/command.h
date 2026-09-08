@@ -58,7 +58,7 @@ namespace dwhbll::cli {
 
         ParseResult() = default;
         ParseResult(ArgMatches m) : matches(std::move(m)) {}
-        ParseResult(std::string err) : success(false), errors({std::move(err)}) {}
+        ParseResult(std::string err) : errors({std::move(err)}), success(false) {}
     };
 
     class Command {

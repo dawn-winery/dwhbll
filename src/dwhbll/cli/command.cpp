@@ -288,7 +288,6 @@ ParseResult Command::parse_args(const std::vector<std::string>& argv) const {
                             matches.insert_flag(arg->id(), action == ArgAction::SetTrue);
                         }
                     } else {
-                        auto action = arg->action().is_some() ? arg->action().unwrap() : ArgAction::Set;
                         auto [min_values, max_values] = get_min_max_values(*arg);
                         auto raw_values = collect_raw_values(argv, i, max_values, value, *arg);
                         auto result = validate_and_insert_values(*arg, matches, raw_values, current);
@@ -296,7 +295,6 @@ ParseResult Command::parse_args(const std::vector<std::string>& argv) const {
                         matches = std::move(result.matches);
                     }
                 } else {
-                    auto action = arg->action().is_some() ? arg->action().unwrap() : ArgAction::Set;
                     auto [min_values, max_values] = get_min_max_values(*arg);
                     std::string value;
                     if (i + 1 >= argv.size()) {
@@ -340,7 +338,6 @@ ParseResult Command::parse_args(const std::vector<std::string>& argv) const {
                                 matches.insert_flag(arg->id(), action == ArgAction::SetTrue);
                             }
                         } else {
-                            auto action = arg->action().is_some() ? arg->action().unwrap() : ArgAction::Set;
                             auto [min_values, max_values] = get_min_max_values(*arg);
 
                             std::string value;
@@ -569,7 +566,7 @@ std::string Command::arg_display_name(const Arg& arg) const {
 std::pair<size_t, size_t> Command::get_min_max_values(const Arg& arg) const {
     size_t min_values = 1, max_values = 1;
     if (arg.num_args().is_some()) {
-        const auto& range = arg.num_args().unwrap();
+        const auto range = arg.num_args().unwrap();
         if (range.min.has_value()) min_values = range.min.value();
         if (range.max.has_value()) max_values = range.max.value();
         else max_values = SIZE_MAX;
@@ -806,7 +803,7 @@ ParseResult Command::check_num_args_range(const ArgMatches& matches) const {
     for (const auto& arg : args_) {
         if (arg.num_args().is_some() && matches.contains_id(arg.id())) {
             size_t count = matches.count(arg.id());
-            const auto& range = arg.num_args().unwrap();
+            const auto range = arg.num_args().unwrap();
             if (range.min.has_value() && count < range.min.value()) {
                 return ParseResult("error: argument '" + arg.id() + "' requires at least " + std::to_string(range.min.value()) + " values");
             }

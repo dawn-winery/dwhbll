@@ -2,7 +2,7 @@
 #include <iostream>
 #include <vector>
 
-bool cli_test(std::optional<std::string> test_to_run) {
+bool cli_test(std::optional<std::string>) {
     using namespace dwhbll::cli;
 
     bool all_passed = true;
