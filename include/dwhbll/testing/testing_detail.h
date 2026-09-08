@@ -1,12 +1,23 @@
 #pragma once
 
 #include <algorithm>
+#include <chrono>
 #include <source_location>
 #include <string>
 #include <vector>
 #include <meta>
 
 namespace dwhbll::test {
+
+enum class test_status {
+    pass,
+    fail,
+    xfail,
+    xpass,
+    unsupported,
+    unresolved,
+    untested
+};
 
 struct test_marker {};
 inline constexpr test_marker test{};
@@ -44,13 +55,44 @@ struct failure {
     std::source_location loc;
 };
 
+struct test_result {
+    std::string name;
+    std::string suite = "unit";
+    test_status status = test_status::pass;
+    std::vector<failure> failures;
+    std::string message;
+    std::vector<std::string_view> tags;
+    std::chrono::microseconds duration{0};
+
+    [[nodiscard]] bool passed() const {
+        return status == test_status::pass || status == test_status::xfail;
+    }
+
+    [[nodiscard]] bool failed() const {
+        return status == test_status::fail || status == test_status::xpass || status == test_status::unresolved;
+    }
+
+    [[nodiscard]] bool skipped() const {
+        return status == test_status::unsupported || status == test_status::untested;
+    }
+};
+
+struct tag_filter {
+    std::vector<std::string> include;
+    std::vector<std::string> exclude;
+
+    bool matches(const std::vector<std::string_view>& tags) const;
+};
+
+tag_filter parse_filter(std::string_view expr);
+
 namespace detail {
 
 class result {
 public:
     void add_failure(std::string msg, std::source_location loc);
     bool passed() const;
-    std::vector<failure> const& failures() const;
+    const std::vector<failure>& failures() const;
 
 private:
     std::vector<failure> failures_;
@@ -74,11 +116,11 @@ struct entry {
 template <std::size_t N>
 struct fixed_string {
     char data[N]{};
-    consteval fixed_string(char const (&s)[N]) {
+    consteval fixed_string(const char(&s)[N]) {
         std::copy_n(s, N, data);
     }
 };
-template <std::size_t N> fixed_string(char const (&)[N]) -> fixed_string<N>;
+template <std::size_t N> fixed_string(const char(&)[N]) -> fixed_string<N>;
 
 std::vector<entry>& registry();
 
