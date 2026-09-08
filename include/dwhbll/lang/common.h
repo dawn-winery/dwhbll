@@ -8,8 +8,8 @@
 namespace dwhbll::lang {
     struct cursor {
         files::filejar::fileid file;
-        std::size_t line{};
-        std::size_t column{};
+        std::size_t line{1};
+        std::size_t column{1};
 
         explicit cursor(const files::filejar::fileid &id);
 
