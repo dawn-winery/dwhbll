@@ -1,6 +1,8 @@
 #pragma once
 
 #include <dwhbll/testing/testing_detail.h>
+#include <dwhbll/testing/harness.h>
+#include <dwhbll/testing/runner.h>
 
 #include <format>
 #include <meta>
@@ -9,13 +11,6 @@
 #include <string_view>
 
 namespace dwhbll::test {
-
-struct tag_filter {
-    std::vector<std::string> include;
-    std::vector<std::string> exclude;
-
-    bool matches(std::vector<std::string_view> tags) const;
-};
 
 bool expect(bool cond, std::string_view msg = {},
             std::source_location loc = std::source_location::current());
@@ -156,11 +151,8 @@ bool expect_no_throw(Fn&& fn, std::source_location loc = std::source_location::c
     }
 }
 
-tag_filter parse_filter(std::string_view expr);
-
-int run_all();
-int run_all(tag_filter const& filter);
-int run_all(int argc, char** argv);
+int run_all(const options& options = {});
+int run_all(const tag_filter& filter);
 
 } // namespace dwhbll::test
 
