@@ -442,6 +442,6 @@ install(FILES
 # TODO : IMPROVE INTEGRATION OF GPU COMPUTE FOR USERS
 
 if (DWHBLL_TESTS)
-    add_executable(dwhbll_test tests/test.cpp)
+    add_executable(dwhbll_test tests/cli.cpp)
     target_link_libraries(dwhbll_test PRIVATE dwhbll dwhbll_test_main)
 endif()
