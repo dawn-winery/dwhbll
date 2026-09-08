@@ -66,6 +66,20 @@ int main() {
     double hf4 = 0xAp0;   // 10.0
     double hf5 = 0x1.8p1; // 3.0
 
+    // Quote separators
+    unsigned q1 = 0xDE'ADBEEFU;
+    unsigned q2 = 0xDEAD'BEEFU;
+    unsigned q3 = 0xDEADBE'EFU;
+    double q4 = 1'23e17;
+    double q5 = 12'3e17;
+    double q6 = 123e1'7;
+
+    if (q1 != q2 || q2 != q3)
+        err("quote separators in integer literal.");
+
+    if (q4 != q5 || q5 != q6)
+        err("quote separators in floating point literal.");
+
     // Test escaped newlines in numbers
     #define num 12\
 34
