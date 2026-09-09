@@ -34,7 +34,7 @@ line2";
         err("escaped newline");
 
     // Escaped newline in char literal
-    const char c1 = 'a\
+    const char c1 = '\
 b';
     if (c1 != 'b')
         err("escaped newline in char");
