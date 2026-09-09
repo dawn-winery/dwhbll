@@ -1,4 +1,4 @@
-name: Build
+name: Build and test
 
 on:
   push:
@@ -29,4 +29,4 @@ jobs:
 
       - name: Test
         run: |
-          ctest --test-dir build
+          ./build/dwhbll_test
