@@ -9,6 +9,8 @@ namespace dwhbll::lang::common {
      * @brief Stream type specialized for use in compilation tasks
      * @tparam T Type the stream provides
      * @tparam PeekCount Number of available lookahead tokens
+     *
+     * TODO why is lookahead tokens defined as tparam? :xdd:
      */
     template <typename T, std::size_t PeekCount>
     class stream {
@@ -214,7 +216,7 @@ namespace dwhbll::lang::common {
         };
 
         constexpr peek_tool get_peeker() {
-            return PeekTool(this);
+            return peek_tool(this);
         }
     };
 }
