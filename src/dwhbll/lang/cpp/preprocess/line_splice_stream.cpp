@@ -31,6 +31,8 @@ namespace dwhbll::lang::cpp::preprocess {
             n = _source->peek();
             _head.next_col();
 
+            buffer += _source->next();
+
             if (n == '\n') {
                 // completed line splice
                 _head.next_line();
@@ -38,9 +40,7 @@ namespace dwhbll::lang::cpp::preprocess {
                 return;
             }
 
-            if (cpp_is_whitespace(n))
-                buffer += _source->next();
-            else
+            if (!cpp_is_whitespace(n))
                 break; // non whitespace means not valid.
         }
 
