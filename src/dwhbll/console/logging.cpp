@@ -55,7 +55,8 @@ namespace dwhbll::console {
         if (level < detail::defaultLevel)
             return;
         std::stringstream ss;
-        ss << (detail::colors ? tagColors[level] : "") << levelsToString[level] << msg << colorReset;
+        const auto& col = (detail::colors ? tagColors[level] : "");
+        ss << col << levelsToString[level] << msg << (col.empty() ? "" : colorReset);
         std::string s = ss.str();
         for (auto* filter : log_filters)
             filter->process(s);
