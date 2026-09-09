@@ -2,8 +2,6 @@ name: Build
 
 on:
   push:
-    branches:
-      - master
   pull_request:
     branches:
       - master
@@ -12,25 +10,19 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    container:
+      image: debian:forky
+
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Install Dependencies
         run: |
-          sudo apt install -y liburing-dev software-properties-common
-
-      - name: Add Repository
-        run: |
-          sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-
-      - name: Install GCC 15
-        run: |
-          sudo apt install -y gcc-15 g++-15
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-15 100
-          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-15 100
+          apt-get update
+          apt-get install -y gcc-16 g++-16 cmake ninja-build liburing-dev pkgconf python3-minimal
 
       - name: Build
         run: |
-          cmake -B build . -DCMAKE_BUILD_TYPE=Debug -DDWHBLL_TESTS=ON -G Ninja
+          CC=gcc-16 CXX=g++-16 cmake -B build . -DCMAKE_BUILD_TYPE=Debug -DDWHBLL_TESTS=ON -G Ninja
           cmake --build build
