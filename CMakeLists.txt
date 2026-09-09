@@ -318,11 +318,13 @@ endif()
 
 if (DWHBLL_DWCC_CPP)
     set(DWHBLL_DWCC_CPP_SOURCES
+        src/dwhbll/lang/cpp/cpp_preprocessing_stream.cpp
         src/dwhbll/lang/cpp/cpp_raw_stream.cpp
         src/dwhbll/lang/cpp/preprocess/line_splice_stream.cpp
 
         include/dwhbll/lang/common.h
         include/dwhbll/lang/cpp/common.h
+        include/dwhbll/lang/cpp/cpp_preprocessing_stream.h
         include/dwhbll/lang/cpp/cpp_raw_stream.h
         include/dwhbll/lang/cpp/preprocess/line_splice_stream.h
     )
