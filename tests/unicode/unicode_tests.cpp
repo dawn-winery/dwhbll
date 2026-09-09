@@ -4,8 +4,8 @@
 #include <unordered_set>
 #include <vector>
 
-#include <dwhbll/console/debug.hpp>
-#include <dwhbll/console/Logging.h>
+#include <dwhbll/debug/debug.h>
+#include <dwhbll/console/logging.h>
 #include <dwhbll/unicode/helpers.h>
 
 

@@ -57,6 +57,10 @@ set(DWHBLL_SOURCES
     src/dwhbll/async/net/buffered_socket.cpp
     src/dwhbll/async/net/socket.cpp
     src/dwhbll/async/net/tcp_listener.cpp
+    src/dwhbll/cli/arg.cpp
+    src/dwhbll/cli/argmatches.cpp
+    src/dwhbll/cli/command.cpp
+    src/dwhbll/cli/parser.cpp
     src/dwhbll/collections/cache.cpp
     src/dwhbll/collections/memory_buffer.cpp
     src/dwhbll/concurrency/coroutine/async_semaphore.cpp
@@ -70,6 +74,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/concurrency/coroutine/wrappers/file.cpp
     src/dwhbll/concurrency/coroutine/wrappers/syscall_wrappers.cpp
     src/dwhbll/concurrency/spinlock.cpp
+    src/dwhbll/concurrency/threading.cpp
     src/dwhbll/console/logging.cpp
     src/dwhbll/debug/debug.cpp
     src/dwhbll/debug/panic.cpp
@@ -84,6 +89,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/files/binary_file.cpp
     src/dwhbll/files/parse_utils.cpp
     src/dwhbll/graphics/bitmap.cpp
+    src/dwhbll/json/json.cpp
     src/dwhbll/lang/c/tokenize.cpp
     src/dwhbll/lang/common/file_stream.cpp
     src/dwhbll/lang/common.cpp
@@ -95,16 +101,10 @@ set(DWHBLL_SOURCES
     src/dwhbll/network/socket_manager.cpp
     src/dwhbll/platform/linux_wrappers/ptrace.cpp
     src/dwhbll/sanify/deferred.cpp
+    src/dwhbll/stl_ext/string.cpp
     src/dwhbll/subprocess/process.cpp
     src/dwhbll/subprocess/pipe_wrapper.cpp
     src/dwhbll/unicode/helpers.cpp
-    src/dwhbll/json/json.cpp
-    src/dwhbll/stl_ext/string.cpp
-    src/dwhbll/concurrency/threading.cpp
-    src/dwhbll/cli/arg.cpp
-    src/dwhbll/cli/argmatches.cpp
-    src/dwhbll/cli/command.cpp
-    src/dwhbll/cli/parser.cpp
     src/dwhbll/uuid/uuid.cpp
 
     include/dwhbll/async/net/buffered_socket.h
@@ -112,6 +112,8 @@ set(DWHBLL_SOURCES
     include/dwhbll/async/net/isocket.h
     include/dwhbll/async/net/socket.h
     include/dwhbll/async/net/tcp_listener.h
+    include/dwhbll/cli/cli.h
+    include/dwhbll/cli/command.h
     include/dwhbll/collections/cache.h
     include/dwhbll/collections/memory_buffer.h
     include/dwhbll/collections/ring.h
@@ -136,10 +138,13 @@ set(DWHBLL_SOURCES
     include/dwhbll/concurrency/coroutine/wrappers/syscall_wrappers.h
     include/dwhbll/concurrency/queues/bounded_mpsc_queue.h
     include/dwhbll/concurrency/queues/bounded_spsc_queue.h
+    include/dwhbll/concurrency/owning_spinlock.h
     include/dwhbll/concurrency/recycling_concurrent_stack.h
     include/dwhbll/concurrency/spinlock.h
+    include/dwhbll/concurrency/threading.h
     include/dwhbll/console/ansi_escape.h
     include/dwhbll/debug/debug.h
+    include/dwhbll/debug/format.h
     include/dwhbll/debug/panic.h
     include/dwhbll/debug/perf.h
     include/dwhbll/console/logging.h
@@ -161,13 +166,16 @@ set(DWHBLL_SOURCES
     include/dwhbll/graphics/bitmap/file_header.h
     include/dwhbll/graphics/bitmap/info_header.h
     include/dwhbll/graphics/pixel.h
+    include/dwhbll/json/json.h
     include/dwhbll/lang/c/tokenize.h
     include/dwhbll/lang/common/file_stream.h
     include/dwhbll/lang/common/stream.h
     include/dwhbll/linalg/matrix.h
     include/dwhbll/math/pad_box.h
     include/dwhbll/math/rect.h
+    include/dwhbll/math/vec4.h
     include/dwhbll/memory/pool.h
+    include/dwhbll/meta/refl.h
     include/dwhbll/network/address.h
     include/dwhbll/network/buffered_socket.h
     include/dwhbll/network/dns/dns.h
@@ -190,25 +198,17 @@ set(DWHBLL_SOURCES
     include/dwhbll/stl_ext/get_set.h
     include/dwhbll/stl_ext/option.h
     include/dwhbll/stl_ext/packs.h
+    include/dwhbll/stl_ext/ranges.h
     include/dwhbll/stl_ext/result.h
+    include/dwhbll/stl_ext/string.h
     include/dwhbll/stl_ext/templates.h
+    include/dwhbll/stl_ext/try.h
+    include/dwhbll/stl_ext/utilities.h
     include/dwhbll/subprocess/pipe_wrapper.h
     include/dwhbll/subprocess/process.h
-    include/dwhbll/debug/format.h
-    include/dwhbll/meta/refl.h
-    include/dwhbll/json/json.h
-    include/dwhbll/stl_ext/string.h
-    include/dwhbll/concurrency/threading.h
-    include/dwhbll/uuid/uuid.h
-    include/dwhbll/math/vec4.h
-    include/dwhbll/cli/cli.h
-    include/dwhbll/cli/command.h
-    include/dwhbll/concurrency/owning_spinlock.h
-    include/dwhbll/stl_ext/ranges.h
-    include/dwhbll/stl_ext/utilities.h
-    include/dwhbll/stl_ext/try.h
     include/dwhbll/unicode/helpers.h
     include/dwhbll/unicode/table.h
+    include/dwhbll/uuid/uuid.h
 
 )
 
