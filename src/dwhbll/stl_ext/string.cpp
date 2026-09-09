@@ -1,6 +1,9 @@
 #include <dwhbll/stl_ext/string.h>
 
 #include <format>
+#include <ranges>
+
+#include <dwhbll/debug/debug.h>
 
 namespace dwhbll::stl_ext {
     std::string escape_non_printable(const std::string &string) {
@@ -71,5 +74,30 @@ namespace dwhbll::stl_ext {
             }
         }
         return s;
+    }
+
+    std::string utf8_encode(std::u32string_view str) {
+        std::string result;
+
+        for (char32_t c : str) {
+            if (c < 0x80)
+                result += (char)c;
+            else if (c < 0x800) {
+                result += (char)(((c >> 6) & 0x1F) | 0xC0);
+                result += (char)((c & 0x3F) | 0x80);
+            } else if (c < 0x10000) {
+                result += (char)(((c >> 12) & 0x0F) | 0xE0);
+                result += (char)(((c >> 6) & 0x3F) | 0x80);
+                result += (char)((c & 0x3F) | 0x80);
+            } else if (c < 0x110000) {
+                result += (char)(((c >> 18) & 0x07) | 0xF0);
+                result += (char)(((c >> 12) & 0x3F) | 0x80);
+                result += (char)(((c >> 6) & 0x3F) | 0x80);
+                result += (char)((c & 0x3F) | 0x80);
+            } else
+                debug::panic("Failed to UTF8 encode unicode code pointe U+{:x}", (uint32_t)c);
+        }
+
+        return result;
     }
 }

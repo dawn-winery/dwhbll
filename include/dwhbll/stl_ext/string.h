@@ -17,4 +17,6 @@ namespace dwhbll::stl_ext {
     constexpr std::vector<std::string> split(std::string_view str, std::string_view sep);
 
     std::string escape_string(std::string_view str);
+
+    std::string utf8_encode(std::u32string_view str);
 }
