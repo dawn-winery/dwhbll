@@ -25,7 +25,7 @@
 namespace dwhbll::debug {
 
 #ifdef NDEBUG
-#define WITH_CONTEXT(fmt, ...) ((void)0)
+#define WITH_CONTEXT(fmt, ...) if (true)
 #else
 class task_deferral {
     std::string name;
@@ -41,7 +41,7 @@ public:
 const std::vector<task_deferral*>& running_tasks();
 
 // TODO: to minimize cost we could probably just store FMT args and format on demand.
-#define WITH_CONTEXT(fmt, ...) auto _ = ::dwhbll::debug::task_deferral(std::format(fmt __VA_OPT__(,) __VA_ARGS__))
+#define WITH_CONTEXT(fmt, ...) if (auto _ = ::dwhbll::debug::task_deferral(std::format(fmt __VA_OPT__(,) __VA_ARGS__)); true)
 #endif
 
 
