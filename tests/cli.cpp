@@ -7,6 +7,8 @@
 using namespace dwhbll::cli;
 using namespace dwhbll::test;
 
+namespace cli {
+
 [[=test]]
 void option_parsing()
 {
@@ -919,6 +921,8 @@ void ignore_errors()
     std::vector<std::string> args = {"--config"};
     auto result = cmd.try_get_matches_from(args);
     REQUIRE(result.success);
+}
+
 }
 
 TEST_REGISTER_FILE();
