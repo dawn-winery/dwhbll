@@ -1,12 +1,60 @@
 #pragma once
 
-#include <dwhbll/testing/testing_detail.h>
-
+#include <chrono>
+#include <source_location>
 #include <string>
 #include <string_view>
 #include <vector>
 
 namespace dwhbll::test {
+
+struct failure {
+    std::string msg;
+    std::source_location loc;
+};
+
+enum class test_status {
+    pass,
+    fail,
+    xfail,
+    xpass,
+    unsupported,
+    unresolved,
+    untested
+};
+
+std::string_view to_status_string(test_status status);
+
+struct test_result {
+    std::string name;
+    std::string suite = "unit";
+    test_status status = test_status::pass;
+    std::vector<failure> failures;
+    std::string message;
+    std::vector<std::string_view> tags;
+    std::chrono::microseconds duration{0};
+
+    [[nodiscard]] bool passed() const {
+        return status == test_status::pass || status == test_status::xfail;
+    }
+
+    [[nodiscard]] bool failed() const {
+        return status == test_status::fail || status == test_status::xpass || status == test_status::unresolved;
+    }
+
+    [[nodiscard]] bool skipped() const {
+        return status == test_status::unsupported || status == test_status::untested;
+    }
+};
+
+struct tag_filter {
+    std::vector<std::string> include;
+    std::vector<std::string> exclude;
+
+    bool matches(const std::vector<std::string_view>& tags) const;
+};
+
+tag_filter parse_filter(std::string_view input);
 
 struct options {
     std::string suite_filter;
@@ -92,8 +140,6 @@ struct suite_result {
     }
 };
 
-std::string_view to_status_string(test_status status);
-
 class test_harness {
 public:
     virtual ~test_harness() = default;
@@ -109,5 +155,32 @@ public:
     [[nodiscard]] std::vector<test_info> list_tests() const override;
     suite_result run(const options& options) override;
 };
+
+class runner {
+public:
+    explicit runner(bool def_harness = true);
+
+    runner& add_harness(std::shared_ptr<test_harness> harness);
+
+    template <typename H, typename... Args>
+    requires std::derived_from<H, test_harness>
+    runner& add_harness(Args&&... args) {
+        return add_harness(std::make_shared<H>(std::forward<Args>(args)...));
+    }
+
+    [[nodiscard]] const std::vector<std::shared_ptr<test_harness>>& harnesses() const {
+        return harnesses_;
+    }
+
+    [[nodiscard]] std::vector<test_info> list_all_tests() const;
+
+    [[nodiscard]] std::vector<suite_result> run_suites(const options& options) const;
+
+    int run(const options& options = {}) const;
+
+private:
+    std::vector<std::shared_ptr<test_harness>> harnesses_;
+};
+
 
 } // namespace dwhbll::test

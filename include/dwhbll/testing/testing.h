@@ -1,16 +1,138 @@
 #pragma once
 
-#include <dwhbll/testing/testing_detail.h>
 #include <dwhbll/testing/harness.h>
-#include <dwhbll/testing/runner.h>
+#include <dwhbll/meta/meta.h>
 
-#include <format>
 #include <meta>
-#include <source_location>
-#include <string>
-#include <string_view>
 
 namespace dwhbll::test {
+
+struct test_marker {};
+inline constexpr test_marker test{};
+
+struct name {
+    char const* test_name;
+
+    consteval explicit name(std::string_view name = "")
+        : test_name(std::define_static_string(name)) {}
+};
+
+struct skip {
+    char const* reason;
+
+    consteval explicit skip(std::string_view reason_ = "")
+        : reason(std::define_static_string(reason_)) {}
+};
+
+struct xfail {
+    char const* reason;
+
+    consteval explicit xfail(std::string_view reason_ = "")
+        : reason(std::define_static_string(reason_)) {}
+};
+
+struct tag {
+    char const* tag_name;
+
+    consteval explicit tag(std::string_view name_ = "")
+        : tag_name(std::define_static_string(name_)) {}
+};
+
+
+namespace detail {
+
+class result {
+public:
+    void add_failure(std::string msg, std::source_location loc);
+    bool passed() const;
+    const std::vector<failure>& failures() const;
+
+private:
+    std::vector<failure> failures_;
+};
+
+extern thread_local result* current_result;
+
+void report_failure(std::string message, std::source_location loc);
+
+struct entry {
+    std::string name;
+    void (*fn)();
+    bool skip;
+    std::string_view skip_reason;
+    bool xfail;
+    std::string_view xfail_reason;
+    std::vector<std::string_view> tags;
+};
+
+std::vector<entry>& registry();
+
+struct discovery_traits {
+    using marker_type = test_marker;
+
+    template <std::meta::info func, std::meta::info scope>
+    static constexpr void process() {
+        using namespace std::meta;
+        if constexpr (annotations_of_with_type(func, ^^test_marker).empty())
+            return;
+
+        static_assert(!is_class_member(func) || is_static_member(func),
+                      "test annotation on non-static member functions is not allowed.");
+
+        constexpr auto fn = extract<void(*)()>(func);
+        auto& reg = registry();
+
+        for (const auto& e : reg) {
+            if (e.fn == fn)
+                return;
+        }
+
+        constexpr auto name_ann = dwhbll::meta::find_annotation(func, ^^name);
+        std::string name;
+        if constexpr (name_ann != info()) {
+            static constexpr auto name_val =
+                extract<typename[: type_of(name_ann) :]>(name_ann);
+            name = std::string_view(name_val.test_name);
+        } else {
+            static_assert(has_identifier(func),
+                "test with no name given on a function with no identifier");
+            name = identifier_of(func);
+        }
+        if constexpr (has_identifier(scope) && identifier_of(scope) != "::")
+            name = std::string(identifier_of(scope)) + "/" + name;
+
+        // TODO: make this conditional (for example based on architecture)
+        //       tbf, the arch check can also be done at build time with
+        //       preprocessor so it's not really that important...
+        constexpr auto skip_ann = dwhbll::meta::find_annotation(func, ^^skip);
+        constexpr bool skip = skip_ann != info();
+        std::string_view skip_reason;
+        if constexpr (skip) {
+            static constexpr auto skip_val =
+                extract<typename[: type_of(skip_ann) :]>(skip_ann);
+            skip_reason = std::string_view(skip_val.reason);
+        }
+
+        constexpr auto xfail_ann = dwhbll::meta::find_annotation(func, ^^xfail);
+        constexpr bool is_xfail = xfail_ann != info();
+        std::string_view xfail_reason;
+        if constexpr (is_xfail) {
+            static constexpr auto xfail_val =
+                extract<typename[: type_of(xfail_ann) :]>(xfail_ann);
+            xfail_reason = std::string_view(xfail_val.reason);
+        }
+
+        std::vector<std::string_view> tags;
+        template for (constexpr auto a : define_static_array(annotations_of_with_type(func, ^^tag))) {
+            constexpr auto ann = constant_of(a);
+            tags.push_back(std::string_view(extract<tag>(ann).tag_name));
+        }
+
+        reg.push_back({ name, fn, skip, skip_reason, is_xfail, xfail_reason, tags });
+    }
+};
+
+} // namespace detail
 
 bool expect(bool cond, std::string_view msg = {},
             std::source_location loc = std::source_location::current());
@@ -201,4 +323,4 @@ int run_all(const tag_filter& filter);
 
 #define TEST_REGISTER_FILE() \
     namespace { static const bool _ = \
-        (::dwhbll::test::detail::collect_tests<^^::, ::dwhbll::test::detail::fixed_string(__FILE__)>(), true); }
+        (::dwhbll::meta::collect_annotated<::dwhbll::test::detail::discovery_traits, ^^::, ::dwhbll::meta::fixed_string(__FILE__)>(), true); }

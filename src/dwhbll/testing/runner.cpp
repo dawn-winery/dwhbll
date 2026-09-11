@@ -1,4 +1,3 @@
-#include <dwhbll/testing/runner.h>
 #include <dwhbll/testing/harness.h>
 
 #include <fstream>
@@ -78,34 +77,24 @@ std::string get_source_line(std::string_view file_path, std::uint32_t line_num) 
     return "";
 }
 
-void print_summary_block(std::ostream* out, std::string_view suite_name,
+void print_summary_block(std::string_view suite_name,
                          const summary_counts& counts, bool use_color) {
     auto print_line = [&](std::string_view label, std::size_t count, std::string_view col) {
         if (count == 0 && (label.contains("unexpected") || label.contains("unresolved")
                     || label.contains("untested")))
             return;
-        if (out) {
-            *out << "# of " << label;
-            if (label.size() < 24) *out << "\t";
-            *out << "" << count << "\n";
+        if (use_color && !col.empty()) {
+            std::println("{}# of {}{}\t\t{}{}{}", color::dim, label, color::reset,
+                    col, count, color::reset);
         } else {
-            if (use_color && !col.empty()) {
-                std::println("{}# of {}{}\t\t{}{}{}", color::dim, label, color::reset,
-                        col, count, color::reset);
-            } else {
-                std::println("# of {}\t\t{}", label, count);
-            }
+            std::println("# of {}\t\t{}", label, count);
         }
     };
 
-    if (out) {
-        *out << "\n=== " << suite_name << " Summary ===\n\n";
-    } else {
-        if (use_color)
-            std::println("\n{}=== {} Summary ==={}", color::bold, suite_name, color::reset);
-        else
-            std::println("\n=== {} Summary ===", suite_name);
-    }
+    if (use_color)
+        std::println("\n{}=== {} Summary ==={}", color::bold, suite_name, color::reset);
+    else
+        std::println("\n=== {} Summary ===", suite_name);
 
     print_line("expected passes", counts.passes, color::green);
     print_line("unexpected failures", counts.failures, color::red);
@@ -170,7 +159,6 @@ int runner::run(const options& options) const {
         for (const auto& tr : suite_res.results) {
             auto st_str = to_status_string(tr.status);
             std::string tags_str = format_tags(tr.tags, options.color);
-            std::string plain_tags = format_tags(tr.tags, false);
 
             if (options.verbosity > 0 || tr.failed()) {
                 if (options.color) {
@@ -222,11 +210,11 @@ int runner::run(const options& options) const {
         }
 
         if (options.verbosity > 0)
-            print_summary_block(nullptr, suite_res.suite_name, suite_res.counts, options.color);
+            print_summary_block(suite_res.suite_name, suite_res.counts, options.color);
     }
 
     if (suite_results.size() > 1 && options.verbosity > 0)
-        print_summary_block(nullptr, "Test", total, options.color);
+        print_summary_block("Test", total, options.color);
 
     return total.is_success() ? 0 : 1;
 }
