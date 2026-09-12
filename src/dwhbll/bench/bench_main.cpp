@@ -1,50 +1,62 @@
 #include <dwhbll/bench/bench.h>
+#include <dwhbll/cli/command.h>
 
-#include <print>
 #include <unistd.h>
 
-namespace {
-
-void print_help(const char* prog) {
-    std::println("Usage: {} [OPTIONS] [PATTERNS...]", prog);
-    std::println("\nBenchmark Runner Options:");
-    std::println("  -h, --help                Show this help message");
-    std::println("  -l, --list                List available benchmarks");
-    std::println("  --iters=<n>               Iterations per section (default 1000)");
-    std::println("  --warmup-iters=<n>        Warmup iterations per section (default 3)");
-    std::println("  --color[=WHEN]            Control color output: 'auto', 'always', or 'never'");
-}
-
-} // namespace
-
 int main(int argc, char** argv) {
+    using namespace dwhbll::cli;
+
+    Command cmd("dwhbll_bench");
+    cmd.about("dwhbll benchmark runner");
+    cmd.arg(Arg("list")
+        .short_opt('l')
+        .long_opt("list")
+        .help("List available benchmarks")
+        .action(ArgAction::SetTrue));
+    cmd.arg(Arg("iters")
+        .long_opt("iters")
+        .help("Iterations per section (default 1000)")
+        .action(ArgAction::Set)
+        .value_name("N"));
+    cmd.arg(Arg("warmup-iters")
+        .long_opt("warmup-iters")
+        .help("Warmup iterations per section (default 3)")
+        .action(ArgAction::Set)
+        .value_name("N"));
+    cmd.arg(Arg("color")
+        .long_opt("color")
+        .help("Control color output: 'auto', 'always', or 'never'")
+        .action(ArgAction::Set)
+        .value_name("WHEN")
+        .default_missing_value("always"));
+    cmd.arg(Arg("patterns")
+        .help("Benchmark name filter patterns")
+        .action(ArgAction::Set)
+        .num_args(ValueRange::any()));
+
+    auto matches = cmd.get_matches(argc, argv);
+
     dwhbll::bench::options opts;
     opts.color = isatty(STDOUT_FILENO);
+    opts.list_only = matches.get_flag("list");
 
-    for (int i = 1; i < argc; ++i) {
-        std::string_view arg = argv[i];
-
-        if (arg == "-h" || arg == "--help") {
-            print_help(argv[0]);
-            return 0;
-        } else if (arg == "-l" || arg == "--list") {
-            opts.list_only = true;
-        } else if (arg.starts_with("--iters=")) {
-            opts.iterations = std::stoul(std::string(arg.substr(sizeof("--iters=") - 1)));
-        } else if (arg.starts_with("--warmup-iters=")) {
-            opts.warmup_iterations = std::stoul(std::string(arg.substr(sizeof("--warmup-iters=") - 1)));
-        } else if (arg == "--color") {
-            opts.color = true;
-        } else if (arg == "--color=never") {
-            opts.color = false;
-        } else if (arg == "--color=always") {
-            opts.color = true;
-        } else if (arg == "--color=auto") {
-            opts.color = isatty(STDOUT_FILENO);
-        } else if (!arg.starts_with("-")) {
-            opts.patterns.emplace_back(arg);
-        }
+    if (matches.contains_id("iters")) {
+        opts.iterations = std::stoul(matches.get_one("iters").unwrap());
     }
+    if (matches.contains_id("warmup-iters")) {
+        opts.warmup_iterations = std::stoul(matches.get_one("warmup-iters").unwrap());
+    }
+    if (matches.contains_id("color")) {
+        auto val = matches.get_one("color").unwrap();
+        if (val == "never" || val == "false")
+            opts.color = false;
+        else if (val == "always" || val == "true")
+            opts.color = true;
+        else if (val == "auto")
+            opts.color = isatty(STDOUT_FILENO);
+    }
+
+    opts.patterns = matches.get_many("patterns");
 
     return dwhbll::bench::run_all(opts);
 }
