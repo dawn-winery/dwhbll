@@ -13,8 +13,8 @@ inline constexpr test_marker test{};
 struct name {
     char const* test_name;
 
-    consteval explicit name(std::string_view name = "")
-        : test_name(std::define_static_string(name)) {}
+    consteval explicit name(std::string_view name_ = "")
+        : test_name(std::define_static_string(name_)) {}
 };
 
 struct skip {
@@ -31,13 +31,6 @@ struct xfail {
         : reason(std::define_static_string(reason_)) {}
 };
 
-struct tag {
-    char const* tag_name;
-
-    consteval explicit tag(std::string_view name_ = "")
-        : tag_name(std::define_static_string(name_)) {}
-};
-
 
 namespace detail {
 
@@ -51,18 +44,17 @@ private:
     std::vector<failure> failures_;
 };
 
-extern thread_local result* current_result;
+extern result* current_result;
 
 void report_failure(std::string message, std::source_location loc);
 
 struct entry {
     std::string name;
     void (*fn)();
-    bool skip;
+    bool is_skip;
     std::string_view skip_reason;
-    bool xfail;
+    bool is_xfail;
     std::string_view xfail_reason;
-    std::vector<std::string_view> tags;
 };
 
 std::vector<entry>& registry();
@@ -88,26 +80,26 @@ struct discovery_traits {
         }
 
         constexpr auto name_ann = dwhbll::meta::find_annotation(func, ^^name);
-        std::string name;
+        std::string test_name;
         if constexpr (name_ann != info()) {
             static constexpr auto name_val =
                 extract<typename[: type_of(name_ann) :]>(name_ann);
-            name = std::string_view(name_val.test_name);
+            test_name = std::string_view(name_val.test_name);
         } else {
             static_assert(has_identifier(func),
                 "test with no name given on a function with no identifier");
-            name = identifier_of(func);
+            test_name = identifier_of(func);
         }
         if constexpr (has_identifier(scope) && identifier_of(scope) != "::")
-            name = std::string(identifier_of(scope)) + "/" + name;
+            test_name = std::string(identifier_of(scope)) + "/" + test_name;
 
         // TODO: make this conditional (for example based on architecture)
         //       tbf, the arch check can also be done at build time with
         //       preprocessor so it's not really that important...
         constexpr auto skip_ann = dwhbll::meta::find_annotation(func, ^^skip);
-        constexpr bool skip = skip_ann != info();
+        constexpr bool is_skip = skip_ann != info();
         std::string_view skip_reason;
-        if constexpr (skip) {
+        if constexpr (is_skip) {
             static constexpr auto skip_val =
                 extract<typename[: type_of(skip_ann) :]>(skip_ann);
             skip_reason = std::string_view(skip_val.reason);
@@ -122,13 +114,7 @@ struct discovery_traits {
             xfail_reason = std::string_view(xfail_val.reason);
         }
 
-        std::vector<std::string_view> tags;
-        template for (constexpr auto a : define_static_array(annotations_of_with_type(func, ^^tag))) {
-            constexpr auto ann = constant_of(a);
-            tags.push_back(std::string_view(extract<tag>(ann).tag_name));
-        }
-
-        reg.push_back({ name, fn, skip, skip_reason, is_xfail, xfail_reason, tags });
+        reg.push_back({ test_name, fn, is_skip, skip_reason, is_xfail, xfail_reason });
     }
 };
 
@@ -274,7 +260,6 @@ bool expect_no_throw(Fn&& fn, std::source_location loc = std::source_location::c
 }
 
 int run_all(const options& options = {});
-int run_all(const tag_filter& filter);
 
 } // namespace dwhbll::test
 
@@ -322,5 +307,5 @@ int run_all(const tag_filter& filter);
     do { if (!::dwhbll::test::expect_no_throw([&]() { __VA_ARGS__; })) return; } while (0)
 
 #define TEST_REGISTER_FILE() \
-    namespace { static const bool _ = \
+    namespace { static const bool _dwhbll_test_registered = \
         (::dwhbll::meta::collect_annotated<::dwhbll::test::detail::discovery_traits, ^^::, ::dwhbll::meta::fixed_string(__FILE__)>(), true); }

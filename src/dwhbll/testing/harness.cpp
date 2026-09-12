@@ -16,42 +16,6 @@ std::string_view to_status_string(test_status status) {
     return "UNKNOWN";
 }
 
-tag_filter parse_filter(std::string_view input) {
-    tag_filter f;
-    std::size_t pos = 0;
-    while (pos <= input.size()) {
-        auto comma = input.find(',', pos);
-        auto token = input.substr(pos, comma == std::string_view::npos
-                                            ? std::string_view::npos
-                                            : comma - pos);
-        if (!token.empty()) {
-            if (token.front() == '~')
-                f.exclude.emplace_back(token.substr(1));
-            else
-                f.include.emplace_back(token);
-        }
-
-        if (comma == std::string_view::npos)
-            break;
-        pos = comma + 1;
-    }
-    return f;
-}
-
-bool tag_filter::matches(const std::vector<std::string_view>& tags) const {
-    for (const auto& ex : exclude) {
-        if (std::find(tags.begin(), tags.end(), ex) != tags.end())
-            return false;
-    }
-    if (include.empty())
-        return true;
-    for (const auto& inc : include) {
-        if (std::find(tags.begin(), tags.end(), inc) != tags.end())
-            return true;
-    }
-    return false;
-}
-
 namespace {
 
 bool match_glob(std::string_view text, std::string_view pattern) {
@@ -82,13 +46,12 @@ bool matches_patterns(std::string_view name, const std::vector<std::string>& pat
     if (patterns.empty())
         return true;
     for (const auto& pat : patterns) {
-        // probably not necessary, but whatever
         if (pat.find('*') != std::string::npos || pat.find('?') != std::string::npos) {
             if (match_glob(name, pat))
                 return true;
-        }
-        else if (name.find(pat) != std::string_view::npos)
+        } else if (name.find(pat) != std::string_view::npos) {
             return true;
+        }
     }
     return false;
 }
@@ -103,10 +66,9 @@ std::vector<test_info> default_harness::list_tests() const {
         list.push_back({
             .name = std::string(e.name),
             .suite = std::string(name()),
-            .tags = e.tags,
-            .is_skip = e.skip,
+            .is_skip = e.is_skip,
             .skip_reason = e.skip_reason,
-            .is_xfail = e.xfail,
+            .is_xfail = e.is_xfail,
             .xfail_reason = e.xfail_reason,
         });
     }
@@ -120,17 +82,14 @@ suite_result default_harness::run(const options& options) {
     const auto& registry = detail::registry();
 
     for (const auto& t : registry) {
-        if (!options.tags.matches(t.tags))
-            continue;
         if (!matches_patterns(t.name, options.patterns))
             continue;
 
         test_result tr;
         tr.name = std::string(t.name);
         tr.suite = std::string(name());
-        tr.tags = t.tags;
 
-        if (t.skip) {
+        if (t.is_skip) {
             tr.status = test_status::unsupported;
             tr.message = std::string(t.skip_reason);
             result.add_result(std::move(tr));
@@ -142,42 +101,39 @@ suite_result default_harness::run(const options& options) {
         bool uncaught_exception = false;
         std::string exception_msg;
 
-        auto start_time = std::chrono::steady_clock::now();
-        try {
-            t.fn();
-        } catch (const std::exception& e) {
-            uncaught_exception = true;
-            exception_msg = e.what();
-            res.add_failure(std::format("uncaught exception: {}", exception_msg),
-                            std::source_location::current());
-        } catch (...) {
-            uncaught_exception = true;
-            exception_msg = "uncaught exception of unknown type";
-            res.add_failure(exception_msg,
-                            std::source_location::current());
-        }
-        auto end_time = std::chrono::steady_clock::now();
-        detail::current_result = nullptr;
+        {
+            struct Guard {
+                ~Guard() { detail::current_result = nullptr; }
+            } guard;
 
-        // TODO: actually use this
-        tr.duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+            auto start_time = std::chrono::steady_clock::now();
+            try {
+                t.fn();
+            } catch (const std::exception& e) {
+                uncaught_exception = true;
+                exception_msg = e.what();
+                res.add_failure(std::format("uncaught exception: {}", exception_msg),
+                                std::source_location::current());
+            } catch (...) {
+                uncaught_exception = true;
+                exception_msg = "uncaught exception of unknown type";
+                res.add_failure(exception_msg, std::source_location::current());
+            }
+            auto end_time = std::chrono::steady_clock::now();
+            // TODO: actually use this
+            tr.duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+        }
+
         tr.failures = res.failures();
 
-        if (t.xfail) {
+        if (uncaught_exception) {
+            tr.status = test_status::unresolved;
+            tr.message = std::move(exception_msg);
+        } else if (t.is_xfail) {
             tr.message = std::string(t.xfail_reason);
-            if (!res.passed())
-                tr.status = test_status::xfail;
-            else
-                tr.status = test_status::xpass;
-        } else {
-            if (uncaught_exception) {
-                tr.status = test_status::unresolved;
-                tr.message = std::move(exception_msg);
-            } else if (res.passed())
-                tr.status = test_status::pass;
-            else
-                tr.status = test_status::fail;
-        }
+            tr.status = res.passed() ? test_status::xpass : test_status::xfail;
+        } else
+            tr.status = res.passed() ? test_status::pass : test_status::fail;
 
         bool was_failure = tr.failed();
         result.add_result(std::move(tr));
