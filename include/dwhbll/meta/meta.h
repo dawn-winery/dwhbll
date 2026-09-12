@@ -62,9 +62,31 @@ consteval bool has_annotation(std::meta::info entity) {
     return !std::meta::annotations_of_with_type(entity, ^^MarkerType).empty();
 }
 
+consteval bool is_reserved_name(std::string_view name) {
+    if (name == "std" || name.starts_with("__"))
+        return true;
+    if (name.size() >= 2 && name[0] == '_' && name[1] >= 'A' && name[1] <= 'Z')
+        return true;
+    return false;
+}
+
+consteval bool is_std_or_reserved(std::meta::info entity) {
+    using namespace std::meta;
+    if (entity == info())
+        return false;
+    if (is_type_alias(entity))
+        entity = dealias(entity);
+    if (has_identifier(entity) && is_reserved_name(identifier_of(entity)))
+        return true;
+    auto str = display_string_of(entity);
+    if (str.starts_with("std::") || str.starts_with("::std::"))
+        return true;
+    return false;
+}
+
 // Finds all visible functions in global namespace that have a specific annotation
 // and calls Traits::process<func>. Avoids stuff in the std namespace or that start
-// with __
+// with __ or _[A-Z]
 template <typename Traits, std::meta::info Scope, fixed_string TU>
 void collect_annotated() {
     using namespace std::meta;
@@ -72,13 +94,11 @@ void collect_annotated() {
 
     template for (constexpr auto n : define_static_array(members_of(Scope, ctx))) {
         if constexpr (is_namespace(n)) {
-            if constexpr (!has_identifier(n) || 
-                            (identifier_of(n) != "std" &&
-                            !identifier_of(n).starts_with("__")))
+            if constexpr (!is_std_or_reserved(n))
                 collect_annotated<Traits, n, TU>();
         }
         else if constexpr (is_type(n) && is_class_type(n)) {
-            if constexpr (is_enumerable_type(n))
+            if constexpr (is_enumerable_type(n) && !is_std_or_reserved(n))
                 collect_annotated<Traits, n, TU>();
         }
         else if constexpr (is_function(n)) {

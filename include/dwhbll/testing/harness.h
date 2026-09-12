@@ -31,7 +31,6 @@ struct test_result {
     test_status status = test_status::pass;
     std::vector<failure> failures;
     std::string message;
-    std::vector<std::string_view> tags;
     std::chrono::microseconds duration{0};
 
     [[nodiscard]] bool passed() const {
@@ -47,21 +46,9 @@ struct test_result {
     }
 };
 
-struct tag_filter {
-    std::vector<std::string> include;
-    std::vector<std::string> exclude;
-
-    bool matches(const std::vector<std::string_view>& tags) const;
-};
-
-tag_filter parse_filter(std::string_view input);
-
 struct options {
     std::string suite_filter;
     std::vector<std::string> patterns;
-    tag_filter tags;
-    // 0 = quiet, 1 = normal, 2 = verbose
-    int verbosity = 1;
     bool list_only = false;
     bool fail_fast = false;
     bool color = true;
@@ -70,7 +57,6 @@ struct options {
 struct test_info {
     std::string name;
     std::string suite;
-    std::vector<std::string_view> tags;
     bool is_skip = false;
     std::string_view skip_reason;
     bool is_xfail = false;
@@ -176,7 +162,7 @@ public:
 
     [[nodiscard]] std::vector<suite_result> run_suites(const options& options) const;
 
-    int run(const options& options = {}) const;
+    [[nodiscard]] int run(const options& options = {}) const;
 
 private:
     std::vector<std::shared_ptr<test_harness>> harnesses_;
