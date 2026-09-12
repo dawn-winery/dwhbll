@@ -1,59 +1,68 @@
 #include <dwhbll/testing/testing.h>
+#include <dwhbll/cli/command.h>
 
-#include <print>
-#include <string_view>
 #include <unistd.h>
 
-namespace {
-
-void print_help(const char* prog) {
-    std::println("Usage: {} [OPTIONS] [PATTERNS...]", prog);
-    std::println("\nTest Runner Options:");
-    std::println("  -h, --help                Show this help message");
-    std::println("  -l, --list                List available test suites and tests");
-    std::println("  -x, --fail-fast           Stop on first test failure");
-    std::println("  --suite=<name>            Run only test suites matching <name>");
-    std::println("  -f, --filter=<pattern>    Filter tests by name or wildcard pattern (*, ?)");
-    std::println("  --color[=WHEN]            Control color output: 'auto', 'always', or 'never'");
-    std::println("\nPositional arguments are treated as test name filter patterns.");
-}
-
-} // namespace
-
 int main(int argc, char** argv) {
+    using namespace dwhbll::cli;
+
+    Command cmd("dwhbll_test");
+    cmd.about("dwhbll test runner");
+    cmd.arg(Arg("list")
+        .short_opt('l')
+        .long_opt("list")
+        .help("List available test suites and tests")
+        .action(ArgAction::SetTrue));
+    cmd.arg(Arg("fail-fast")
+        .short_opt('x')
+        .long_opt("fail-fast")
+        .help("Stop on first test failure")
+        .action(ArgAction::SetTrue));
+    cmd.arg(Arg("suite")
+        .long_opt("suite")
+        .help("Run only test suites matching <name>")
+        .action(ArgAction::Set)
+        .value_name("NAME"));
+    cmd.arg(Arg("filter")
+        .short_opt('f')
+        .long_opt("filter")
+        .help("Filter tests by name or wildcard pattern (*, ?)")
+        .action(ArgAction::Append)
+        .value_name("PATTERN"));
+    cmd.arg(Arg("color")
+        .long_opt("color")
+        .help("Control color output: 'auto', 'always', or 'never'")
+        .action(ArgAction::Set)
+        .value_name("WHEN")
+        .default_missing_value("always"));
+    cmd.arg(Arg("patterns")
+        .help("Test name filter patterns")
+        .action(ArgAction::Set)
+        .num_args(ValueRange::any()));
+
+    auto matches = cmd.get_matches(argc, argv);
+
     dwhbll::test::options opts;
     opts.color = isatty(STDOUT_FILENO);
+    opts.list_only = matches.get_flag("list");
+    opts.fail_fast = matches.get_flag("fail-fast");
 
-    for (int i = 1; i < argc; ++i) {
-        std::string_view arg = argv[i];
-
-        if (arg == "-h" || arg == "--help") {
-            print_help(argv[0]);
-            return 0;
-        } else if (arg == "-l" || arg == "--list") {
-            opts.list_only = true;
-        } else if (arg == "-x" || arg == "--fail-fast") {
-            opts.fail_fast = true;
-        } else if (arg == "--color") {
-            opts.color = true;
-        } else if (arg == "--color=never") {
-            opts.color = false;
-        } else if (arg == "--color=always") {
-            opts.color = true;
-        } else if (arg == "--color=auto") {
-            opts.color = isatty(STDOUT_FILENO);
-        } else if (arg.starts_with("--suite=")) {
-            opts.suite_filter = arg.substr(sizeof("--suite=") - 1);
-        } else if (arg == "--suite" && i + 1 < argc) {
-            opts.suite_filter = argv[++i];
-        } else if (arg.starts_with("--filter=")) {
-            opts.patterns.emplace_back(arg.substr(sizeof("--filter=") - 1));
-        } else if ((arg == "-f" || arg == "--filter") && i + 1 < argc) {
-            opts.patterns.emplace_back(argv[++i]);
-        } else if (!arg.starts_with("-")) {
-            opts.patterns.emplace_back(arg);
-        }
+    if (matches.contains_id("suite")) {
+        opts.suite_filter = matches.get_one("suite").unwrap();
     }
+    if (matches.contains_id("color")) {
+        auto val = matches.get_one("color").unwrap();
+        if (val == "never" || val == "false")
+            opts.color = false;
+        else if (val == "always" || val == "true")
+            opts.color = true;
+        else if (val == "auto")
+            opts.color = isatty(STDOUT_FILENO);
+    }
+
+    opts.patterns = matches.get_many("filter");
+    auto pos_patterns = matches.get_many("patterns");
+    opts.patterns.insert(opts.patterns.end(), pos_patterns.begin(), pos_patterns.end());
 
     return dwhbll::test::run_all(opts);
 }
