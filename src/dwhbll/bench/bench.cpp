@@ -257,10 +257,10 @@ int run_all(const options& opts) {
         std::println("\n{}=== Benchmark Summary ==={}", color::bold, color::reset);
     else
         std::println("\n=== Benchmark Summary ===");
-    std::println("# of benchmarks\t\t{}", results.size());
-    std::println("# of sections\t\t{}", total_sections);
+    std::println("  {:<26} {}", "# of benchmarks", results.size());
+    std::println("  {:<26} {}", "# of sections", total_sections);
     if (skipped)
-        std::println("# of skipped\t\t{}", skipped);
+        std::println("  {:<26} {}", "# of skipped", skipped);
 
     return 0;
 }

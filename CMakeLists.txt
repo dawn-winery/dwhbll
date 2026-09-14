@@ -471,7 +471,7 @@ install(FILES
 # TODO : IMPROVE INTEGRATION OF GPU COMPUTE FOR USERS
 
 if (DWHBLL_TESTS)
-    add_executable(dwhbll_test tests/cli.cpp)
+    add_executable(dwhbll_test tests/cli.cpp tests/matrix.cpp)
     target_link_libraries(dwhbll_test PRIVATE dwhbll dwhbll_test_main)
 endif()
 
@@ -480,6 +480,7 @@ if (DWHBLL_BENCHMARKS)
         bench/bounded_spsc_int_bench.cpp
         bench/bounded_mpsc_int_bench.cpp
         bench/recycling_concurrent_stack_bench.cpp
+        bench/matrix.cpp
     )
     target_link_libraries(dwhbll_bench PRIVATE dwhbll dwhbll_bench_main)
 endif()
