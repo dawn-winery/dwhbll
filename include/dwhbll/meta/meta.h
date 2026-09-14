@@ -85,8 +85,8 @@ consteval bool is_std_or_reserved(std::meta::info entity) {
 }
 
 // Finds all visible functions in global namespace that have a specific annotation
-// and calls Traits::process<func>. Avoids stuff in the std namespace or that start
-// with __ or _[A-Z]
+// and calls Traits::process<func, namespace>. Avoids stuff in the std namespace
+// ot in namespaces that start with __ or _[A-Z].
 template <typename Traits, std::meta::info Scope, fixed_string TU>
 void collect_annotated() {
     using namespace std::meta;

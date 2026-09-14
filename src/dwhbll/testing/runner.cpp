@@ -55,10 +55,12 @@ void print_summary_block(std::string_view suite_name,
                           std::string_view col, bool hide_if_zero = false) {
         if (hide_if_zero && count == 0)
             return;
+        std::string full_label = std::format("# of {}", label);
         if (use_color && !col.empty())
-            std::println("{}# of {}{}\t\t{}{}{}", color::dim, label, color::reset, col, count, color::reset);
+            std::println("{}  {:<26}{} {}{}{}", color::dim, full_label, color::reset,
+                                                col, count, color::reset);
         else
-            std::println("# of {}\t\t{}", label, count);
+            std::println("  {:<26} {}", full_label, count);
     };
 
     if (use_color)
@@ -68,7 +70,7 @@ void print_summary_block(std::string_view suite_name,
 
     print_line("expected passes", counts.passes, color::green);
     print_line("unexpected failures", counts.failures, color::red);
-    print_line("expected failures",counts.xfails, color::yellow, true);
+    print_line("expected failures", counts.xfails, color::yellow, true);
     print_line("unexpected successes", counts.xpasses, color::magenta, true);
     print_line("unsupported tests", counts.unsupported, color::yellow, true);
     print_line("unresolved testcases", counts.unresolved, color::red, true);
