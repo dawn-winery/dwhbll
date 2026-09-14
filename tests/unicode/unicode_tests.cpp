@@ -118,12 +118,6 @@ std::pair<bool, std::string> test_norm(
 }
 
 bool unicode_norm_test(std::optional<std::string> norm_file) {
-    // std::u32string str = U"\u0344";
-    // if (dwhbll::unicode::normalization::nfc::normalize(str) != U"\u0308\u0301")
-    //     dwhbll::debug::unreachable();
-    //
-    // return true;
-
     if (!norm_file.has_value()) {
         dwhbll::console::fatal("Need the NormalizationTest.txt file!");
 
