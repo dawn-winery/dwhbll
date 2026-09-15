@@ -53,6 +53,27 @@ if (DWHBLL_SUGAR_EXPORT)
     add_compile_definitions(DWHBLL_SUGAR_EXPORT)
 endif()
 
+set(DWHBLL_SANITIZER "OFF" CACHE STRING "Sanitizer: OFF, asan_ubsan, address, thread, undefined, leak")
+set_property(CACHE DWHBLL_SANITIZER PROPERTY STRINGS OFF asan_ubsan address thread memory undefined leak)
+
+if (NOT DWHBLL_SANITIZER STREQUAL "OFF")
+    if (DWHBLL_SANITIZER STREQUAL "address" OR DWHBLL_SANITIZER STREQUAL "asan_ubsan")
+        add_compile_options(-fsanitize=address,undefined,leak -fno-omit-frame-pointer)
+        add_link_options(-fsanitize=address,undefined,leak)
+    elseif (DWHBLL_SANITIZER STREQUAL "thread" OR DWHBLL_SANITIZER STREQUAL "tsan")
+        add_compile_options(-fsanitize=thread -fno-omit-frame-pointer)
+        add_link_options(-fsanitize=thread)
+    elseif (DWHBLL_SANITIZER STREQUAL "undefined" OR DWHBLL_SANITIZER STREQUAL "ubsan")
+        add_compile_options(-fsanitize=undefined -fno-omit-frame-pointer)
+        add_link_options(-fsanitize=undefined)
+    elseif (DWHBLL_SANITIZER STREQUAL "leak" OR DWHBLL_SANITIZER STREQUAL "lsan")
+        add_compile_options(-fsanitize=leak -fno-omit-frame-pointer)
+        add_link_options(-fsanitize=leak)
+    else()
+        message(FATAL_ERROR "Unknown DWHBLL_SANITIZER value: ${DWHBLL_SANITIZER}")
+    endif()
+endif()
+
 set(DWHBLL_SOURCES
     src/dwhbll/async/net/buffered_socket.cpp
     src/dwhbll/async/net/socket.cpp
