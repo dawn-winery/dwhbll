@@ -434,18 +434,24 @@ install(TARGETS dwhbll
 if (DWHBLL_TESTS)
     add_library(dwhbll_test_main STATIC src/dwhbll/testing/test_main.cpp)
     target_link_libraries(dwhbll_test_main PUBLIC dwhbll_core)
+
+    install(TARGETS dwhbll_test_main
+        EXPORT dwhbllTargets
+        ARCHIVE DESTINATION lib
+        INCLUDES DESTINATION include
+    )
 endif()
 
 if (DWHBLL_BENCHMARKS)
     add_library(dwhbll_bench_main STATIC src/dwhbll/bench/bench_main.cpp)
     target_link_libraries(dwhbll_bench_main PUBLIC dwhbll_core)
-endif()
 
-install(TARGETS dwhbll_test_main
-    EXPORT dwhbllTargets
-    ARCHIVE DESTINATION lib
-    INCLUDES DESTINATION include
-)
+    install(TARGETS dwhbll_bench_main
+        EXPORT dwhbllTargets
+        ARCHIVE DESTINATION lib
+        INCLUDES DESTINATION include
+    )
+endif()
 
 install(EXPORT dwhbllTargets
     FILE dwhbllTargets.cmake
