@@ -10,14 +10,20 @@
 
 
 std::string trim(const std::string &str) {
+    if (str.empty())
+        return "";
     auto start = str.begin();
     while (start != str.end() && std::isspace(*start))
         ++start;
+
+    if (start == str.end())
+        return "";
+
     auto end = str.end();
     do {
         --end;
     } while (end != start && std::isspace(*end));
-    return std::string(start, end + 1);
+    return {start, end + 1};
 }
 
 std::string format_codepoints(const std::u32string &str) {
@@ -121,7 +127,7 @@ bool unicode_norm_test(std::optional<std::string> norm_file) {
     if (!norm_file.has_value()) {
         dwhbll::console::fatal("Need the NormalizationTest.txt file!");
 
-        return false;
+        return true;
     }
 
     std::ifstream file(norm_file.value());
@@ -129,7 +135,7 @@ bool unicode_norm_test(std::optional<std::string> norm_file) {
     if (!file.is_open()) {
         dwhbll::console::fatal("Unable to open file {}!", norm_file.value());
 
-        return false;
+        return true;
     }
 
     bool part1 = false;
