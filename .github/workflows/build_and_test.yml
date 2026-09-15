@@ -1,4 +1,4 @@
-name: Build
+name: Build and test
 
 on:
   push:
@@ -9,6 +9,13 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        sanitizer:
+          - asan_ubsan
+          - tsan
+          - ubsan
+          - lsan
 
     container:
       image: debian:forky
@@ -24,7 +31,7 @@ jobs:
 
       - name: Build
         run: |
-          CC=gcc-16 CXX=g++-16 cmake -B build . -DCMAKE_BUILD_TYPE=Debug -DDWHBLL_TESTS=ON -G Ninja
+          CC=gcc-16 CXX=g++-16 cmake -B build . -DCMAKE_BUILD_TYPE=Debug -DDWHBLL_SANITIZER=${{ matrix.sanitizer }} -DDWHBLL_TESTS=ON -G Ninja
           cmake --build build
 
       - name: Test
