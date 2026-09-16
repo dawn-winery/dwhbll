@@ -187,6 +187,13 @@ set(DWHBLL_SOURCES
     include/dwhbll/graphics/bitmap/file_header.h
     include/dwhbll/graphics/bitmap/info_header.h
     include/dwhbll/graphics/pixel.h
+    include/dwhbll/hash/xxh/constants.h
+    include/dwhbll/hash/xxh/xxh32.h
+    include/dwhbll/hash/xxh/xxh64.h
+    include/dwhbll/hash/xxh/xxhelpers.h
+    include/dwhbll/hash/xxh/xxh3_64.h
+    include/dwhbll/hash/xxh/xxh3_128.h
+    include/dwhbll/hash/xxh/xxh3_common.h
     include/dwhbll/json/json.h
     include/dwhbll/lang/c/tokenize.h
     include/dwhbll/lang/common/file_stream.h
@@ -461,6 +468,7 @@ if (DWHBLL_TESTS)
         tests/bench/recycling_concurrent_stack_bench.cpp
         tests/cryptography/arc4.cpp
         tests/cli.cpp
+        tests/hash/xxh.cpp
     )
 
     if (DWHBLL_UNICODE_SUPPORT)
@@ -486,6 +494,8 @@ if (DWHBLL_TESTS)
 
         add_test(NAME TestUnicodeNormalization COMMAND dwhbll_test "unicode/norm" "${CMAKE_CURRENT_BINARY_DIR}/data/NormalizationTest.txt")
     endif()
+
+    add_test(NAME TestXXH COMMAND dwhbll_test "hash/xxh" "${CMAKE_SOURCE_DIR}/data/hash/xxh_vectors.dat")
 endif()
 
 add_executable(http_server_test tests/http_server_test.cpp)

@@ -9,8 +9,5 @@ compile_commands.json
 .vscode
 build
 
-# data files used to store downloaded temporary data
-data/**
-
 # Ignore script pycache
 script/**/__pycache__/

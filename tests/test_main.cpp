@@ -26,6 +26,9 @@ extern bool recycling_concurrent_stack_bench(std::optional<std::string> test_to_
 // unicode testing
 extern bool unicode_norm_test(std::optional<std::string> norm_file);
 
+// unicode testing
+extern bool xxh_test(std::optional<std::string> data_file);
+
 // The optional string argument is for the subtests to run
 using TestFunc = std::function<bool(std::optional<std::string>)>;
 
@@ -45,7 +48,9 @@ std::unordered_map<std::string, TestFunc> module_dispatch{
 
     {"cli", cli_test},
 
-    {"unicode/norm", unicode_norm_test}
+    {"unicode/norm", unicode_norm_test},
+
+    {"hash/xxh", xxh_test}
 };
 
 int main(int argc, char **argv) {
