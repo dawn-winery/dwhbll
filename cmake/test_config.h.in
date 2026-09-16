@@ -9,4 +9,7 @@ inline constexpr const char* TEST_DATA_DIR = "@CMAKE_CURRENT_BINARY_DIR@/data";
 inline constexpr const char* UNICODE_NORMALIZATION_TEST_FILE =
     "@CMAKE_CURRENT_BINARY_DIR@/data/NormalizationTest.txt";
 
+inline constexpr const char* XXH_TEST_FILE =
+    "@CMAKE_SOURCE_DIR@/data/hash/xxh_vectors.dat";
+
 } // namespace dwhbll::test::config
