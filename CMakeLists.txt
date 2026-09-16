@@ -196,6 +196,13 @@ set(DWHBLL_SOURCES
     include/dwhbll/graphics/bitmap/file_header.h
     include/dwhbll/graphics/bitmap/info_header.h
     include/dwhbll/graphics/pixel.h
+    include/dwhbll/hash/xxh/constants.h
+    include/dwhbll/hash/xxh/xxh32.h
+    include/dwhbll/hash/xxh/xxh64.h
+    include/dwhbll/hash/xxh/xxhelpers.h
+    include/dwhbll/hash/xxh/xxh3_64.h
+    include/dwhbll/hash/xxh/xxh3_128.h
+    include/dwhbll/hash/xxh/xxh3_common.h
     include/dwhbll/json/json.h
     include/dwhbll/lang/c/tokenize.h
     include/dwhbll/lang/common/file_stream.h
@@ -502,7 +509,9 @@ if (DWHBLL_TESTS AND COMPILER_HAS_REFLECTION)
         tests/cryptography/arc4.cpp
         tests/graphics/bitmap.cpp
         tests/lang/c/tokenizer_test.cpp
+        tests/hash/xxh.cpp
     )
+
     if (DWHBLL_UNICODE_SUPPORT)
         list(APPEND DWHBLL_TEST_SOURCES tests/unicode/unicode_tests.cpp)
     endif()
