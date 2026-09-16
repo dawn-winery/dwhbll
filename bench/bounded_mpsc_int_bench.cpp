@@ -12,12 +12,14 @@
 #include <dwhbll/console/logging.h>
 #include <dwhbll/debug/debug.h>
 
+using namespace dwhbll::bench;
+
 [[=dwhbll::bench::bench]]
-[[=dwhbll::bench::iterations(5)]]
-[[=dwhbll::bench::warmup(2)]]
+[[=dwhbll::bench::iterations(3)]]
+[[=dwhbll::bench::warmup(1)]]
 void bounded_mpsc_int_bench() {
-    constexpr std::size_t count = 5000000;
-    constexpr std::size_t total_iterations = 7;
+    constexpr std::size_t count = 100000;
+    constexpr std::size_t total_iterations = 4;
 
     dwhbll::concurrency::queues::BoundedMPSCQueue<std::size_t, 8192, false, dwhbll::concurrency::backoff::PolicyExponential> channel;
 
@@ -52,7 +54,7 @@ void bounded_mpsc_int_bench() {
     std::size_t total = 0;
     const std::size_t target = count * producer_count;
 
-    BENCH {
+    for (auto _ : state) {
         std::size_t x = 0;
         while (true) {
             if (const auto next = channel.get(); next.has_value()) {

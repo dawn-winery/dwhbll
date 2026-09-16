@@ -55,6 +55,8 @@ struct section_result {
     std::string name;
     std::source_location loc;
     stats st;
+    std::size_t bytes_processed = 0;
+    std::size_t items_processed = 0;
 };
 
 struct entry_result {
@@ -71,43 +73,78 @@ struct options {
     std::size_t iterations = 1000;
 };
 
-namespace detail {
-
-struct entry {
-    std::string name;
-    void (*fn)();
-    bool is_skip;
-    std::string_view skip_reason;
-    // 0 is harness options
-    std::size_t iterations_override = 0;
-    std::size_t warmup_override = 0;
-};
-
-std::vector<entry>& registry();
-
-class section {
+class State {
 public:
-    section(std::string_view name, std::source_location loc);
+    struct Iterator {
+        State* st;
+
+        bool operator!=(const Iterator&) const {
+            return st->next();
+        }
+
+        void operator++() {}
+
+        int operator*() const {
+            return 0;
+        }
+    };
+
+    State(std::string_view name = "", std::source_location loc = std::source_location::current());
+
+    void reset(std::string_view name, std::source_location loc, std::size_t total_iterations, std::size_t warmup_iterations);
 
     bool next();
+    bool keep_running() { return next(); }
+
+    Iterator begin() { return Iterator{this}; }
+    Iterator end() { return Iterator{nullptr}; }
+
+    void pause_timing();
+    void resume_timing();
+
+    void set_bytes_processed(std::size_t bytes) { bytes_processed_ = bytes; }
+    void set_items_processed(std::size_t items) { items_processed_ = items; }
+
+    std::size_t bytes_processed() const { return bytes_processed_; }
+    std::size_t items_processed() const { return items_processed_; }
 
 private:
     void finalize();
 
     static stats compute_stats(std::vector<double>&& samples);
 
-    enum class state { warmup, measure };
+    enum class state_kind { warmup, measure };
 
     std::string_view name_;
     std::source_location loc_;
-    state state_ = state::warmup;
+    state_kind state_ = state_kind::warmup;
     std::size_t warmup_done_ = 0;
     std::size_t measure_done_ = 0;
     std::size_t total_iterations_ = 0;
     std::size_t warmup_iterations_ = 0;
     std::chrono::steady_clock::time_point start_;
+    std::chrono::steady_clock::time_point pause_start_;
+    std::chrono::nanoseconds paused_duration_{0};
+    bool is_paused_ = false;
     std::vector<double> samples_;
+    std::size_t bytes_processed_ = 0;
+    std::size_t items_processed_ = 0;
 };
+
+inline State state;
+
+namespace detail {
+
+struct entry {
+    std::string name;
+    void (*fn)() = nullptr;
+    bool is_skip;
+    std::string_view skip_reason;
+    std::size_t iterations_override = 0;
+    std::size_t warmup_override = 0;
+};
+
+std::vector<entry>& registry();
 
 struct discovery_traits {
     using marker_type = bench_marker;
@@ -179,12 +216,7 @@ int run_all(const options& opts = {});
 } // namespace dwhbll::bench
 
 #define BENCH \
-    for (::dwhbll::bench::detail::section _dwhbll_bench_section{ "",\
-                std::source_location::current() }; _dwhbll_bench_section.next(); )
-
-#define BENCH_NAMED(section_name) \
-    for (::dwhbll::bench::detail::section _dwhbll_bench_section{ (section_name),\
-            std::source_location::current() }; _dwhbll_bench_section.next(); )
+    for (auto _ : ::dwhbll::bench::state)
 
 #define BENCH_REGISTER_FILE() \
     namespace { static const bool _dwhbll_bench_registered = \

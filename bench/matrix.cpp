@@ -8,11 +8,11 @@ using namespace dwhbll::bench;
 using namespace dwhbll::linalg;
 
 [[=bench]]
-[[=warmup(3)]]
-[[=iterations(10)]]
+[[=warmup(1)]]
+[[=iterations(3)]]
 void matmul()
 {
-    constexpr size_t SIZE = 4096;
+    constexpr size_t SIZE = 512;
     Matrix<int, SIZE, SIZE> m1;
     Matrix<int, SIZE, SIZE> m2;
 
@@ -26,7 +26,7 @@ void matmul()
         }
     }
 
-    BENCH {
+    for (auto _ : state) {
         m1 * m2;
     }
 }

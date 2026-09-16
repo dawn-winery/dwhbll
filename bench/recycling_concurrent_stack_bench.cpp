@@ -11,12 +11,14 @@
 #include <dwhbll/console/logging.h>
 #include <dwhbll/debug/debug.h>
 
+using namespace dwhbll::bench;
+
 [[=dwhbll::bench::bench]]
-[[=dwhbll::bench::iterations(5)]]
-[[=dwhbll::bench::warmup(2)]]
+[[=dwhbll::bench::iterations(3)]]
+[[=dwhbll::bench::warmup(1)]]
 void recycling_concurrent_stack_bench() {
-    constexpr std::size_t items = 2000000;
-    constexpr std::size_t total_iterations = 7;
+    constexpr std::size_t items = 100000;
+    constexpr std::size_t total_iterations = 4;
 
     dwhbll::concurrency::RecyclingConcurrentStack<int> stack;
 
@@ -73,7 +75,7 @@ void recycling_concurrent_stack_bench() {
 
     std::size_t iter_idx = 0;
 
-    BENCH {
+    for (auto _ : state) {
         start_latches[iter_idx]->arrive_and_wait();
         done_latches[iter_idx]->arrive_and_wait();
         iter_idx++;

@@ -2,11 +2,23 @@
 
 #include <cstdint>
 #include <format>
-#include <string>
 #include <sstream>
+#include <string>
+#include <string_view>
 
 // TODO: rest of ANSI escapes maybe?
 namespace dwhbll::console::ansi_escape {
+    namespace color {
+        constexpr std::string_view reset = "\e[0m";
+        constexpr std::string_view bold = "\e[1m";
+        constexpr std::string_view dim = "\e[2m";
+        constexpr std::string_view red = "\e[31m";
+        constexpr std::string_view green = "\e[32m";
+        constexpr std::string_view yellow = "\e[33m";
+        constexpr std::string_view magenta = "\e[35m";
+        constexpr std::string_view cyan = "\e[36m";
+    }
+
     enum class Graphics {
         RESET = 0,
         BOLD = 1,

@@ -56,9 +56,8 @@ void print_summary_block(std::string_view suite_name,
         if (hide_if_zero && count == 0)
             return;
         std::string full_label = std::format("# of {}", label);
-        if (use_color && !col.empty())
-            std::println("{}  {:<26}{} {}{}{}", color::dim, full_label, color::reset,
-                                                col, count, color::reset);
+        if (use_color && !col.empty() && count > 0)
+            std::println("  {:<26} {}{}{}", full_label, col, count, color::reset);
         else
             std::println("  {:<26} {}", full_label, count);
     };
@@ -68,13 +67,13 @@ void print_summary_block(std::string_view suite_name,
     else
         std::println("\n=== {} Summary ===", suite_name);
 
-    print_line("expected passes", counts.passes, color::green);
+    print_line("expected passes", counts.passes, "");
     print_line("unexpected failures", counts.failures, color::red);
     print_line("expected failures", counts.xfails, color::yellow, true);
     print_line("unexpected successes", counts.xpasses, color::magenta, true);
     print_line("unsupported tests", counts.unsupported, color::yellow, true);
     print_line("unresolved testcases", counts.unresolved, color::red, true);
-    print_line("untested testcases", counts.untested, color::dim, true);
+    print_line("untested testcases", counts.untested, "", true);
 }
 
 } // namespace
@@ -156,15 +155,14 @@ int runner::run(const options& options) const {
                 std::string_view fn_name = f.loc.function_name();
                 if (options.color) {
                     if (!fn_name.empty())
-                        std::println("    {}{}:{}:{} in {}{}{}:", color::dim,
-                                f.loc.file_name(), f.loc.line(), color::reset,
-                                color::cyan, fn_name, color::reset);
+                        std::println("    {}:{}: in {}:",
+                                f.loc.file_name(), f.loc.line(), fn_name);
                     else
-                        std::println("    {}{}:{}{}", color::dim,
-                                f.loc.file_name(), f.loc.line(), color::reset);
+                        std::println("    {}:{}:",
+                                f.loc.file_name(), f.loc.line());
                     if (!src_line.empty())
-                        std::println("      {}{:4d} |{} {}", color::dim,
-                                f.loc.line(), color::reset, src_line);
+                        std::println("      {:4d} | {}",
+                                f.loc.line(), src_line);
                     std::println("      {}{}{}", color::red, f.msg, color::reset);
                 } else {
                     if (!fn_name.empty())

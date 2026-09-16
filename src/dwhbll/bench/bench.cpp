@@ -7,7 +7,9 @@
 #include <string_view>
 #include <vector>
 
+#include <dwhbll/console/ansi_escape.h>
 #include <dwhbll/debug/debug.h>
+#include <dwhbll/stl_ext/string.h>
 
 namespace dwhbll::bench {
 
@@ -32,29 +34,68 @@ static const run_config& active_config() {
     return current_config ? *current_config : defaults;
 }
 
-section::section(std::string_view name, std::source_location loc)
+} // namespace detail
+
+State::State(std::string_view name, std::source_location loc)
     : name_(name), loc_(loc) {
-    const run_config& cfg = active_config();
+    const detail::run_config& cfg = detail::active_config();
     total_iterations_ = cfg.iterations;
     warmup_iterations_ = cfg.warmup_iterations;
 }
 
-bool section::next() {
+void State::reset(std::string_view name, std::source_location loc, std::size_t total_iterations, std::size_t warmup_iterations) {
+    name_ = name;
+    loc_ = loc;
+    state_ = state_kind::warmup;
+    warmup_done_ = 0;
+    measure_done_ = 0;
+    total_iterations_ = total_iterations;
+    warmup_iterations_ = warmup_iterations;
+    paused_duration_ = std::chrono::nanoseconds{0};
+    is_paused_ = false;
+    samples_.clear();
+    bytes_processed_ = 0;
+    items_processed_ = 0;
+}
+
+void State::pause_timing() {
+    if (!is_paused_) {
+        pause_start_ = std::chrono::steady_clock::now();
+        is_paused_ = true;
+    }
+}
+
+void State::resume_timing() {
+    if (is_paused_) {
+        paused_duration_ += std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::steady_clock::now() - pause_start_);
+        is_paused_ = false;
+    }
+}
+
+bool State::next() {
     using clock = std::chrono::steady_clock;
 
-    if (state_ == state::warmup) {
+    if (state_ == state_kind::warmup) [[unlikely]] {
         if (warmup_done_ < warmup_iterations_) {
             ++warmup_done_;
             return true;
         }
-        state_ = state::measure;
+        state_ = state_kind::measure;
         samples_.reserve(total_iterations_);
+        paused_duration_ = std::chrono::nanoseconds{0};
+        is_paused_ = false;
         start_ = clock::now();
         return true;
     }
 
+    if (is_paused_)
+        resume_timing();
+
     const auto now = clock::now();
-    const double elapsed_ns = std::chrono::duration<double, std::nano>(now - start_).count();
+    const auto elapsed = (now - start_) - paused_duration_;
+    const double elapsed_ns = std::chrono::duration<double, std::nano>(now - start_ 
+                                                        - paused_duration_).count();
     samples_.push_back(elapsed_ns);
     ++measure_done_;
 
@@ -63,23 +104,27 @@ bool section::next() {
         return false;
     }
 
+    paused_duration_ = std::chrono::nanoseconds{0};
+    is_paused_ = false;
     start_ = clock::now();
     return true;
 }
 
-void section::finalize() {
-    ASSERT(current_sections);
+void State::finalize() {
+    ASSERT(detail::current_sections);
 
     section_result res;
     res.name = name_.empty() ? std::format("<line {}>", loc_.line()) : std::string(name_);
     res.loc = loc_;
     res.st = compute_stats(std::move(samples_));
+    res.bytes_processed = bytes_processed_;
+    res.items_processed = items_processed_;
 
-    std::lock_guard lock(current_sections_mutex);
-    current_sections->push_back(std::move(res));
+    std::lock_guard lock(detail::current_sections_mutex);
+    detail::current_sections->push_back(std::move(res));
 }
 
-stats section::compute_stats(std::vector<double>&& samples) {
+stats State::compute_stats(std::vector<double>&& samples) {
     stats s;
     s.iterations = samples.size();
     if (samples.empty())
@@ -107,55 +152,9 @@ stats section::compute_stats(std::vector<double>&& samples) {
     return s;
 }
 
-} // namespace detail
-
 namespace {
 
-namespace color {
-    constexpr std::string_view reset = "\e[0m";
-    constexpr std::string_view bold = "\e[1m";
-    constexpr std::string_view dim = "\e[2m";
-    constexpr std::string_view yellow = "\e[33m";
-    constexpr std::string_view green = "\e[32m";
-    constexpr std::string_view cyan = "\e[36m";
-}
-
-bool match_glob(std::string_view text, std::string_view pattern) {
-    if (pattern.empty())
-        return text.empty();
-    std::size_t t = 0, p = 0;
-    std::size_t star_p = std::string_view::npos, star_t = 0;
-    while (t < text.size()) {
-        if (p < pattern.size() && (pattern[p] == '?' || pattern[p] == text[t])) {
-            ++t;
-            ++p;
-        } else if (p < pattern.size() && pattern[p] == '*') {
-            star_p = p++;
-            star_t = t;
-        } else if (star_p != std::string_view::npos) {
-            p = star_p + 1;
-            t = ++star_t;
-        } else {
-            return false;
-        }
-    }
-    while (p < pattern.size() && pattern[p] == '*')
-        ++p;
-    return p == pattern.size();
-}
-
-bool matches_patterns(std::string_view nm, const std::vector<std::string>& patterns) {
-    if (patterns.empty())
-        return true;
-    for (const auto& pat : patterns) {
-        if (pat.find('*') != std::string::npos || pat.find('?') != std::string::npos) {
-            if (match_glob(nm, pat))
-                return true;
-        } else if (nm.find(pat) != std::string_view::npos)
-            return true;
-    }
-    return false;
-}
+namespace color = console::ansi_escape::color;
 
 std::string format_duration(double ns) {
     if (ns < 1000.0)
@@ -167,26 +166,64 @@ std::string format_duration(double ns) {
     return std::format("{:.3f} s", ns / 1000000000.0);
 }
 
-void print_entry(const entry_result& res, const options& opts) {
+std::string format_bytes_per_sec(double bytes_per_sec) {
+    if (bytes_per_sec < 1000.0)
+        return std::format("{:.2f} B/s", bytes_per_sec);
+    if (bytes_per_sec < 1000000.0)
+        return std::format("{:.2f} KB/s", bytes_per_sec / 1000.0);
+    if (bytes_per_sec < 1000000000.0)
+        return std::format("{:.2f} MB/s", bytes_per_sec / 1000000.0);
+    return std::format("{:.2f} GB/s", bytes_per_sec / 1000000000.0);
+}
+
+std::string format_items_per_sec(double items_per_sec) {
+    if (items_per_sec < 1000.0)
+        return std::format("{:.2f} items/s", items_per_sec);
+    if (items_per_sec < 1000000.0)
+        return std::format("{:.2f} Kitems/s", items_per_sec / 1000.0);
+    if (items_per_sec < 1000000000.0)
+        return std::format("{:.2f} Mitems/s", items_per_sec / 1000000.0);
+    return std::format("{:.2f} Gitems/s", items_per_sec / 1000000000.0);
+}
+
+void print_entry(const entry_result& res, const options& opts, bool is_first) {
+    std::string_view prefix = is_first ? "" : "\n";
     if (opts.color)
-        std::println("\n{}=== {} ==={}", color::bold, res.name, color::reset);
+        std::println("{}{}=== {} ==={}", prefix, color::bold, res.name, color::reset);
     else
-        std::println("\n=== {} ===", res.name);
+        std::println("{}=== {} ===", prefix, res.name);
 
     for (const auto& sec : res.sections) {
         const auto& s = sec.st;
         const double rel_stddev = s.mean_ns > 0 ? (s.stddev_ns / s.mean_ns) * 100.0 : 0.0;
         const std::string range = std::format("[{} .. {}]", format_duration(s.min_ns), format_duration(s.max_ns));
 
+        std::string raw_tp;
+        if (sec.bytes_processed > 0 && s.mean_ns > 0) {
+            const double rate = static_cast<double>(sec.bytes_processed) / (s.mean_ns / 1e9);
+            raw_tp = format_bytes_per_sec(rate);
+        } else if (sec.items_processed > 0 && s.mean_ns > 0) {
+            const double rate = static_cast<double>(sec.items_processed) / (s.mean_ns / 1e9);
+            raw_tp = format_items_per_sec(rate);
+        }
+
+        const std::string p_name = std::format("{:<32}", sec.name);
+        const std::string p_mean = std::format("{:>12}", format_duration(s.mean_ns));
+        const std::string p_range = std::format("{:>28}", range);
+        const std::string p_stddev = std::format("{:>8}", std::format("+-{:.1f}%", rel_stddev));
+        const std::string p_iters = std::format("{:>12}", std::format("({} iters)", s.iterations));
+        const std::string p_tp = raw_tp.empty() ? "" : std::format("{:>16}", raw_tp);
+
         if (opts.color) {
-            std::println("  {}{:<28}{}  {}{:>12}{}  {}{}{}  {}+-{:.1f}%{}  ({} iters)",
-                    color::cyan, sec.name, color::reset, color::green,
-                    format_duration(s.mean_ns), color::reset,
-                    color::dim, range, color::reset, color::dim,
-                    rel_stddev, color::reset, s.iterations);
+            std::println("  {}  {}{}{}  {}  {}  {}{}{}",
+                    p_name,
+                    color::green, p_mean, color::reset,
+                    p_range, p_stddev, p_iters,
+                    p_tp.empty() ? "" : "  ", p_tp);
         } else {
-            std::println("  {:<28}  {:>12}  {}  +-{:.1f}%  ({} iters)",
-                    sec.name, format_duration(s.mean_ns), range, rel_stddev, s.iterations);
+            std::println("  {}  {}  {}  {}  {}{}{}",
+                    p_name, p_mean, p_range, p_stddev, p_iters,
+                    p_tp.empty() ? "" : "  ", p_tp);
         }
     }
 }
@@ -207,9 +244,10 @@ int run_all(const options& opts) {
 
     std::vector<entry_result> results;
     std::size_t skipped = 0;
+    bool is_first = true;
 
     for (const auto& e : reg) {
-        if (!matches_patterns(e.name, opts.patterns))
+        if (!stl_ext::matches_patterns(e.name, opts.patterns))
             continue;
 
         if (e.is_skip) {
@@ -238,14 +276,17 @@ int run_all(const options& opts) {
             }
         } guard;
 
+        state.reset(e.name, std::source_location::current(), cfg.iterations, cfg.warmup_iterations);
+
         e.fn();
 
         if (res.sections.empty()) {
-            std::println("{}: no BENCH sections were run (missing BENCH {{ ... }} in the function?)", e.name);
+            std::println("{}: no BENCH sections were run", e.name);
             continue;
         }
 
-        print_entry(res, opts);
+        print_entry(res, opts, is_first);
+        is_first = false;
         results.push_back(std::move(res));
     }
 

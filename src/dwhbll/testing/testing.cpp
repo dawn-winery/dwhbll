@@ -9,12 +9,12 @@ namespace detail {
 static std::mutex failure_mutex;
 
 void result::add_failure(std::string msg, std::source_location loc) {
-    std::lock_guard lock(failure_mutex);
+    std::lock_guard _(failure_mutex);
     failures_.push_back({std::move(msg), loc});
 }
 
 bool result::passed() const {
-    std::lock_guard lock(failure_mutex);
+    std::lock_guard _(failure_mutex);
     return failures_.empty();
 }
 

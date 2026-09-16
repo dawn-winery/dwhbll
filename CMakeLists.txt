@@ -123,7 +123,6 @@ set(DWHBLL_SOURCES
     src/dwhbll/network/socket_manager.cpp
     src/dwhbll/platform/linux_wrappers/ptrace.cpp
     src/dwhbll/sanify/deferred.cpp
-    src/dwhbll/stl_ext/string.cpp
     src/dwhbll/subprocess/process.cpp
     src/dwhbll/subprocess/pipe_wrapper.cpp
     src/dwhbll/unicode/helpers.cpp
