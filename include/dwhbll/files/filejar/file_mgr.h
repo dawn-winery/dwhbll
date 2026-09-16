@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <functional>
 #include <memory>
+#include <dwhbll/sanify/types.h>
 
 namespace dwhbll::files::filejar {
     class file;
@@ -87,7 +88,7 @@ namespace dwhbll::files::filejar {
 
         [[nodiscard]] std::filesystem::path path(const fileid &id) const;
 
-        [[nodiscard]] const std::vector<char>& contents(const fileid &id) const;
+        [[nodiscard]] std::span<sanify::u8> contents(const fileid &id) const;
     };
 }
 

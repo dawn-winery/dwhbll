@@ -63,7 +63,7 @@ namespace dwhbll::files::filejar {
         return f->path();
     }
 
-    const std::vector<char> & file_mgr::contents(const fileid &id) const {
+    std::span<sanify::u8> file_mgr::contents(const fileid &id) const {
         auto& f = get(id);
 
         return f->contents();
