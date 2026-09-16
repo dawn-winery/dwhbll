@@ -14,11 +14,11 @@
 using namespace dwhbll::bench;
 
 [[=dwhbll::bench::bench]]
-[[=dwhbll::bench::iterations(3)]]
-[[=dwhbll::bench::warmup(1)]]
+[[=dwhbll::bench::iterations(5)]]
+[[=dwhbll::bench::warmup(2)]]
 void recycling_concurrent_stack_bench() {
     constexpr std::size_t items = 100000;
-    constexpr std::size_t total_iterations = 4;
+    std::size_t total_iterations = state.total_iterations();
 
     dwhbll::concurrency::RecyclingConcurrentStack<int> stack;
 

@@ -14,11 +14,11 @@
 using namespace dwhbll::bench;
 
 [[=dwhbll::bench::bench]]
-[[=dwhbll::bench::iterations(3)]]
-[[=dwhbll::bench::warmup(1)]]
+[[=dwhbll::bench::iterations(5)]]
+[[=dwhbll::bench::warmup(2)]]
 void bounded_spsc_int_bench() {
     constexpr std::size_t count = 200000;
-    constexpr std::size_t total_iterations = 4;
+    std::size_t total_iterations = state.total_iterations();
 
     dwhbll::concurrency::queues::BoundedSPSCQueue<std::size_t, 8192, false, dwhbll::concurrency::backoff::PolicyExponential> channel;
 

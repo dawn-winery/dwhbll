@@ -95,6 +95,7 @@ public:
 
     bool next();
     bool keep_running() { return next(); }
+    int total_iterations() { return total_iterations_ + warmup_iterations_; };
 
     Iterator begin() { return Iterator{this}; }
     Iterator end() { return Iterator{nullptr}; }

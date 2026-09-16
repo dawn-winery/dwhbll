@@ -8,8 +8,8 @@ using namespace dwhbll::bench;
 using namespace dwhbll::linalg;
 
 [[=bench]]
-[[=warmup(1)]]
-[[=iterations(3)]]
+[[=warmup(2)]]
+[[=iterations(5)]]
 void matmul()
 {
     constexpr size_t SIZE = 512;
