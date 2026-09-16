@@ -1,11 +1,19 @@
 #include <dwhbll/bench/bench.h>
 
+#include <array>
 #include <cmath>
+#include <cstdint>
+#include <memory>
 #include <mutex>
 #include <numeric>
 #include <print>
 #include <string_view>
 #include <vector>
+
+#include <linux/perf_event.h>
+#include <sys/ioctl.h>
+#include <sys/syscall.h>
+#include <unistd.h>
 
 #include <dwhbll/console/ansi_escape.h>
 #include <dwhbll/debug/debug.h>
@@ -14,6 +22,82 @@
 namespace dwhbll::bench {
 
 namespace detail {
+
+struct PerfGroup {
+    struct Counter {
+        uint64_t nr;
+        uint64_t values[4];
+    };
+
+    int fds[4] = {-1, -1, -1, -1};
+    bool available = false;
+
+    // For whatever reason glibc does not have a wrapper for this
+    static int perf_event_open(perf_event_attr* attr, int group_fd) {
+        return static_cast<int>(syscall(SYS_perf_event_open, attr, 0, -1, group_fd, 0));
+    }
+
+    static int open_counter(uint32_t type, uint64_t config, int group_fd) {
+        perf_event_attr attr{};
+        attr.type = type;
+        attr.size = sizeof(attr);
+        attr.config = config;
+        attr.disabled = 1;
+        attr.exclude_kernel = 1;
+        attr.exclude_hv = 1;
+        attr.read_format = PERF_FORMAT_GROUP;
+        return perf_event_open(&attr, group_fd);
+    }
+
+    // TODO: add more counters, and make this configurable
+    // TODO: maybe use perf to time instead of clock difference when --perf is passed?
+    PerfGroup() {
+        fds[0] = open_counter(PERF_TYPE_HARDWARE, PERF_COUNT_HW_INSTRUCTIONS, -1);
+        if (fds[0] < 0)
+            return;
+        fds[1] = open_counter(PERF_TYPE_HARDWARE, PERF_COUNT_HW_CPU_CYCLES, fds[0]);
+        fds[2] = open_counter(PERF_TYPE_HARDWARE, PERF_COUNT_HW_CACHE_MISSES, fds[0]);
+        fds[3] = open_counter(PERF_TYPE_HARDWARE, PERF_COUNT_HW_BRANCH_MISSES, fds[0]);
+        if (fds[1] < 0 || fds[2] < 0 || fds[3] < 0) {
+            close_all();
+            return;
+        }
+        available = true;
+    }
+
+    ~PerfGroup() { close_all(); }
+
+    PerfGroup(const PerfGroup&) = delete;
+    PerfGroup& operator=(const PerfGroup&) = delete;
+
+    void close_all() {
+        for (int fd : fds) {
+            if (fd >= 0) {
+                close(fd);
+                fd = -1;
+            }
+        }
+        available = false;
+    }
+
+    void reset_and_enable() {
+        ioctl(fds[0], PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP);
+        ioctl(fds[0], PERF_EVENT_IOC_ENABLE, PERF_IOC_FLAG_GROUP);
+    }
+
+    void disable() {
+        ioctl(fds[0], PERF_EVENT_IOC_DISABLE, PERF_IOC_FLAG_GROUP);
+    }
+
+    std::array<uint64_t, 4> read_counts() {
+        Counter buf{};
+        if (read(fds[0], &buf, sizeof(buf)) < 0 || buf.nr < 4)
+            return {};
+        return {buf.values[0], buf.values[1], buf.values[2], buf.values[3]};
+    }
+};
+
+static PerfGroup* current_perf = nullptr;
 
 std::vector<entry>& registry() {
     static std::vector<entry> r;
@@ -54,12 +138,15 @@ void State::reset(std::string_view name, std::source_location loc, std::size_t t
     paused_duration_ = std::chrono::nanoseconds{0};
     is_paused_ = false;
     samples_.clear();
+    perf_samples_.clear();
     bytes_processed_ = 0;
     items_processed_ = 0;
 }
 
 void State::pause_timing() {
     if (!is_paused_) {
+        if (detail::current_perf && detail::current_perf->available)
+            detail::current_perf->disable();
         pause_start_ = std::chrono::steady_clock::now();
         is_paused_ = true;
     }
@@ -70,11 +157,15 @@ void State::resume_timing() {
         paused_duration_ += std::chrono::duration_cast<std::chrono::nanoseconds>(
             std::chrono::steady_clock::now() - pause_start_);
         is_paused_ = false;
+        if (detail::current_perf && detail::current_perf->available)
+            detail::current_perf->reset_and_enable();
     }
 }
 
 bool State::next() {
     using clock = std::chrono::steady_clock;
+    auto* perf = detail::current_perf;
+    const bool use_perf = perf && perf->available;
 
     if (state_ == state_kind::warmup) [[unlikely]] {
         if (warmup_done_ < warmup_iterations_) {
@@ -83,8 +174,12 @@ bool State::next() {
         }
         state_ = state_kind::measure;
         samples_.reserve(total_iterations_);
+        if (use_perf)
+            perf_samples_.reserve(total_iterations_);
         paused_duration_ = std::chrono::nanoseconds{0};
         is_paused_ = false;
+        if (use_perf)
+            perf->reset_and_enable();
         start_ = clock::now();
         return true;
     }
@@ -93,10 +188,15 @@ bool State::next() {
         resume_timing();
 
     const auto now = clock::now();
-    const auto elapsed = (now - start_) - paused_duration_;
-    const double elapsed_ns = std::chrono::duration<double, std::nano>(now - start_ 
+    const double elapsed_ns = std::chrono::duration<double, std::nano>(now - start_
                                                         - paused_duration_).count();
     samples_.push_back(elapsed_ns);
+
+    if (use_perf) {
+        perf->disable();
+        perf_samples_.push_back(perf->read_counts());
+    }
+
     ++measure_done_;
 
     if (measure_done_ >= total_iterations_) {
@@ -106,6 +206,8 @@ bool State::next() {
 
     paused_duration_ = std::chrono::nanoseconds{0};
     is_paused_ = false;
+    if (use_perf)
+        perf->reset_and_enable();
     start_ = clock::now();
     return true;
 }
@@ -117,6 +219,7 @@ void State::finalize() {
     res.name = name_.empty() ? std::format("<line {}>", loc_.line()) : std::string(name_);
     res.loc = loc_;
     res.st = compute_stats(std::move(samples_));
+    res.perf = compute_perf_stats(std::move(perf_samples_));
     res.bytes_processed = bytes_processed_;
     res.items_processed = items_processed_;
 
@@ -150,6 +253,25 @@ stats State::compute_stats(std::vector<double>&& samples) {
         : 0.0;
 
     return s;
+}
+
+perf_stats State::compute_perf_stats(std::vector<std::array<uint64_t, 4>>&& samples) {
+    perf_stats ps;
+    if (samples.empty())
+        return ps;
+    ps.available = true;
+    const double n = static_cast<double>(samples.size());
+    for (const auto& s : samples) {
+        ps.instructions += static_cast<double>(s[0]);
+        ps.cycles += static_cast<double>(s[1]);
+        ps.cache_misses += static_cast<double>(s[2]);
+        ps.branch_misses += static_cast<double>(s[3]);
+    }
+    ps.instructions /= n;
+    ps.cycles /= n;
+    ps.cache_misses /= n;
+    ps.branch_misses /= n;
+    return ps;
 }
 
 namespace {
@@ -196,34 +318,42 @@ void print_entry(const entry_result& res, const options& opts, bool is_first) {
     for (const auto& sec : res.sections) {
         const auto& s = sec.st;
         const double rel_stddev = s.mean_ns > 0 ? (s.stddev_ns / s.mean_ns) * 100.0 : 0.0;
-        const std::string range = std::format("[{} .. {}]", format_duration(s.min_ns), format_duration(s.max_ns));
 
-        std::string raw_tp;
+        if (res.sections.size() > 1)
+            std::println("  {}:", sec.name);
+
+        auto row = [&](std::string_view label, std::string value) {
+            std::println("    {:<18} {}", label, value);
+        };
+        auto row_colored = [&](std::string_view label, std::string value) {
+            if (opts.color)
+                std::println("    {:<18} {}{}{}", label, color::green, value, color::reset);
+            else
+                std::println("    {:<18} {}", label, value);
+        };
+
+        row_colored("mean:", format_duration(s.mean_ns));
+        row("median:", format_duration(s.median_ns));
+        row("min:", format_duration(s.min_ns));
+        row("max:", format_duration(s.max_ns));
+        row("stddev:", std::format("{} (+-{:.1f}%)", format_duration(s.stddev_ns), rel_stddev));
+        row("iterations:", std::format("{}", s.iterations));
+
         if (sec.bytes_processed > 0 && s.mean_ns > 0) {
             const double rate = static_cast<double>(sec.bytes_processed) / (s.mean_ns / 1e9);
-            raw_tp = format_bytes_per_sec(rate);
+            row("throughput:", format_bytes_per_sec(rate));
         } else if (sec.items_processed > 0 && s.mean_ns > 0) {
             const double rate = static_cast<double>(sec.items_processed) / (s.mean_ns / 1e9);
-            raw_tp = format_items_per_sec(rate);
+            row("throughput:", format_items_per_sec(rate));
         }
 
-        const std::string p_name = std::format("{:<32}", sec.name);
-        const std::string p_mean = std::format("{:>12}", format_duration(s.mean_ns));
-        const std::string p_range = std::format("{:>28}", range);
-        const std::string p_stddev = std::format("{:>8}", std::format("+-{:.1f}%", rel_stddev));
-        const std::string p_iters = std::format("{:>12}", std::format("({} iters)", s.iterations));
-        const std::string p_tp = raw_tp.empty() ? "" : std::format("{:>16}", raw_tp);
-
-        if (opts.color) {
-            std::println("  {}  {}{}{}  {}  {}  {}{}{}",
-                    p_name,
-                    color::green, p_mean, color::reset,
-                    p_range, p_stddev, p_iters,
-                    p_tp.empty() ? "" : "  ", p_tp);
-        } else {
-            std::println("  {}  {}  {}  {}  {}{}{}",
-                    p_name, p_mean, p_range, p_stddev, p_iters,
-                    p_tp.empty() ? "" : "  ", p_tp);
+        if (opts.perf && sec.perf.available) {
+            const double ipc = sec.perf.cycles > 0 ? sec.perf.instructions / sec.perf.cycles : 0.0;
+            row("instructions:", std::format("{:.0f}", sec.perf.instructions));
+            row("cycles:", std::format("{:.0f}", sec.perf.cycles));
+            row("IPC:", std::format("{:.3f}", ipc));
+            row("cache misses:", std::format("{:.0f}", sec.perf.cache_misses));
+            row("branch misses:", std::format("{:.0f}", sec.perf.branch_misses));
         }
     }
 }
@@ -241,6 +371,18 @@ int run_all(const options& opts) {
         }
         return 0;
     }
+
+    std::unique_ptr<detail::PerfGroup> perf_group;
+    if (opts.perf) {
+        perf_group = std::make_unique<detail::PerfGroup>();
+        if (!perf_group->available)
+            std::println("warning: perf_event_open failed; perf counters unavailable");
+        detail::current_perf = perf_group.get();
+    }
+
+    struct PerfGuard {
+        ~PerfGuard() { detail::current_perf = nullptr; }
+    } perf_guard;
 
     std::vector<entry_result> results;
     std::size_t skipped = 0;

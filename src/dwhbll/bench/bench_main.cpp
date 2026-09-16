@@ -29,6 +29,10 @@ int main(int argc, char** argv) {
         .action(ArgAction::Set)
         .value_name("WHEN")
         .default_missing_value("always"));
+    cmd.arg(Arg("perf")
+        .long_opt("perf")
+        .help("Enable perf data (instructions, cycles, cache misses, branch misses)")
+        .action(ArgAction::SetTrue));
     cmd.arg(Arg("patterns")
         .help("Benchmark name filter patterns")
         .action(ArgAction::Set)
@@ -56,6 +60,7 @@ int main(int argc, char** argv) {
             opts.color = isatty(STDOUT_FILENO);
     }
 
+    opts.perf = matches.get_flag("perf");
     opts.patterns = matches.get_many("patterns");
 
     return dwhbll::bench::run_all(opts);

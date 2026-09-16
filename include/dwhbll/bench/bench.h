@@ -3,7 +3,9 @@
 #include <dwhbll/meta/meta.h>
 
 #include <meta>
+#include <array>
 #include <chrono>
+#include <cstdint>
 #include <source_location>
 #include <string>
 #include <string_view>
@@ -51,10 +53,19 @@ struct stats {
     std::size_t iterations = 0;
 };
 
+struct perf_stats {
+    double instructions = 0;
+    double cycles = 0;
+    double cache_misses = 0;
+    double branch_misses = 0;
+    bool available = false;
+};
+
 struct section_result {
     std::string name;
     std::source_location loc;
     stats st;
+    perf_stats perf;
     std::size_t bytes_processed = 0;
     std::size_t items_processed = 0;
 };
@@ -68,6 +79,7 @@ struct options {
     std::vector<std::string> patterns;
     bool list_only = false;
     bool color = true;
+    bool perf = false;
 
     std::size_t warmup_iterations = 3;
     std::size_t iterations = 1000;
@@ -113,6 +125,7 @@ private:
     void finalize();
 
     static stats compute_stats(std::vector<double>&& samples);
+    static perf_stats compute_perf_stats(std::vector<std::array<uint64_t, 4>>&& samples);
 
     enum class state_kind { warmup, measure };
 
@@ -128,6 +141,7 @@ private:
     std::chrono::nanoseconds paused_duration_{0};
     bool is_paused_ = false;
     std::vector<double> samples_;
+    std::vector<std::array<uint64_t, 4>> perf_samples_;
     std::size_t bytes_processed_ = 0;
     std::size_t items_processed_ = 0;
 };
