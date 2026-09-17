@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <functional>
 #include <source_location>
 #include <string>
 #include <string_view>
@@ -46,14 +47,6 @@ struct test_result {
     }
 };
 
-struct options {
-    std::string suite_filter;
-    std::vector<std::string> patterns;
-    bool list_only = false;
-    bool fail_fast = false;
-    bool color = true;
-};
-
 struct test_info {
     std::string name;
     std::string suite;
@@ -61,6 +54,19 @@ struct test_info {
     std::string_view skip_reason;
     bool is_xfail = false;
     std::string_view xfail_reason;
+};
+
+using test_start_callback = std::function<void(const test_info&)>;
+using test_end_callback = std::function<void(const test_result&)>;
+
+struct options {
+    std::string suite_filter;
+    std::vector<std::string> patterns;
+    bool list_only = false;
+    bool fail_fast = false;
+    bool color = true;
+    test_start_callback on_test_start;
+    test_end_callback on_test_end;
 };
 
 struct summary_counts {

@@ -85,6 +85,18 @@ suite_result default_harness::run(const options& options) {
         if (!matches_patterns(t.name, options.patterns))
             continue;
 
+        test_info info{
+            .name = std::string(t.name),
+            .suite = std::string(name()),
+            .is_skip = t.is_skip,
+            .skip_reason = t.skip_reason,
+            .is_xfail = t.is_xfail,
+            .xfail_reason = t.xfail_reason,
+        };
+
+        if (options.on_test_start)
+            options.on_test_start(info);
+
         test_result tr;
         tr.name = std::string(t.name);
         tr.suite = std::string(name());
@@ -92,6 +104,8 @@ suite_result default_harness::run(const options& options) {
         if (t.is_skip) {
             tr.status = test_status::unsupported;
             tr.message = std::string(t.skip_reason);
+            if (options.on_test_end)
+                options.on_test_end(tr);
             result.add_result(std::move(tr));
             continue;
         }
@@ -134,6 +148,9 @@ suite_result default_harness::run(const options& options) {
             tr.status = res.passed() ? test_status::xpass : test_status::xfail;
         } else
             tr.status = res.passed() ? test_status::pass : test_status::fail;
+
+        if (options.on_test_end)
+            options.on_test_end(tr);
 
         bool was_failure = tr.failed();
         result.add_result(std::move(tr));

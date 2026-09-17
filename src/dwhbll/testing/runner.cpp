@@ -114,13 +114,20 @@ int runner::run(const options& options) const {
         return 0;
     }
 
-    summary_counts total;
-    auto suite_results = run_suites(options);
+    auto exec_options = options;
+    if (!exec_options.on_test_start) {
+        exec_options.on_test_start = [&exec_options](const test_info& info) {
+            if (exec_options.color) {
+                std::print("{}{}:{} {}", color::cyan, "RUNNING", color::reset, info.name);
+            } else {
+                std::print("RUNNING: {}", info.name);
+            }
+            std::fflush(stdout);
+        };
+    }
 
-    for (const auto& suite_res : suite_results) {
-        total += suite_res.counts;
-
-        for (const auto& tr : suite_res.results) {
+    if (!exec_options.on_test_end) {
+        exec_options.on_test_end = [&exec_options](const test_result& tr) {
             auto st_str = to_status_string(tr.status);
 
             bool has_reason = !tr.message.empty() &&
@@ -128,32 +135,34 @@ int runner::run(const options& options) const {
                  tr.status == test_status::xfail ||
                  tr.status == test_status::xpass);
 
-            if (options.color) {
+            std::size_t running_len = 9 + tr.name.size();
+            std::size_t status_len = st_str.size() + 2 + tr.name.size() + (has_reason ? 3 + tr.message.size() : 0);
+            std::size_t pad_len = (running_len > status_len) ? (running_len - status_len) : 0;
+            std::string pad(pad_len, ' ');
+
+            if (exec_options.color) {
                 auto col = status_color(tr.status);
                 if (has_reason)
-                    std::println("{}{}:{} {} ({})", col, st_str, color::reset, tr.name, tr.message);
+                    std::print("\r{}{}:{} {} ({}){}\033[K\n", col, st_str, color::reset, tr.name, tr.message, pad);
                 else
-                    std::println("{}{}:{} {}", col, st_str, color::reset, tr.name);
+                    std::print("\r{}{}:{} {}{}\033[K\n", col, st_str, color::reset, tr.name, pad);
             } else {
                 if (has_reason)
-                    std::println("{}: {} ({})", st_str, tr.name, tr.message);
+                    std::print("\r{}: {} ({}){}\n", st_str, tr.name, tr.message, pad);
                 else
-                    std::println("{}: {}", st_str, tr.name);
+                    std::print("\r{}: {}{}\n", st_str, tr.name, pad);
             }
 
             for (const auto& f : tr.failures) {
                 auto src_line = get_source_line(f.loc.file_name(), f.loc.line());
                 std::string_view fn_name = f.loc.function_name();
-                if (options.color) {
+                if (exec_options.color) {
                     if (!fn_name.empty())
-                        std::println("    {}:{}: in {}:",
-                                f.loc.file_name(), f.loc.line(), fn_name);
+                        std::println("    {}:{}: in {}:", f.loc.file_name(), f.loc.line(), fn_name);
                     else
-                        std::println("    {}:{}:",
-                                f.loc.file_name(), f.loc.line());
+                        std::println("    {}:{}:", f.loc.file_name(), f.loc.line());
                     if (!src_line.empty())
-                        std::println("      {:4d} | {}",
-                                f.loc.line(), src_line);
+                        std::println("      {:4d} | {}", f.loc.line(), src_line);
                     std::println("      {}{}{}", color::red, f.msg, color::reset);
                 } else {
                     if (!fn_name.empty())
@@ -165,13 +174,20 @@ int runner::run(const options& options) const {
                     std::println("      {}", f.msg);
                 }
             }
-        }
+            std::fflush(stdout);
+        };
+    }
 
-        print_summary_block(suite_res.suite_name, suite_res.counts, options.color);
+    summary_counts total;
+    auto suite_results = run_suites(exec_options);
+
+    for (const auto& suite_res : suite_results) {
+        total += suite_res.counts;
+        print_summary_block(suite_res.suite_name, suite_res.counts, exec_options.color);
     }
 
     if (suite_results.size() > 1)
-        print_summary_block("Test", total, options.color);
+        print_summary_block("Test", total, exec_options.color);
 
     return total.is_success() ? 0 : 1;
 }
