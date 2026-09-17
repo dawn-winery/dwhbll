@@ -476,7 +476,17 @@ install(FILES
 # TODO : IMPROVE INTEGRATION OF GPU COMPUTE FOR USERS
 
 if (DWHBLL_TESTS)
-    add_executable(dwhbll_test tests/cli.cpp tests/matrix.cpp)
+    add_executable(dwhbll_test
+        tests/cli.cpp
+        tests/matrix.cpp
+        tests/pool.cpp
+        tests/collections/ring.cpp
+        tests/collections/cache.cpp
+        tests/cryptography/arc4.cpp
+        tests/graphics/bitmap.cpp
+        tests/lang/c/tokenizer_test.cpp
+        tests/unicode/unicode_tests.cpp
+    )
     target_link_libraries(dwhbll_test PRIVATE dwhbll dwhbll_test_main)
 endif()
 
