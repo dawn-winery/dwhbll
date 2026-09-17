@@ -6,8 +6,6 @@
 
 #include <dwhbll/memory/pool.h>
 
-bool cache_test(std::optional<std::string> test_to_run);
-
 namespace dwhbll::collections {
     class generic_cache {
         std::mutex cache_lock;
@@ -45,10 +43,9 @@ namespace dwhbll::collections {
     template <typename K, typename V>
     requires std::copy_constructible<K> && std::copy_constructible<V>
     class cache : generic_cache {
+    private:
         memory::Pool<K> keys;
         memory::Pool<V> values;
-
-        friend bool ::cache_test(std::optional<std::string> test_to_run);
 
     public:
         cache() = default;
