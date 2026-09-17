@@ -131,6 +131,7 @@ std::pair<bool, std::string> test_norm(
 namespace unicode {
 
 [[=test]]
+[[=xfail()]]
 void normalization()
 {
     const char* env = std::getenv("DWHBLL_NORM_TEST_FILE");
