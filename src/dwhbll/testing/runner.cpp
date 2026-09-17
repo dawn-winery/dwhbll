@@ -1,3 +1,4 @@
+#include <dwhbll/console/ansi_escape.h>
 #include <dwhbll/testing/harness.h>
 
 #include <fstream>
@@ -5,19 +6,9 @@
 
 namespace dwhbll::test {
 
-// TODO: Deduplicate code betewen here (and headers) and the bench lib
 namespace {
 
-namespace color {
-    constexpr std::string_view reset = "\e[0m";
-    constexpr std::string_view bold = "\e[1m";
-    constexpr std::string_view dim = "\e[2m";
-    constexpr std::string_view red = "\e[31m";
-    constexpr std::string_view green = "\e[32m";
-    constexpr std::string_view yellow = "\e[33m";
-    constexpr std::string_view magenta = "\e[35m";
-    constexpr std::string_view cyan = "\e[36m";
-}
+namespace color = console::ansi_escape::color;
 
 std::string_view status_color(test_status status) {
     switch (status) {
