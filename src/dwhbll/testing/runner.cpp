@@ -1,6 +1,11 @@
 #include <dwhbll/console/ansi_escape.h>
 #include <dwhbll/testing/harness.h>
 
+#include <fcntl.h>
+#include <unistd.h>
+
+#include <cstdio>
+#include <filesystem>
 #include <fstream>
 #include <print>
 
@@ -40,7 +45,7 @@ std::string get_source_line(std::string_view file_path, std::uint32_t line_num) 
     return "";
 }
 
-void print_summary_block(std::string_view suite_name,
+void print_summary_block(FILE* out, std::string_view suite_name,
                          const summary_counts& counts, bool use_color) {
     auto print_line = [&](std::string_view label, std::size_t count,
                           std::string_view col, bool hide_if_zero = false) {
@@ -48,15 +53,15 @@ void print_summary_block(std::string_view suite_name,
             return;
         std::string full_label = std::format("# of {}", label);
         if (use_color && !col.empty() && count > 0)
-            std::println("  {:<26} {}{}{}", full_label, col, count, color::reset);
+            std::println(out, "  {:<26} {}{}{}", full_label, col, count, color::reset);
         else
-            std::println("  {:<26} {}", full_label, count);
+            std::println(out, "  {:<26} {}", full_label, count);
     };
 
     if (use_color)
-        std::println("\n{}=== {} Summary ==={}", color::bold, suite_name, color::reset);
+        std::println(out, "\n{}=== {} Summary ==={}", color::bold, suite_name, color::reset);
     else
-        std::println("\n=== {} Summary ===", suite_name);
+        std::println(out, "\n=== {} Summary ===", suite_name);
 
     print_line("expected passes", counts.passes, "");
     print_line("unexpected failures", counts.failures, color::red);
@@ -65,6 +70,7 @@ void print_summary_block(std::string_view suite_name,
     print_line("unsupported tests", counts.unsupported, color::yellow, true);
     print_line("unresolved testcases", counts.unresolved, color::red, true);
     print_line("untested testcases", counts.untested, "", true);
+    std::fflush(out);
 }
 
 } // namespace
@@ -100,35 +106,57 @@ std::vector<suite_result> runner::run_suites(const options& options) const {
 }
 
 int runner::run(const options& options) const {
+    std::string log_path = "dwhbll_test.log";
+    if (std::filesystem::exists("/proc/self/exe"))
+        log_path = (std::filesystem::read_symlink("/proc/self/exe").parent_path() / "dwhbll_test.log").display_string();
+
+    FILE* console_out = stdout;
+    int log_fd = ::open(log_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (log_fd != -1) {
+        int orig_stdout = ::dup(STDOUT_FILENO);
+        if (orig_stdout != -1) {
+            console_out = ::fdopen(orig_stdout, "w");
+        }
+        ::dup2(log_fd, STDOUT_FILENO);
+        ::dup2(log_fd, STDERR_FILENO);
+        ::close(log_fd);
+    }
+
     if (options.list_only) {
         auto all_tests = list_all_tests();
-        std::println("Available tests ({} total):", all_tests.size());
+        std::println(console_out, "Available tests ({} total):", all_tests.size());
         for (const auto& t : all_tests) {
             std::string extra;
             if (t.is_skip)
                 extra = " [skip]";
             if (t.is_xfail)
                 extra = " [xfail]";
-            std::println("  {}:{}{}", t.suite, t.name, extra);
+            std::println(console_out, "  {}:{}{}", t.suite, t.name, extra);
         }
+        std::fflush(console_out);
         return 0;
     }
 
     auto exec_options = options;
     if (!exec_options.on_test_start) {
-        exec_options.on_test_start = [&exec_options](const test_info& info) {
-            if (exec_options.color) {
-                std::print("{}{}:{} {}", color::cyan, "RUNNING", color::reset, info.name);
-            } else {
-                std::print("RUNNING: {}", info.name);
-            }
+        exec_options.on_test_start = [console_out, &exec_options](const test_info& info) {
+            std::println("\n=== RUNNING: {} ===", info.name);
             std::fflush(stdout);
+
+            if (exec_options.color) {
+                std::print(console_out, "{}{}:{} {}", color::cyan, "RUNNING", color::reset, info.name);
+            } else {
+                std::print(console_out, "RUNNING: {}", info.name);
+            }
+            std::fflush(console_out);
         };
     }
 
     if (!exec_options.on_test_end) {
-        exec_options.on_test_end = [&exec_options](const test_result& tr) {
+        exec_options.on_test_end = [console_out, &exec_options](const test_result& tr) {
             auto st_str = to_status_string(tr.status);
+            std::println("=== END: {} ({}) ===", tr.name, st_str);
+            std::fflush(stdout);
 
             bool has_reason = !tr.message.empty() &&
                 (tr.status == test_status::unsupported ||
@@ -143,14 +171,14 @@ int runner::run(const options& options) const {
             if (exec_options.color) {
                 auto col = status_color(tr.status);
                 if (has_reason)
-                    std::print("\r{}{}:{} {} ({}){}\033[K\n", col, st_str, color::reset, tr.name, tr.message, pad);
+                    std::print(console_out, "\r{}{}:{} {} ({}){}\033[K\n", col, st_str, color::reset, tr.name, tr.message, pad);
                 else
-                    std::print("\r{}{}:{} {}{}\033[K\n", col, st_str, color::reset, tr.name, pad);
+                    std::print(console_out, "\r{}{}:{} {}{}\033[K\n", col, st_str, color::reset, tr.name, pad);
             } else {
                 if (has_reason)
-                    std::print("\r{}: {} ({}){}\n", st_str, tr.name, tr.message, pad);
+                    std::print(console_out, "\r{}: {} ({}){}\n", st_str, tr.name, tr.message, pad);
                 else
-                    std::print("\r{}: {}{}\n", st_str, tr.name, pad);
+                    std::print(console_out, "\r{}: {}{}\n", st_str, tr.name, pad);
             }
 
             for (const auto& f : tr.failures) {
@@ -158,23 +186,23 @@ int runner::run(const options& options) const {
                 std::string_view fn_name = f.loc.function_name();
                 if (exec_options.color) {
                     if (!fn_name.empty())
-                        std::println("    {}:{}: in {}:", f.loc.file_name(), f.loc.line(), fn_name);
+                        std::println(console_out, "    {}:{}: in {}:", f.loc.file_name(), f.loc.line(), fn_name);
                     else
-                        std::println("    {}:{}:", f.loc.file_name(), f.loc.line());
+                        std::println(console_out, "    {}:{}:", f.loc.file_name(), f.loc.line());
                     if (!src_line.empty())
-                        std::println("      {:4d} | {}", f.loc.line(), src_line);
-                    std::println("      {}{}{}", color::red, f.msg, color::reset);
+                        std::println(console_out, "      {:4d} | {}", f.loc.line(), src_line);
+                    std::println(console_out, "      {}{}{}", color::red, f.msg, color::reset);
                 } else {
                     if (!fn_name.empty())
-                        std::println("    {}:{}: in {}:", f.loc.file_name(), f.loc.line(), fn_name);
+                        std::println(console_out, "    {}:{}: in {}:", f.loc.file_name(), f.loc.line(), fn_name);
                     else
-                        std::println("    {}:{}:", f.loc.file_name(), f.loc.line());
+                        std::println(console_out, "    {}:{}:", f.loc.file_name(), f.loc.line());
                     if (!src_line.empty())
-                        std::println("      {:4d} | {}", f.loc.line(), src_line);
-                    std::println("      {}", f.msg);
+                        std::println(console_out, "      {:4d} | {}", f.loc.line(), src_line);
+                    std::println(console_out, "      {}", f.msg);
                 }
             }
-            std::fflush(stdout);
+            std::fflush(console_out);
         };
     }
 
@@ -183,11 +211,11 @@ int runner::run(const options& options) const {
 
     for (const auto& suite_res : suite_results) {
         total += suite_res.counts;
-        print_summary_block(suite_res.suite_name, suite_res.counts, exec_options.color);
+        print_summary_block(console_out, suite_res.suite_name, suite_res.counts, exec_options.color);
     }
 
     if (suite_results.size() > 1)
-        print_summary_block("Test", total, exec_options.color);
+        print_summary_block(console_out, "Test", total, exec_options.color);
 
     return total.is_success() ? 0 : 1;
 }
