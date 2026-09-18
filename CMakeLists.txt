@@ -378,6 +378,8 @@ if (DWHBLL_DWCC_CPP)
         include/dwhbll/lang/cpp/cpp_preprocessing_stream.h
         include/dwhbll/lang/cpp/cpp_raw_stream.h
         include/dwhbll/lang/cpp/preprocess/line_splice_stream.h
+        modules/dwcc/compile_context.h
+        modules/dwcc/compile_context.cpp
     )
 else()
     set(DWHBLL_DWCC_CPP_SOURCES )
@@ -391,6 +393,7 @@ add_library(dwhbll_core STATIC ${DWHBLL_SOURCES} ${DWHBLL_UNICODE_SOURCES} ${DWH
 set_target_properties(dwhbll_core PROPERTIES LINKER_LANGUAGE CXX)
 target_include_directories(dwhbll_core
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules>
 )
 
 target_link_libraries(dwhbll_core PUBLIC stdc++exp)
