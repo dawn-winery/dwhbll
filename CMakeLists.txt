@@ -7,7 +7,6 @@ find_package(PkgConfig REQUIRED)
 
 set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
-add_compile_options("-freflection")
 
 # Maybe only in debug builds?
 add_compile_options(
@@ -18,6 +17,7 @@ add_compile_options(
 )
 
 option(DWHBLL_TESTS "Build tests" OFF)
+option(DWHBLL_BENCHMARKS "Build benchmarks" OFF)
 option(BUILD_HARDEN "enable hardening on the library." OFF)
 option(BUILD_HARDEN_EXPENSIVE "enable expensive hardening features on the library." OFF)
 option(DWHBLL_GPU_ENABLED "Toggle GPU acceleration" ON)
@@ -25,6 +25,11 @@ option(DWHBLL_SANIFY_EXPORT "Export Sanification directly to the global namespac
 option(DWHBLL_SUGAR_EXPORT "Export sugar directly to the global namespace" OFF)
 option(DWHBLL_UNICODE_SUPPORT "Build with unicode support (requires internet connection to pull UCD.zip from unicode.org)" ON)
 option(DWHBLL_DWCC_CPP "Build DWCC C++ compiler" ON)
+
+if (DWHBLL_TESTS OR DWHBLL_BENCHMARKS)
+    message("Enabling reflection features. Will need a compiler that supports reflection (gcc 16+)")
+    add_compile_options("-freflection")
+endif()
 
 if (DWHBLL_DWCC_CPP AND NOT DWHBLL_UNICODE_SUPPORT)
     message(FATAL_ERROR
@@ -468,7 +473,6 @@ write_basic_package_version_file(
 
 install(FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/dwhbllConfig.cmake" # needed for find_package()
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/dwhbll-reflection-toolchain.cmake"
     "${CMAKE_CURRENT_BINARY_DIR}/dwhbllConfigVersion.cmake"
     DESTINATION lib/cmake/dwhbll
 )
