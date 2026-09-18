@@ -11,7 +11,7 @@ namespace dwhbll::lang::common {
      * Automatically strips potential leading byte order mark.
      */
     class file_stream : public stream<char32_t, 16> {
-        std::vector<char> contents;
+        std::span<sanify::u8> data;
 
         bool first = true;
         std::size_t byte_head = 0;
@@ -32,6 +32,6 @@ namespace dwhbll::lang::common {
         bool has_next0() override;
 
     public:
-        explicit file_stream(const std::vector<char>& contents);
+        explicit file_stream(std::span<sanify::u8> contents);
     };
 }

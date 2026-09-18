@@ -2,15 +2,15 @@
 
 namespace dwhbll::lang::common {
     bool file_stream::data_left() const {
-        return byte_head < contents.size();
+        return byte_head < data.size();
     }
 
     char32_t file_stream::get_char() {
-        if (byte_head >= contents.size())
+        if (byte_head >= data.size())
             debug::panic("No more bytes to read.");
 
         char32_t res{};
-        char cur = contents[byte_head++];
+        char cur = data[byte_head++];
         int continuation_byte_count = 0;
 
         switch (std::countl_one(static_cast<unsigned char>(cur))) {
@@ -39,11 +39,11 @@ namespace dwhbll::lang::common {
             debug::panic("Unexpected number of leading ones in UTF8 code point.");
         }
 
-        if (byte_head + continuation_byte_count > contents.size())
+        if (byte_head + continuation_byte_count > data.size())
             debug::panic("File ended mid UTF8 point.");
 
         for (int i = 0; i < continuation_byte_count; i++) {
-            cur = contents.at(byte_head++);
+            cur = (char)data.at(byte_head++);
 
             if (std::countl_one(static_cast<unsigned char>(cur)) != 1)
                 debug::panic("Expected UTF8 continuation byte found {:#x}", static_cast<unsigned char>(cur));
@@ -99,7 +99,7 @@ namespace dwhbll::lang::common {
         return buffer.has_value();
     }
 
-    file_stream::file_stream(const std::vector<char> &contents) : contents(contents) {
+    file_stream::file_stream(std::span<sanify::u8> contents) : data(contents) {
 
     }
 }
