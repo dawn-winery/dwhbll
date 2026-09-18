@@ -107,6 +107,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/concurrency/spinlock.cpp
     src/dwhbll/concurrency/threading.cpp
     src/dwhbll/console/logging.cpp
+    src/dwhbll/console/diags/diagnostics.cpp
     src/dwhbll/debug/debug.cpp
     src/dwhbll/debug/panic.cpp
     src/dwhbll/debug/perf.cpp
@@ -173,15 +174,16 @@ set(DWHBLL_SOURCES
     include/dwhbll/concurrency/spinlock.h
     include/dwhbll/concurrency/threading.h
     include/dwhbll/console/ansi_escape.h
-    include/dwhbll/debug/debug.h
-    include/dwhbll/debug/format.h
-    include/dwhbll/debug/panic.h
-    include/dwhbll/debug/perf.h
+    include/dwhbll/console/diags/diagnostics.h
     include/dwhbll/console/logging.h
     include/dwhbll/cryptography/arc4/arc4.h
     include/dwhbll/cryptography/hmac.h
     include/dwhbll/cryptography/ihash.h
     include/dwhbll/cryptography/hash/sha1.h
+    include/dwhbll/debug/debug.h
+    include/dwhbll/debug/format.h
+    include/dwhbll/debug/panic.h
+    include/dwhbll/debug/perf.h
     include/dwhbll/exceptions/concurrency_exception.h
     include/dwhbll/exceptions/rt_exception_base.h
     include/dwhbll/exceptions/sys_error.h
