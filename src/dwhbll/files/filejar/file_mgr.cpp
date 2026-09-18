@@ -51,6 +51,17 @@ namespace dwhbll::files::filejar {
         return id;
     }
 
+    void file_mgr::remove_file(const fileid &file) {
+        const auto it = files.find(file);
+
+        if (it == files.end())
+            debug::panic("Cannot remove file not in the filejar!");
+
+        auto abspath = it->second->path();
+        file_ids.erase(abspath);
+        files.erase(file);
+    }
+
     bool file_mgr::exists(const fileid &id) const {
         auto& f = get(id);
 
@@ -67,5 +78,17 @@ namespace dwhbll::files::filejar {
         auto& f = get(id);
 
         return f->contents();
+    }
+
+    file_metadata & file_mgr::metadata(const fileid &id) const {
+        auto& f = get(id);
+
+        return f->get_metadata();
+    }
+
+    void file_mgr::hash_file(const fileid &id) const {
+        auto& f = get(id);
+
+        f->compute_hash();
     }
 }

@@ -43,7 +43,8 @@ namespace dwhbll::files::filejar {
         if (!metadata._exists || !data)
             debug::panic("File doesn't exist!");
 
-        metadata.hash = hash::xxh::detail3_64::hash(data, metadata.len);
+        if (!metadata.hash.has_value())
+            metadata.hash = hash::xxh::detail3_64::hash(data, metadata.len);
     }
 
     bool file::file_unchanged_against(const file_metadata &other) const {
