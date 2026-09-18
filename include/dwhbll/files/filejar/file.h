@@ -84,5 +84,9 @@ namespace dwhbll::files::filejar {
         [[nodiscard]] constexpr file_metadata get_metadata() const {
             return metadata;
         }
+
+        [[nodiscard]] constexpr file_metadata& get_metadata() {
+            return metadata;
+        }
     };
 }

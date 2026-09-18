@@ -8,6 +8,7 @@
 #include <dwhbll/sanify/types.h>
 
 namespace dwhbll::files::filejar {
+    struct file_metadata;
     class file;
     struct fileid;
 }
@@ -84,11 +85,17 @@ namespace dwhbll::files::filejar {
 
         fileid add_file(const std::filesystem::path &path);
 
+        void remove_file(const fileid &file);
+
         [[nodiscard]] bool exists(const fileid &id) const;
 
         [[nodiscard]] std::filesystem::path path(const fileid &id) const;
 
         [[nodiscard]] std::span<sanify::u8> contents(const fileid &id) const;
+
+        [[nodiscard]] file_metadata& metadata(const fileid &id) const;
+
+        void hash_file(const fileid &id) const;
     };
 }
 
