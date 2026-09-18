@@ -13,6 +13,7 @@ class GeneratedFile(object):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
+        self.outfile.parent.mkdir(parents=True, exist_ok=True)
         with open(self.outfile, "w") as f:
             f.write("\n".join(self.lines))
 

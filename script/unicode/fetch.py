@@ -21,6 +21,7 @@ def download_ucd(output: Path) -> None:
     with urllib.request.urlopen(UCD_URL) as response:
         data = response.read()
 
+    output.parent.mkdir(parents=True, exist_ok=True)
     output.write_bytes(data)
     print(f"Saved {len(data):,} bytes to {output}")
 
