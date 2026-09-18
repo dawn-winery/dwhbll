@@ -51,6 +51,19 @@ namespace dwhbll::files::filejar {
         return id;
     }
 
+    fileid file_mgr::phantom_file(const std::filesystem::path &path) {
+        if (const auto it = file_ids.find(path); it != file_ids.end())
+            return it->second;
+
+        auto id = fileid{id_alloc++};
+        auto f = std::make_unique<file>(path);
+
+        file_ids.emplace(path, id);
+        files.emplace(id, std::move(f));
+
+        return id;
+    }
+
     void file_mgr::remove_file(const fileid &file) {
         const auto it = files.find(file);
 

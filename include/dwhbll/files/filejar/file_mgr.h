@@ -85,6 +85,8 @@ namespace dwhbll::files::filejar {
 
         fileid add_file(const std::filesystem::path &path);
 
+        fileid phantom_file(const std::filesystem::path &path);
+
         void remove_file(const fileid &file);
 
         [[nodiscard]] bool exists(const fileid &id) const;
