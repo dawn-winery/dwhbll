@@ -108,7 +108,11 @@ std::vector<suite_result> runner::run_suites(const options& options) const {
 int runner::run(const options& options) const {
     std::string log_path = "dwhbll_test.log";
     if (std::filesystem::exists("/proc/self/exe"))
+#if __cpp_lib_format_path >= 202506L
         log_path = (std::filesystem::read_symlink("/proc/self/exe").parent_path() / "dwhbll_test.log").display_string();
+#else
+        log_path = (std::filesystem::read_symlink("/proc/self/exe").parent_path() / "dwhbll_test.log").string();
+#endif
 
     FILE* console_out = stdout;
     int log_fd = ::open(log_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);

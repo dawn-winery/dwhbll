@@ -1,24 +1,22 @@
 #include <dwhbll/testing/testing.h>
 #include <dwhbll/debug/debug.h>
-#include <mutex>
 
 namespace dwhbll::test {
 
 namespace detail {
 
-static std::mutex failure_mutex;
-
 void result::add_failure(std::string msg, std::source_location loc) {
-    std::lock_guard _(failure_mutex);
+    std::lock_guard _(mutex_);
     failures_.push_back({std::move(msg), loc});
 }
 
 bool result::passed() const {
-    std::lock_guard _(failure_mutex);
+    std::lock_guard _(mutex_);
     return failures_.empty();
 }
 
-const std::vector<failure>& result::failures() const {
+std::vector<failure> result::failures() const {
+    std::lock_guard _(mutex_);
     return failures_;
 }
 

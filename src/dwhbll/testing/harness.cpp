@@ -1,5 +1,6 @@
 #include <dwhbll/testing/testing.h>
 #include <dwhbll/testing/harness.h>
+#include <dwhbll/stl_ext/string.h>
 
 namespace dwhbll::test {
 
@@ -15,48 +16,6 @@ std::string_view to_status_string(test_status status) {
     }
     return "UNKNOWN";
 }
-
-namespace {
-
-bool match_glob(std::string_view text, std::string_view pattern) {
-    if (pattern.empty())
-        return text.empty();
-    std::size_t t = 0, p = 0;
-    std::size_t star_p = std::string_view::npos, star_t = 0;
-    while (t < text.size()) {
-        if (p < pattern.size() && (pattern[p] == '?' || pattern[p] == text[t])) {
-            ++t;
-            ++p;
-        } else if (p < pattern.size() && pattern[p] == '*') {
-            star_p = p++;
-            star_t = t;
-        } else if (star_p != std::string_view::npos) {
-            p = star_p + 1;
-            t = ++star_t;
-        } else {
-            return false;
-        }
-    }
-    while (p < pattern.size() && pattern[p] == '*')
-        ++p;
-    return p == pattern.size();
-}
-
-bool matches_patterns(std::string_view name, const std::vector<std::string>& patterns) {
-    if (patterns.empty())
-        return true;
-    for (const auto& pat : patterns) {
-        if (pat.find('*') != std::string::npos || pat.find('?') != std::string::npos) {
-            if (match_glob(name, pat))
-                return true;
-        } else if (name.find(pat) != std::string_view::npos) {
-            return true;
-        }
-    }
-    return false;
-}
-
-} // namespace
 
 std::vector<test_info> default_harness::list_tests() const {
     const auto& registry = detail::registry();
@@ -82,7 +41,7 @@ suite_result default_harness::run(const options& options) {
     const auto& registry = detail::registry();
 
     for (const auto& t : registry) {
-        if (!matches_patterns(t.name, options.patterns))
+        if (!stl_ext::matches_patterns(t.name, options.patterns))
             continue;
 
         test_info info{

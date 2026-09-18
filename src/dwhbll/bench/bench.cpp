@@ -1,14 +1,13 @@
 #include <dwhbll/bench/bench.h>
 
 #include <array>
-#include <cmath>
 #include <cstdint>
 #include <memory>
 #include <mutex>
 #include <numeric>
+#include <cmath>
 #include <print>
 #include <string_view>
-#include <vector>
 
 #include <linux/perf_event.h>
 #include <sys/ioctl.h>
@@ -71,7 +70,7 @@ struct PerfGroup {
     PerfGroup& operator=(const PerfGroup&) = delete;
 
     void close_all() {
-        for (int fd : fds) {
+        for (int& fd : fds) {
             if (fd >= 0) {
                 close(fd);
                 fd = -1;

@@ -2,6 +2,7 @@
 
 #include <dwhbll/testing/harness.h>
 #include <dwhbll/meta/meta.h>
+#include <mutex>
 
 #include <meta>
 
@@ -38,9 +39,10 @@ class result {
 public:
     void add_failure(std::string msg, std::source_location loc);
     bool passed() const;
-    const std::vector<failure>& failures() const;
+    std::vector<failure> failures() const;
 
 private:
+    mutable std::mutex mutex_;
     std::vector<failure> failures_;
 };
 
