@@ -227,7 +227,7 @@ namespace dwhbll::unicode {
                     if (r.empty())
                         result.push_back(str[k]);
                     else
-                        result.append_range(r);
+                        result.insert(result.end(), r.begin(), r.end());
                 }
 
                 std::span spn(result.begin() + last_starter, result.end());
@@ -252,7 +252,7 @@ namespace dwhbll::unicode {
                     if (r.empty())
                         result.push_back(k);
                     else
-                        result.append_range(r);
+                        result.insert(result.end(), r.begin(), r.end());
                 }
 
                 std::span spn(result.begin(), result.end());
@@ -355,7 +355,7 @@ namespace dwhbll::unicode {
                     if (r.empty())
                         result.push_back(str[k]);
                     else
-                        result.append_range(r);
+                        result.insert(result.end(), r.begin(), r.end());
                 }
 
                 std::span spn(result.begin() + i, result.end());
@@ -445,7 +445,7 @@ namespace dwhbll::unicode {
                     if (r.empty())
                         result.push_back(str[k]);
                     else
-                        result.append_range(r);
+                        result.insert(result.end(), r.begin(), r.end());
                 }
 
                 std::span spn(result.begin() + last_starter, result.end());
@@ -468,7 +468,7 @@ namespace dwhbll::unicode {
                     if (auto r = decompose(k, true); r.empty())
                         result.push_back(k);
                     else
-                        result.append_range(r);
+                        result.insert(result.end(), r.begin(), r.end());
                 }
 
                 std::span spn(result.begin(), result.end());
@@ -571,7 +571,7 @@ namespace dwhbll::unicode {
                     if (r.empty())
                         result.push_back(str[k]);
                     else
-                        result.append_range(r);
+                        result.insert(result.end(), r.begin(), r.end());
                 }
 
                 std::span spn(result.begin() + i, result.end());
