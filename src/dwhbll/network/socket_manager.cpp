@@ -165,7 +165,7 @@ namespace dwhbll::network {
         auto tcp = pool.acquire(i, Socket::LISTEN);
         struct sockaddr_in a{};
         a.sin_family = AF_INET;
-        a.sin_port   = htons(port);
+        a.sin_port = htons(port);
         a.sin_addr.s_addr = addr;
         ASSERT(::bind(i, (struct sockaddr *)&a, sizeof(a)) == 0);
         listen(i, 64);

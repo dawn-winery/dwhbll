@@ -92,7 +92,7 @@ namespace dwhbll::unicode {
         void canonical_ordering(std::span<char32_t> spn) {
             size_t last_ccc0 = 0;
             size_t i;
-            int curccc;
+            int curccc = 0;
             bool lacking = !spn.empty() && (base::canonical_combining_class.at_or_default(spn[0], 0));
 
             for (i = 0; i < spn.size(); i++) {

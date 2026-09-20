@@ -8,7 +8,6 @@
 #include <cassert>
 #include <concepts>
 #include <cstddef>
-#include <print>
 
 
 
@@ -156,30 +155,30 @@ class Matrix {
         template<size_t K, typename T2, ExecutionPolicy Policy = ExecutionPolicy::Auto>
         requires MatrixElement<T2> && Arithmetic<T, T2>
         Matrix<std::common_type_t<T, T2>, Row, K> matmul(const Matrix<T2, Col, K>& other) const {
-            std::print("{}x{} * {}x{} > ", Row, Col, Col, K);
+            // std::print("{}x{} * {}x{} > ", Row, Col, Col, K);
 
             using ResultType = std::common_type_t<T, T2>;
             Matrix<ResultType, Row, K> res;
 
 #ifdef DWHBLL_GPU_ENABLED
             if constexpr (Policy == ExecutionPolicy::CPU) {
-                std::println("CPU");
+                // std::println("CPU");
                 matmul_cpu<K, T2, ResultType>(other, res);
             }
             else if constexpr (Policy == ExecutionPolicy::GPU) {
                 // TODO
             }
             else if constexpr (Policy == ExecutionPolicy::HIP) {
-                std::println("Using hipBLAS GPU kernel [TODO]");
+                // std::println("Using hipBLAS GPU kernel [TODO]");
             }
             else {
                 // ExecutionPolicy::Auto
                 if constexpr (Row * Col * K <= GPU_VOLUME_THRESHOLD) {
-                    std::println("Auto dispatch to CPU");
+                    // std::println("Auto dispatch to CPU");
                     matmul_cpu<K, T2, ResultType>(other, res);
                 }
                 else {
-                    std::println("Auto dispatch to GPU");
+                    // std::println("Auto dispatch to GPU");
 
                     std::vector<double> A(this->size()), B(other.size());
                     std::ranges::transform(this->data, A.begin(), [] (int i) { return static_cast<double>(i); });
