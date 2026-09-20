@@ -1,15 +1,14 @@
 #pragma once
 
-#include <version>
-
-#if __cpp_impl_reflection >= 202506L
-
-#include <dwhbll/json/json.h>
-#include <dwhbll/console/logging.h>
-#include <cassert>
 #include <meta>
+#include <dwhbll/json/json.h>
+#include <cassert>
 
-namespace dwhbll::debug {
+namespace dwhbll::console {
+void trace(const std::string& msg);
+}
+
+namespace dwhbll::meta {
 
 constexpr std::string get_indentation(int depth, int step) {
     return std::string(depth * step, ' ');
@@ -107,7 +106,7 @@ constexpr std::string dbg(T const& val, int depth = 0, int step = 4, bool first_
 
 #define 🦀 dbg
 
-#define TRACE_FUNC(func) \
+#define LOG_FUNC(func) \
     constexpr std::string_view __id = std::meta::identifier_of(^^func); \
     std::string __s; \
     template for (constexpr auto __e : std::define_static_array(std::meta::parameters_of(^^func))) { \
@@ -116,7 +115,4 @@ constexpr std::string dbg(T const& val, int depth = 0, int step = 4, bool first_
     } \
     trace(std::format("function {}:\n{}", __id, __s));
 
-
-} // namespace dwhbll::debug
-
-#endif
+} // namespace dwhbll::meta
