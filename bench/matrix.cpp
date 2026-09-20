@@ -1,0 +1,33 @@
+#include <dwhbll/bench/bench.h>
+#include <dwhbll/linalg/matrix.h>
+
+#include <random>
+
+using namespace dwhbll::bench;
+using namespace dwhbll::linalg;
+
+[[=bench]]
+[[=warmup(2)]]
+[[=iterations(5)]]
+void matmul()
+{
+    constexpr size_t SIZE = 512;
+    Matrix<int, SIZE, SIZE> m1;
+    Matrix<int, SIZE, SIZE> m2;
+
+    std::mt19937_64 generator(17);
+    std::uniform_int_distribution<int> distrib(0, 128);
+
+    for(size_t i = 0; i < SIZE; i++) {
+        for(size_t j = 0; j < SIZE; j++) {
+            m1[i,j] = distrib(generator);
+            m2[i,j] = distrib(generator);
+        }
+    }
+
+    while (state.keep_running()) {
+        m1 * m2;
+    }
+}
+
+BENCH_REGISTER_FILE();
