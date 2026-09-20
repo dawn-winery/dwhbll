@@ -47,7 +47,7 @@ const std::vector<task_deferral*>& running_tasks();
 
 template <typename... Args>
 [[noreturn]] inline void assert_internal(std::string_view cond, std::string_view fmt, Args... args) {
-    auto formatted_msg = std::vformat(fmt, std::make_format_args(std::forward<Args>(args)...));
+    auto formatted_msg = std::vformat(fmt, std::make_format_args(args...));
     panic("Assertion Failed: {}\nCondition: {}", formatted_msg, cond);
 }
 
