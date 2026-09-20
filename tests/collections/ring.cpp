@@ -1,7 +1,13 @@
-#include <iostream>
+#include <dwhbll/testing/testing.h>
 #include <dwhbll/collections/ring.h>
 
-bool ring_test(std::optional<std::string>) {
+using namespace dwhbll::test;
+
+namespace collections::ring {
+
+[[=test]]
+void fill_capacity()
+{
     dwhbll::collections::Ring<int> ringBuffer;
 
     std::size_t before = ringBuffer.size();
@@ -13,66 +19,102 @@ bool ring_test(std::optional<std::string>) {
 
     std::size_t after = ringBuffer.size();
 
-    if (after - before != ringBuffer.capacity()) {
-        // resized???
-        std::cerr << "[FAILED] ring buffer got resized." << std::endl;
-        return false;
-    }
+    // resized???
+    EXPECT(after - before == ringBuffer.capacity());
+}
 
-    before = ringBuffer.size();
+[[=test]]
+void pop_front()
+{
+    dwhbll::collections::Ring<int> ringBuffer;
+
+    for (std::size_t i = 0; i < ringBuffer.capacity(); i++)
+        ringBuffer.push_back(i);
+
+    std::size_t before = ringBuffer.size();
 
     for (int i = 0; i < 5; i++) {
         ringBuffer.pop_front();
     }
 
-    after = ringBuffer.size();
+    std::size_t after = ringBuffer.size();
 
-    if (after + 5 != before) {
-        // resized???
-        std::cerr << "[FAILED] ring buffer failed pops." << std::endl;
-        return false;
-    }
+    // resized???
+    EXPECT(after + 5 == before);
+}
 
-    before = ringBuffer.size();
+[[=test]]
+void push_front_no_resize()
+{
+    dwhbll::collections::Ring<int> ringBuffer;
+
+    for (std::size_t i = 0; i < ringBuffer.capacity(); i++)
+        ringBuffer.push_back(i);
+    for (int i = 0; i < 5; i++)
+        ringBuffer.pop_front();
+
+    std::size_t before = ringBuffer.size();
 
     for (int i = 4; i >= 0; i--) {
         ringBuffer.push_front(i);
     }
 
-    after = ringBuffer.size();
+    std::size_t after = ringBuffer.size();
 
-    if (after - 5 != before) {
-        // resized???
-        std::cerr << "[FAILED] ring buffer resized while still space available." << std::endl;
-        return false;
-    }
+    // resized???
+    EXPECT(after - 5 == before);
+}
 
-    before = ringBuffer.size();
+[[=test]]
+void push_back_triggers_resize()
+{
+    dwhbll::collections::Ring<int> ringBuffer;
+
+    for (std::size_t i = 0; i < ringBuffer.capacity(); i++)
+        ringBuffer.push_back(i);
+    for (int i = 4; i >= 0; i--)
+        ringBuffer.push_front(i);
+
+    std::size_t before = ringBuffer.size() - 5;
 
     for (int i = 0; i < 5; i++) {
         ringBuffer.push_back(i);
     }
 
-    after = ringBuffer.size();
+    std::size_t after = ringBuffer.size();
 
-    if (after == before) {
-        // no resized???
-        std::cerr << "[FAILED] ring buffer did not resize when no space available." << std::endl;
-        return false;
-    }
+    // no resized???
+    EXPECT(after != before);
+}
 
-    for (int i = 0; i < 5; i++) {
+[[=test]]
+void iterator_after_resize()
+{
+    dwhbll::collections::Ring<int> ringBuffer;
+
+    for (std::size_t i = 0; i < ringBuffer.capacity(); i++)
+        ringBuffer.push_back(i);
+
+    for (int i = 0; i < 5; i++)
+        ringBuffer.pop_front();
+
+    for (int i = 4; i >= 0; i--)
+        ringBuffer.push_front(i);
+
+    // trigger resize
+    for (int i = 0; i < 5; i++)
+        ringBuffer.push_back(i);
+
+    for (int i = 0; i < 5; i++)
         ringBuffer.pop_back();
-    }
 
     int expected = 0;
     for (int entry : ringBuffer) {
-        if (entry != expected) {
-            std::cerr << "[FAILED] ring buffer resize did not correctly rearrange data / iterator broken. " << std::format("(expected: {}, got: {})", expected, entry) << std::endl;
-            return false;
-        }
+        EXPECT_EQ(entry, expected);
         expected++;
     }
-
-    return true;
 }
+
+}
+
+TEST_REGISTER_FILE();

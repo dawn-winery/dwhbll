@@ -1,13 +1,17 @@
-#include <fstream>
-#include <functional>
-#include <iostream>
-#include <unordered_set>
-#include <vector>
-
+#include <dwhbll/testing/testing.h>
+#include <dwhbll/testing/config.h>
 #include <dwhbll/debug/debug.h>
 #include <dwhbll/console/logging.h>
 #include <dwhbll/unicode/helpers.h>
 
+#include <fstream>
+#include <iostream>
+#include <unordered_set>
+#include <vector>
+
+using namespace dwhbll::test;
+
+namespace {
 
 std::string trim(const std::string &str) {
     if (str.empty())
@@ -123,20 +127,16 @@ std::pair<bool, std::string> test_norm(
     return {pass, data};
 }
 
-bool unicode_norm_test(std::optional<std::string> norm_file) {
-    if (!norm_file.has_value()) {
-        dwhbll::console::fatal("Need the NormalizationTest.txt file!");
+} // namespace
 
-        return true;
-    }
+namespace unicode {
 
-    std::ifstream file(norm_file.value());
+[[=test]]
+void normalization()
+{
+    std::ifstream file(dwhbll::test::config::UNICODE_NORMALIZATION_TEST_FILE);
 
-    if (!file.is_open()) {
-        dwhbll::console::fatal("Unable to open file {}!", norm_file.value());
-
-        return true;
-    }
+    REQUIRE(file.is_open());
 
     bool part1 = false;
     std::unordered_set<char32_t> individual_tested;
@@ -251,5 +251,9 @@ bool unicode_norm_test(std::optional<std::string> norm_file) {
     dwhbll::console::info("PASS: {}/{}, FAIL: {}/{}", pass, total, total - pass, total);
     dwhbll::console::info("OVERALL: PASS: {}/{}, FAIL: {}/{}", overall_pass, overall, overall - overall_pass, overall);
 
-    return overall_pass != overall;
+    EXPECT(overall_pass == overall);
 }
+
+}
+
+TEST_REGISTER_FILE();

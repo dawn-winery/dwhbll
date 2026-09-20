@@ -1,0 +1,12 @@
+#pragma once
+
+namespace dwhbll::test::config {
+
+inline constexpr const char* TEST_BINARY_DIR = "@CMAKE_CURRENT_BINARY_DIR@";
+inline constexpr const char* TEST_SOURCE_DIR = "@CMAKE_CURRENT_SOURCE_DIR@";
+inline constexpr const char* TEST_DATA_DIR = "@CMAKE_CURRENT_BINARY_DIR@/data";
+
+inline constexpr const char* UNICODE_NORMALIZATION_TEST_FILE =
+    "@CMAKE_CURRENT_BINARY_DIR@/data/NormalizationTest.txt";
+
+} // namespace dwhbll::test::config
