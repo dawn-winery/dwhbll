@@ -277,6 +277,12 @@ set(GENERATE_UNICODE
     "${CMAKE_CURRENT_SOURCE_DIR}/script/unicode/generate_tables.py"
 )
 
+set_source_files_properties(
+    "${UNICODE_TABLES}"
+    PROPERTIES
+    COMPILE_OPTIONS "-g0;-fno-var-tracking;-fno-var-tracking-assignments;-fno-sanitize=all"
+)
+
 add_custom_command(
     OUTPUT
     "${UCD_ZIP}"
