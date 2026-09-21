@@ -312,7 +312,7 @@ add_custom_command(
     "${UNICODE_TABLES}"
 
     WORKING_DIRECTORY
-    "${CMAKE_SOURCE_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}"
 
     DEPENDS
     "${UCD_ZIP}"
@@ -339,7 +339,7 @@ add_custom_command(
     "${CMAKE_CURRENT_BINARY_DIR}/data/NormalizationTest.txt"
 
     WORKING_DIRECTORY
-    "${CMAKE_SOURCE_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}"
 
     DEPENDS
     "${UCD_ZIP}"
