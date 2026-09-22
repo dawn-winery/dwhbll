@@ -1,6 +1,6 @@
 #include <dwhbll/concurrency/spinlock.h>
 #include <dwhbll/console/logging.h>
-#include <dwhbll/exceptions/timeout_exception.h>
+#include <dwhbll/exceptions/concurrency_exception.h>
 
 #if defined(__x86_64__) || defined(__i386__)
 #include <xmmintrin.h>
