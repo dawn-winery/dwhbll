@@ -97,6 +97,10 @@ namespace dwhbll::stl_ext {
     template <typename T, typename E>
     requires (!std::same_as<T, void> && !std::same_as<E, void>)
     class Result {
+        template <typename U, typename F>
+        requires (!std::same_as<U, void> && !std::same_as<F, void>)
+        friend class Result;
+
         enum class state : uint8_t {
             invalid,
             ok,
@@ -351,6 +355,21 @@ namespace dwhbll::stl_ext {
                 type = state::err;
             }
             return *this;
+        }
+
+        template <typename U, typename F>
+        requires std::equality_comparable_with<T, U> &&
+                 std::equality_comparable_with<E, F>
+        [[nodiscard]] constexpr bool operator==(const Result<U, F> &other) const noexcept
+        {
+            if (static_cast<uint8_t>(type) != static_cast<uint8_t>(other.type))
+                return false;
+            if (type == state::invalid)
+                return true;
+            if (type == state::err)
+                return data.ERR_VALUE == other.data.ERR_VALUE;
+            else
+                return data.OK_VALUE == other.data.OK_VALUE;
         }
 
         constexpr ~Result() {
