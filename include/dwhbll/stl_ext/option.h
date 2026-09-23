@@ -184,6 +184,16 @@ namespace dwhbll::stl_ext {
             return *this;
         }
 
+        [[nodiscard]] constexpr bool operator==(const Option& other) const noexcept
+            requires std::equality_comparable<T>
+        {
+            if (type != other.type)
+                return false;
+            if (type == state::none)
+                return true;
+            return data.SOME_VALUE == other.data.SOME_VALUE;
+        }
+
         ~Option() {
             __destroy_storage();
         }

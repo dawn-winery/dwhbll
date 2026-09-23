@@ -507,6 +507,7 @@ if (DWHBLL_TESTS AND COMPILER_HAS_REFLECTION)
         tests/collections/cache.cpp
         tests/cryptography/arc4.cpp
         tests/graphics/bitmap.cpp
+        tests/stl_ext/option.cpp
         tests/lang/c/tokenizer_test.cpp
     )
     if (DWHBLL_UNICODE_SUPPORT)
