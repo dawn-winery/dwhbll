@@ -1,11 +1,16 @@
-#include <dwhbll/platform/linux_wrappers/ptrace.h>
-
-#include <csignal>
+#include <dwhbll/macros/debug.h>
+#include <sys/ptrace.h>
+#include <sys/user.h>
 #include <cstring>
+#include <unistd.h>
 #include <fcntl.h>
+#include <signal.h>
 
-#include <dwhbll/debug/debug.h>
-#include <dwhbll/exceptions/rt_exception_base.h>
+import std;
+import dwhbll.linux_wrappers;
+import dwhbll.debug;
+import dwhbll.exceptions;
+import dwhbll.sanify;
 
 namespace dwhbll::platform::linux_wrappers {
     void PTrace::check(long status) {
@@ -22,7 +27,7 @@ namespace dwhbll::platform::linux_wrappers {
         check(ptrace(PTRACE_TRACEME, 0, nullptr, nullptr));
     }
 
-    void PTrace::readMemory(std::uint64_t addr, std::span<std::uint8_t> data) {
+    void PTrace::readMemory(u64 addr, std::span<u8> data) {
         if (memfd == -1) {
             std::string target = std::format("/proc/{}/mem", pid);
             memfd = open(target.c_str(), O_RDWR);
@@ -42,7 +47,7 @@ namespace dwhbll::platform::linux_wrappers {
             throw exceptions::rt_exception_base("Out of bounds read.");
     }
 
-    void PTrace::writeMemory(std::uint64_t addr, std::span<std::uint8_t> data) {
+    void PTrace::writeMemory(u64 addr, std::span<u8> data) {
         if (memfd == -1) {
             std::string target = std::format("/proc/{}/mem", pid);
             memfd = open(target.c_str(), O_RDWR);

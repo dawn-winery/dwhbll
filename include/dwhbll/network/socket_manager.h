@@ -10,8 +10,6 @@
 
 #include <dwhbll/memory/pool.h>
 
-#define BuildIPV4(a, b, c, d) (htonl((((std::uint32_t)a) << 24 & 0xFF000000) | (((std::uint32_t)b) << 16 & 0xFF0000) | (((std::uint32_t)c) << 8 & 0xFF00) | (((std::uint32_t)d) & 0xFF)))
-
 namespace dwhbll::network {
     class Socket {
         int fd;

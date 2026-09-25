@@ -1,7 +1,7 @@
-#include <ranges>
-#include <dwhbll/unicode/helpers.h>
-
-#include <dwhbll/unicode/table.h>
+import std;
+import dwhbll.unicode;
+import dwhbll.debug;
+import dwhbll.sanify;
 
 // TODO: This entire file has a lot of redundancies, probably worth cleaning up.
 namespace dwhbll::unicode {
@@ -10,7 +10,7 @@ namespace dwhbll::unicode {
             return c >= hangul::SBASE && c < (hangul::SBASE + hangul::SCOUNT);
         }
 
-        std::pair<std::array<char32_t, 3>, size_t> decompose_hangul(char32_t c) {
+        std::pair<std::array<char32_t, 3>, std::size_t> decompose_hangul(char32_t c) {
             const char32_t s_index = c - hangul::SBASE;
             const char32_t l = hangul::LBASE + (s_index / hangul::NCOUNT);
             const char32_t v = hangul::VBASE + ((s_index % hangul::NCOUNT) / hangul::TCOUNT);
@@ -85,13 +85,13 @@ namespace dwhbll::unicode {
                     return left.value < right.value;
                 });
 
-            for (size_t i = 0; i < spn.size(); i++)
+            for (std::size_t i = 0; i < spn.size(); i++)
                 spn[i] = keys[i].key;
         }
 
         void canonical_ordering(std::span<char32_t> spn) {
-            size_t last_ccc0 = 0;
-            size_t i;
+            std::size_t last_ccc0 = 0;
+            std::size_t i;
             int curccc = 0;
             bool lacking = !spn.empty() && (base::canonical_combining_class.at_or_default(spn[0], 0));
 
@@ -119,13 +119,13 @@ namespace dwhbll::unicode {
         void canonical_composition(std::span<char32_t> &str) {
             if (str.empty()) return;
 
-            size_t starter_idx = 0;
-            uint8_t last_ccc = base::canonical_combining_class.at_or_default(str[0], 0);
-            size_t write_idx = 1;
+            std::size_t starter_idx = 0;
+            u8 last_ccc = base::canonical_combining_class.at_or_default(str[0], 0);
+            std::size_t write_idx = 1;
 
-            for (size_t read_idx = 1; read_idx < str.size(); read_idx++) {
+            for (std::size_t read_idx = 1; read_idx < str.size(); read_idx++) {
                 char32_t ch = str[read_idx];
-                uint8_t ccc = base::canonical_combining_class.at_or_default(ch, 0);
+                u8 ccc = base::canonical_combining_class.at_or_default(ch, 0);
                 char32_t starter = str[starter_idx];
 
                 // Blocked check condition:
@@ -176,11 +176,11 @@ namespace dwhbll::unicode {
 
         namespace nfc {
             std::u32string normalize(std::u32string_view str) {
-                size_t i = 0;
-                size_t n = str.size();
+                std::size_t i = 0;
+                std::size_t n = str.size();
 
                 // O(n) copy as long as the string passes QC
-                uint8_t prev_ccc = 0;
+                u8 prev_ccc = 0;
                 while (i < n) {
                     auto qc = nfc_qc.at_or_default(str[i], QC_VAL::YES);
 
@@ -206,7 +206,7 @@ namespace dwhbll::unicode {
                 // Should still be fairly close to O(n) on average but
                 // approaches O(8n) if all decompositions are rare, large decompositions
 
-                size_t last_starter = i;
+                std::size_t last_starter = i;
                 while (last_starter > 0) {
                     auto cccv = base::canonical_combining_class.find(str[last_starter]);
                     auto ccc = cccv == base::canonical_combining_class.end() ? 0 : cccv->data;
@@ -221,7 +221,7 @@ namespace dwhbll::unicode {
                 std::u32string result(str, 0, last_starter);
 
                 // decompose remaining chars
-                for (size_t k = last_starter; k < n; k++) {
+                for (std::size_t k = last_starter; k < n; k++) {
                     auto r = decompose(str[k], false);
 
                     if (r.empty())
@@ -266,11 +266,11 @@ namespace dwhbll::unicode {
             }
 
             bool quick_check(std::u32string_view str) {
-                uint8_t prev_ccc = 0;
-                size_t n = str.size();
-                size_t last_starter_idx = 0;
+                u8 prev_ccc = 0;
+                std::size_t n = str.size();
+                std::size_t last_starter_idx = 0;
 
-                for (size_t i = 0; i < n; ++i) {
+                for (std::size_t i = 0; i < n; ++i) {
                     char32_t c = str[i];
 
                     if (c < 0x80) {
@@ -295,7 +295,7 @@ namespace dwhbll::unicode {
                         return false;
 
                     if (qc == QC_VAL::MAYBE) {
-                        size_t end = i + 1;
+                        std::size_t end = i + 1;
                         while (end < n && base::canonical_combining_class.at_or_default(str[end], 0) != 0)
                             end++;
 
@@ -316,11 +316,11 @@ namespace dwhbll::unicode {
 
         namespace nfd {
             std::u32string normalize(std::u32string_view str) {
-                size_t i = 0;
-                size_t n = str.size();
+                std::size_t i = 0;
+                std::size_t n = str.size();
 
                 // 1. Fast Path: Find first code point violating NFD QC or ordering
-                uint8_t prev_ccc = 0;
+                u8 prev_ccc = 0;
                 while (i < n) {
                     auto ch = str[i];
                     auto qcv = nfd_qc.at_or_default(ch, QC_VAL::YES);
@@ -328,7 +328,7 @@ namespace dwhbll::unicode {
                     if (qcv == QC_VAL::NO)
                         break;
 
-                    uint8_t ccc = base::canonical_combining_class.at_or_default(ch, 0);
+                    u8 ccc = base::canonical_combining_class.at_or_default(ch, 0);
                     if (prev_ccc > ccc && ccc != 0)
                         break; // fail canonical ordering
 
@@ -349,7 +349,7 @@ namespace dwhbll::unicode {
                 std::u32string result(str, 0, i);
 
                 // decompose remaining chars
-                for (size_t k = i; k < n; k++) {
+                for (std::size_t k = i; k < n; k++) {
                     auto r = decompose(str[k], false);
 
                     if (r.empty())
@@ -366,7 +366,7 @@ namespace dwhbll::unicode {
             }
 
             bool quick_check(std::u32string_view str) {
-                uint8_t prev_ccc = 0;
+                u8 prev_ccc = 0;
 
                 for (char32_t c : str) {
                     // ASCII
@@ -394,11 +394,11 @@ namespace dwhbll::unicode {
 
         namespace nfkc {
             std::u32string normalize(std::u32string_view str) {
-                size_t i = 0;
-                size_t n = str.size();
+                std::size_t i = 0;
+                std::size_t n = str.size();
 
                 // O(n) copy as long as the string passes QC
-                uint8_t prev_ccc = 0;
+                u8 prev_ccc = 0;
                 while (i < n) {
                     auto qc = nfkc_qc.at_or_default(str[i], QC_VAL::YES);
 
@@ -424,7 +424,7 @@ namespace dwhbll::unicode {
                 // Should still be fairly close to O(n) on average but
                 // approaches O(8n) if all decompositions are rare, large decompositions
 
-                size_t last_starter = i;
+                std::size_t last_starter = i;
                 while (last_starter > 0) {
                     auto cccv = base::canonical_combining_class.find(str[last_starter]);
                     auto ccc = cccv == base::canonical_combining_class.end() ? 0 : cccv->data;
@@ -439,7 +439,7 @@ namespace dwhbll::unicode {
                 std::u32string result(str, 0, last_starter);
 
                 // decompose remaining chars
-                for (size_t k = last_starter; k < n; k++) {
+                for (std::size_t k = last_starter; k < n; k++) {
                     auto r = decompose(str[k], true);
 
                     if (r.empty())
@@ -482,11 +482,11 @@ namespace dwhbll::unicode {
             }
 
             bool quick_check(std::u32string_view str) {
-                uint8_t prev_ccc = 0;
-                size_t n = str.size();
-                size_t last_starter_idx = 0;
+                u8 prev_ccc = 0;
+                std::size_t n = str.size();
+                std::size_t last_starter_idx = 0;
 
-                for (size_t i = 0; i < n; ++i) {
+                for (std::size_t i = 0; i < n; ++i) {
                     char32_t c = str[i];
 
                     if (c < 0x80) {
@@ -511,7 +511,7 @@ namespace dwhbll::unicode {
                         return false;
 
                     if (qc == QC_VAL::MAYBE) {
-                        size_t end = i + 1;
+                        std::size_t end = i + 1;
                         while (end < n && base::canonical_combining_class.at_or_default(str[end], 0) != 0)
                             end++;
 
@@ -532,11 +532,11 @@ namespace dwhbll::unicode {
 
         namespace nfkd {
             std::u32string normalize(std::u32string_view str) {
-                size_t i = 0;
-                size_t n = str.size();
+                std::size_t i = 0;
+                std::size_t n = str.size();
 
                 // 1. Fast Path: Find first code point violating NFD QC or ordering
-                uint8_t prev_ccc = 0;
+                u8 prev_ccc = 0;
                 while (i < n) {
                     auto ch = str[i];
                     auto qcv = nfkd_qc.at_or_default(ch, QC_VAL::YES);
@@ -544,7 +544,7 @@ namespace dwhbll::unicode {
                     if (qcv == QC_VAL::NO)
                         break;
 
-                    uint8_t ccc = base::canonical_combining_class.at_or_default(ch, 0);
+                    u8 ccc = base::canonical_combining_class.at_or_default(ch, 0);
                     if (prev_ccc > ccc && ccc != 0)
                         break; // fail canonical ordering
 
@@ -565,7 +565,7 @@ namespace dwhbll::unicode {
                 std::u32string result(str, 0, i);
 
                 // decompose remaining chars
-                for (size_t k = i; k < n; k++) {
+                for (std::size_t k = i; k < n; k++) {
                     auto r = decompose(str[k], true);
 
                     if (r.empty())
@@ -582,7 +582,7 @@ namespace dwhbll::unicode {
             }
 
             bool quick_check(std::u32string_view str) {
-                uint8_t prev_ccc = 0;
+                u8 prev_ccc = 0;
 
                 for (char32_t c : str) {
                     // ASCII

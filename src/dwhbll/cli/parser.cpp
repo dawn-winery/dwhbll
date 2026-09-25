@@ -1,4 +1,7 @@
-#include <dwhbll/cli/cli.h>
+import std;
+import dwhbll.cli;
+import dwhbll.sanify;
+import dwhbll.stl_ext;
 
 namespace dwhbll::cli {
 
@@ -82,7 +85,7 @@ std::unique_ptr<ValueParser> FloatValueParser::clone() const {
 
 bool BoolValueParser::parse(const std::string& input, std::string& output) const {
     std::string lower = input;
-    std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+    std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c){ return std::tolower(c); });
     if (lower == "true" || lower == "1" || lower == "yes" || lower == "on") {
         output = "true";
         return true;

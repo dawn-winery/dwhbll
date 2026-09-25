@@ -1,16 +1,14 @@
-#include <dwhbll/concurrency/coroutine/reactor.h>
-
+#include <cstring>
 #include <liburing.h>
 
-#include <dwhbll/concurrency/coroutine/cancellable_base.h>
-#include <dwhbll/concurrency/coroutine/cancellation_exception.h>
-#include <dwhbll/concurrency/coroutine/detached_task.h>
-#include <dwhbll/concurrency/coroutine/uring_promise.h>
-#include <dwhbll/concurrency/coroutine/uring_sqe_awaitable.h>
-#include <dwhbll/debug/debug.h>
-#include <dwhbll/console/logging.h>
-#include <dwhbll/exceptions/rt_exception_base.h>
-#include <dwhbll/stl_ext/utilities.h>
+import std;
+import dwhbll.concurrency.coroutine;
+import dwhbll.concurrency;
+import dwhbll.debug;
+import dwhbll.console;
+import dwhbll.exceptions;
+import dwhbll.stl_ext;
+import dwhbll.sanify;
 
 namespace dwhbll::concurrency::coroutine {
     namespace detail {
@@ -170,7 +168,7 @@ namespace dwhbll::concurrency::coroutine {
         }();
     }
 
-    reactor::reactor(std::uint32_t size) : ring() {
+    reactor::reactor(u32 size) : ring() {
         auto r = io_uring_queue_init(size, &ring, IORING_SETUP_SQPOLL);
         if (r < 0)
             debug::panic("failed to setup uring queue! ({})", strerror(errno));

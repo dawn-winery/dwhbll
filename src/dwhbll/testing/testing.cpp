@@ -1,4 +1,5 @@
-#include <dwhbll/testing/testing.h>
+import std;
+import dwhbll.testing;
 
 namespace dwhbll::test {
 

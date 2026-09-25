@@ -1,5 +1,8 @@
-#include <dwhbll/testing/testing.h>
-#include <dwhbll/lang/c/tokenize.h>
+#include <dwhbll/macros/testing.h>
+
+import dwhbll.testing;
+import dwhbll.lang;
+import std;
 
 using namespace dwhbll::test;
 using namespace dwhbll::lang::c;

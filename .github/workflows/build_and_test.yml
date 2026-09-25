@@ -39,7 +39,9 @@ jobs:
             -DDWHBLL_TESTS=ON \
             -DDWHBLL_BENCHMARKS=ON \
             -DDWHBLL_UNICODE_SUPPORT=YES \
-            -DDWHBLL_DWCC_CPP=YES
+            -DDWHBLL_DWCC_CPP=YES \
+            -DDWHBLL_REFLECTION=ON \
+            -DDWHBLL_MODULES=ON
           cmake --build build
 
       - name: Test

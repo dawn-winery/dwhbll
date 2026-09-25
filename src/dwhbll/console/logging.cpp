@@ -1,10 +1,7 @@
-#include <dwhbll/console/logging.h>
-
-#include <iostream>
-#include <sstream>
-#include <unordered_map>
-#include <dwhbll/sanify/types.h>
-#include <dwhbll/stl_ext/string.h>
+import std;
+import dwhbll.console;
+import dwhbll.sanify;
+import dwhbll.stl_ext;
 
 namespace dwhbll::console {
     namespace detail {

@@ -3,9 +3,13 @@
 #include <span>
 
 #include <dwhbll/collections/ring.h>
-#include <dwhbll/concurrency/spinlock.h>
+#include <dwhbll/sanify/deferred.h>
 #include <dwhbll/concurrency/coroutine/task.h>
 #include <dwhbll/sanify/types.h>
+
+namespace dwhbll::concurrency {
+    class spinlock;
+}
 
 namespace dwhbll::collections {
     /**

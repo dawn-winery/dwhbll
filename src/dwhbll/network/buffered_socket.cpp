@@ -1,9 +1,15 @@
-#include <dwhbll/network/buffered_socket.h>
+#include <cerrno>
 
-#include <dwhbll/debug/debug.h>
-#include <dwhbll/exceptions/rt_exception_base.h>
-#define DWHBLL_SANIFY_EXPORT
-#include <dwhbll/sanify/coroutines.h>
+import std;
+import dwhbll.network;
+import dwhbll.concurrency.coroutine;
+import dwhbll.exceptions;
+import dwhbll.memory;
+import dwhbll.debug;
+import dwhbll.sanify;
+
+using namespace dwhbll::concurrency::coroutine;
+using namespace dwhbll::concurrency::coroutine::wrappers;
 
 namespace dwhbll::network {
     inbound_network_buffer::inbound_network_buffer(memory::Pool<Socket>::ObjectWrapper &socket) : ParseUtils(), socket(socket) {}
@@ -22,7 +28,7 @@ namespace dwhbll::network {
             return;
 
         buffer.resize(recv_count);
-        write_vector(std::span{*reinterpret_cast<std::vector<sanify::u8> *>(&buffer)});
+        write_vector(std::span{*reinterpret_cast<std::vector<u8> *>(&buffer)});
     }
 
     task<> inbound_network_buffer::refill_buffer_async() {

@@ -2,7 +2,9 @@
 
 #include <atomic>
 
-#include <dwhbll/sanify/deferred.h>
+namespace dwhbll::sanify {
+    class deferred;
+}
 
 namespace dwhbll::concurrency {
     class spinlock {

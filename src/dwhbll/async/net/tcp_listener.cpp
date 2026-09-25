@@ -1,15 +1,19 @@
-#include <dwhbll/async/net/tcp_listener.h>
-
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <cerrno>
 
-#include <dwhbll/concurrency/coroutine/wrappers/syscall_wrappers.h>
-#include <dwhbll/network/address.h>
+import std;
+import dwhbll.async.net;
+import dwhbll.concurrency.coroutine;
+import dwhbll.stl_ext;
+import dwhbll.network;
+import dwhbll.debug;
+import dwhbll.sanify;
 
-#define DWHBLL_SANIFY_EXPORT
-#include <dwhbll/sanify/coroutines.h>
-#include <dwhbll/sanify/stl_ext.h>
+using namespace dwhbll::stl_ext;
+using namespace dwhbll::concurrency::coroutine;
+using namespace dwhbll::concurrency::coroutine::wrappers;
 
 namespace dwhbll::async::net {
     tcp_listener::tcp_listener() = default;
@@ -42,7 +46,7 @@ namespace dwhbll::async::net {
             debug::panic("binding to domain is not allowed.");
         case network::address::IPV4: {
             use_ipv6 = false;
-            auto& v4addr = std::get<std::array<std::uint8_t, 4>>(endpoint.host);
+            auto& v4addr = std::get<std::array<u8, 4>>(endpoint.host);
             auto* v4 = reinterpret_cast<sockaddr_in*>(&addr);
             v4->sin_family = AF_INET;
             v4->sin_addr.s_addr = v4addr[3] << 24 | v4addr[2] << 16 | v4addr[1] << 8 | v4addr[0];
@@ -100,10 +104,10 @@ namespace dwhbll::async::net {
                     auto* a = reinterpret_cast<sockaddr_in*>(&addr);
                     auto addr = a->sin_addr.s_addr;
                     return network::address(std::array{
-                        static_cast<std::uint8_t>(addr & 0xFF),
-                        static_cast<std::uint8_t>((addr >> 8) & 0xFF),
-                        static_cast<std::uint8_t>((addr >> 16) & 0xFF),
-                        static_cast<std::uint8_t>((addr >> 24) & 0xFF)
+                        static_cast<u8>(addr & 0xFF),
+                        static_cast<u8>((addr >> 8) & 0xFF),
+                        static_cast<u8>((addr >> 16) & 0xFF),
+                        static_cast<u8>((addr >> 24) & 0xFF)
                     }, a->sin_port);
                 }
                 case AF_INET6:

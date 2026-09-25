@@ -1,11 +1,12 @@
-#include <dwhbll/files/executables/mz.h>
-
-#include <dwhbll/files/parse_utils.h>
+import std;
+import dwhbll.files;
+import dwhbll.debug;
+import dwhbll.sanify;
 
 namespace dwhbll::files::executables {
     DOS_HEADER::DOS_HEADER() = default;
 
-    DOS_HEADER::DOS_HEADER(std::span<uint8_t> file) {
+    DOS_HEADER::DOS_HEADER(std::span<u8> file) {
         // TODO: technically the MZ header can be smaller for non PE files
         // but that's a problem for future me.
         e_magic = read_u16_le(file);
@@ -42,7 +43,7 @@ namespace dwhbll::files::executables {
 
     DOS_IMAGE::DOS_IMAGE() = default;
 
-    DOS_IMAGE::DOS_IMAGE(std::span<uint8_t> file) : header(file) {
+    DOS_IMAGE::DOS_IMAGE(std::span<u8> file) : header(file) {
         // compute the range for the DOS stub
         auto begin = header.e_cparhdr * 16;
         auto end = file.size();

@@ -3,6 +3,7 @@
 #include <memory>
 
 #include <dwhbll/concurrency/spinlock.h>
+#include <dwhbll/sanify/deferred.h>
 
 namespace dwhbll::concurrency {
     template <typename T>

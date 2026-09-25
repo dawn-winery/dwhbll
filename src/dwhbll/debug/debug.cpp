@@ -1,8 +1,8 @@
-#include <dwhbll/debug/debug.h>
+#include <dwhbll/macros/debug.h>
 
-#include <vector>
-#include <fstream>
-
+import std;
+import dwhbll.debug;
+import dwhbll.sanify;
 
 namespace dwhbll::debug {
 

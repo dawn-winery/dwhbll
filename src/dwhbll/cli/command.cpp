@@ -1,8 +1,7 @@
-#include <dwhbll/cli/command.h>
-#include <iostream>
-#include <cstdlib>
-#include <cctype>
-#include <sstream>
+import std;
+import dwhbll.cli;
+import dwhbll.stl_ext;
+import dwhbll.sanify;
 
 extern int __argc;
 extern char** __argv;
@@ -229,12 +228,12 @@ ParseResult Command::parse_args(const std::vector<std::string>& argv) const {
         long_map["version"] = &version_arg;
     }
 
-    size_t i = 0;
+    std::size_t i = 0;
     while (i < argv.size()) {
         const std::string& current = argv[i];
 
         if (current == "--") {
-            for (size_t j = i + 1; j < argv.size(); ++j) {
+            for (std::size_t j = i + 1; j < argv.size(); ++j) {
                 positional_args.push_back(argv[j]);
             }
             break;
@@ -244,7 +243,7 @@ ParseResult Command::parse_args(const std::vector<std::string>& argv) const {
             if (current[1] == '-') {
                 std::string long_name = current.substr(2);
                 std::string value;
-                size_t eq_pos = long_name.find('=');
+                std::size_t eq_pos = long_name.find('=');
                 if (eq_pos != std::string::npos) {
                     value = long_name.substr(eq_pos + 1);
                     long_name = long_name.substr(0, eq_pos);
@@ -313,7 +312,7 @@ ParseResult Command::parse_args(const std::vector<std::string>& argv) const {
                 }
             } else {
                 std::string short_flags = current.substr(1);
-                for (size_t j = 0; j < short_flags.size(); ++j) {
+                for (std::size_t j = 0; j < short_flags.size(); ++j) {
                     char flag = short_flags[j];
                     auto it = short_map.find(flag);
                     if (it == short_map.end()) {
@@ -409,7 +408,7 @@ ParseResult Command::parse_args(const std::vector<std::string>& argv) const {
             } else if (external_subcommand_) {
                 matches.insert_value("external_subcommand", current);
                 std::vector<std::string> ext_args(argv.begin() + i + 1, argv.end());
-                for (size_t j = 0; j < ext_args.size(); ++j) {
+                for (std::size_t j = 0; j < ext_args.size(); ++j) {
                     matches.insert_value("external_subcommand_arg", ext_args[j]);
                 }
                 break;
@@ -419,14 +418,14 @@ ParseResult Command::parse_args(const std::vector<std::string>& argv) const {
         ++i;
     }
 
-    size_t pos_idx = 1;
+    std::size_t pos_idx = 1;
     for (const auto& arg : args_) {
         if (arg.is_positional()) {
             if (arg.index().is_some()) {
                 pos_idx = arg.index().unwrap();
             }
             if (arg.trailing_var_arg()) {
-                for (size_t j = pos_idx - 1; j < positional_args.size(); ++j) {
+                for (std::size_t j = pos_idx - 1; j < positional_args.size(); ++j) {
                     matches.insert_value(arg.id(), positional_args[j]);
                 }
                 pos_idx = positional_args.size() + 1;
@@ -563,27 +562,27 @@ std::string Command::arg_display_name(const Arg& arg) const {
     return arg.id();
 }
 
-std::pair<size_t, size_t> Command::get_min_max_values(const Arg& arg) const {
-    size_t min_values = 1, max_values = 1;
+std::pair<std::size_t, std::size_t> Command::get_min_max_values(const Arg& arg) const {
+    std::size_t min_values = 1, max_values = 1;
     if (arg.num_args().is_some()) {
         const auto range = arg.num_args().unwrap();
         if (range.min.has_value()) min_values = range.min.value();
         if (range.max.has_value()) max_values = range.max.value();
-        else max_values = SIZE_MAX;
+        else max_values = std::numeric_limits<std::size_t>().max();
     }
     return {min_values, max_values};
 }
 
-size_t Command::count_total_values(const Arg& arg, const std::vector<std::string>& raw_values) const {
+std::size_t Command::count_total_values(const Arg& arg, const std::vector<std::string>& raw_values) const {
     if (!arg.value_delimiter().is_some()) {
         return raw_values.size();
     }
     char delim = arg.value_delimiter().unwrap();
-    size_t total = 0;
+    std::size_t total = 0;
     for (const auto& rv : raw_values) {
-        size_t start = 0;
+        std::size_t start = 0;
         while (start < rv.size()) {
-            size_t end = rv.find(delim, start);
+            std::size_t end = rv.find(delim, start);
             if (end == std::string::npos) {
                 total++;
                 break;
@@ -601,9 +600,9 @@ void Command::insert_values_with_delimiter(const Arg& arg, ArgMatches& matches, 
         matches.clear_values(arg.id());
     }
     for (const auto& val : raw_values) {
-        size_t start = 0;
+        std::size_t start = 0;
         while (start < val.size()) {
-            size_t end = val.find(delim, start);
+            std::size_t end = val.find(delim, start);
             std::string part;
             if (end == std::string::npos) {
                 part = val.substr(start);
@@ -625,7 +624,7 @@ void Command::insert_values_with_delimiter(const Arg& arg, ArgMatches& matches, 
     }
 }
 
-std::vector<std::string> Command::collect_raw_values(const std::vector<std::string>& argv, size_t& i, size_t max_values, const std::string& initial_value) const {
+std::vector<std::string> Command::collect_raw_values(const std::vector<std::string>& argv, std::size_t& i, std::size_t max_values, const std::string& initial_value) const {
     std::vector<std::string> raw_values;
     if (!initial_value.empty()) {
         raw_values.push_back(initial_value);
@@ -642,7 +641,7 @@ std::vector<std::string> Command::collect_raw_values(const std::vector<std::stri
 
 ParseResult Command::validate_and_insert_values(const Arg& arg, ArgMatches& matches, const std::vector<std::string>& raw_values, const std::string& current) const {
     auto [min_values, max_values] = get_min_max_values(arg);
-    size_t total_values = count_total_values(arg, raw_values);
+    std::size_t total_values = count_total_values(arg, raw_values);
 
     if (total_values < min_values) {
         if (get_setting(CommandSetting::IgnoreErrors)) {
@@ -802,7 +801,7 @@ ParseResult Command::check_requires(const ArgMatches& matches) const {
 ParseResult Command::check_num_args_range(const ArgMatches& matches) const {
     for (const auto& arg : args_) {
         if (arg.num_args().is_some() && matches.contains_id(arg.id())) {
-            size_t count = matches.count(arg.id());
+            std::size_t count = matches.count(arg.id());
             const auto range = arg.num_args().unwrap();
             if (range.min.has_value() && count < range.min.value()) {
                 return ParseResult("error: argument '" + arg.id() + "' requires at least " + std::to_string(range.min.value()) + " values");
@@ -818,7 +817,7 @@ ParseResult Command::check_num_args_range(const ArgMatches& matches) const {
 ParseResult Command::check_groups(const ArgMatches& matches) const {
     ArgMatches new_matches = matches;
     for (const auto& group : groups_) {
-        size_t group_count = 0;
+        std::size_t group_count = 0;
         std::string used_arg;
         for (const auto& arg_id : group.args()) {
             if (matches.contains_id(arg_id)) {
@@ -884,7 +883,7 @@ ParseResult Command::check_groups(const ArgMatches& matches) const {
     return ParseResult(std::move(new_matches));
 }
 
-std::vector<std::string> Command::collect_raw_values(const std::vector<std::string>& argv, size_t& i, size_t max_values, const std::string& initial_value, const Arg& arg) const {
+std::vector<std::string> Command::collect_raw_values(const std::vector<std::string>& argv, std::size_t& i, std::size_t max_values, const std::string& initial_value, const Arg& arg) const {
     std::vector<std::string> raw_values;
     if (!initial_value.empty()) {
         raw_values.push_back(initial_value);
@@ -927,7 +926,7 @@ std::vector<std::string> Command::collect_raw_values(const std::vector<std::stri
 
 bool Command::is_negative_number(const std::string& s) {
     if (s.empty() || s[0] != '-') return false;
-    for (size_t i = 1; i < s.size(); ++i) {
+    for (std::size_t i = 1; i < s.size(); ++i) {
         if (!std::isdigit(static_cast<unsigned char>(s[i]))) return false;
     }
     return true;
@@ -953,8 +952,10 @@ std::string Command::render_help() const {
         }
     }
     std::sort(sorted_args.begin(), sorted_args.end(), [](const Arg* a, const Arg* b) {
-        auto a_order = a->display_order().is_some() ? a->display_order().unwrap() : SIZE_MAX;
-        auto b_order = b->display_order().is_some() ? b->display_order().unwrap() : SIZE_MAX;
+        auto a_order = a->display_order().is_some() ? a->display_order().unwrap() 
+                                                    : std::numeric_limits<std::size_t>().max();
+        auto b_order = b->display_order().is_some() ? b->display_order().unwrap() 
+                                                    : std::numeric_limits<std::size_t>().max();
         return a_order < b_order;
     });
 

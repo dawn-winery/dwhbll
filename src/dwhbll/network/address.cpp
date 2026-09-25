@@ -1,15 +1,17 @@
-#include <dwhbll/network/address.h>
+import std;
+import dwhbll.network;
+import dwhbll.sanify;
 
 namespace dwhbll::network {
     address::address() : type(EMPTY) {}
 
-    address::address(std::string host, const std::uint16_t port): type(DOMAIN), host(std::move(host)),
+    address::address(std::string host, const u16 port): type(DOMAIN), host(std::move(host)),
                                                                   port(port) {}
 
-    address::address(std::array<std::uint8_t, 4> host, std::uint16_t port): type(IPV4), host(host),
+    address::address(std::array<u8, 4> host, u16 port): type(IPV4), host(host),
                                                                   port(port) {}
 
-    address::address(std::array<std::uint16_t, 8> host, std::uint16_t port): type(IPV6), host(host),
+    address::address(std::array<u16, 8> host, u16 port): type(IPV6), host(host),
                                                                   port(port) {}
 
     address::address(const address &other) = default;

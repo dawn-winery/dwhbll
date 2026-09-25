@@ -1,15 +1,16 @@
-#include <dwhbll/network/socket_manager.h>
-
-#include <stdexcept>
-
+#include <dwhbll/macros/debug.h>
 #include <arpa/inet.h>
 #include <poll.h>
-#include <sys/socket.h>
 #include <unistd.h>
-#include <dwhbll/concurrency/coroutine/wrappers/syscall_wrappers.h>
 
-#define DWHBLL_SANIFY_EXPORT
-#include <dwhbll/sanify/coroutines.h>
+import std;
+import dwhbll.network;
+import dwhbll.concurrency.coroutine;
+import dwhbll.stl_ext;
+import dwhbll.debug;
+
+using namespace dwhbll::concurrency::coroutine;
+using namespace dwhbll::concurrency::coroutine::wrappers;
 
 namespace dwhbll::network {
     Socket::~Socket() {

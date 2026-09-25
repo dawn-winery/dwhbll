@@ -1,9 +1,8 @@
-#include <dwhbll/testing/testing.h>
-#include <dwhbll/linalg/matrix.h>
+#include <dwhbll/macros/testing.h>
 
-#include <cstdlib>
-#include <print>
-#include <random>
+import std;
+import dwhbll.testing;
+import dwhbll.linalg;
 
 using namespace dwhbll::test;
 using namespace dwhbll::linalg;
@@ -35,8 +34,8 @@ void init_list()
 
     REQUIRE(mat.size() == 9);
 
-    for(size_t i = 0; i < 3; i++)
-        for(size_t j = 0; j < 3; j++)
+    for(std::size_t i = 0; i < 3; i++)
+        for(std::size_t j = 0; j < 3; j++)
             REQUIRE((mat[i,j] == static_cast<int>(i * mat.rows() + j)));
 }
 
@@ -68,23 +67,23 @@ void square_matrix()
     REQUIRE(res.rows() == m1.rows());
     REQUIRE(res.cols() == m2.cols());
 
-    for(size_t i = 0; i < res.rows(); i++)
-        for(size_t j = 0; j < res.cols(); j++)
+    for(std::size_t i = 0; i < res.rows(); i++)
+        for(std::size_t j = 0; j < res.cols(); j++)
             REQUIRE((res[i,j] == expected[i,j]));
 }
 
 [[=test]]
 void matmul()
 {
-    constexpr size_t SIZE = 512;
+    constexpr std::size_t SIZE = 512;
     Matrix<int, SIZE, SIZE> m1;
     Matrix<int, SIZE, SIZE> m2;
 
     std::mt19937_64 generator(17);
     std::uniform_int_distribution<int> distrib(0, 128);
 
-    for(size_t i = 0; i < SIZE; i++) {
-        for(size_t j = 0; j < SIZE; j++) {
+    for(std::size_t i = 0; i < SIZE; i++) {
+        for(std::size_t j = 0; j < SIZE; j++) {
             m1[i,j] = distrib(generator);
             m2[i,j] = distrib(generator);
         }
@@ -94,8 +93,8 @@ void matmul()
     auto res_cpu = m1.matmul<SIZE, int, dwhbll::linalg::ExecutionPolicy::CPU>(m2);
     float tolerance = 1e-5;
 
-    for(size_t i = 0; i < SIZE; i++)
-        for(size_t j = 0; j < SIZE; j++)
+    for(std::size_t i = 0; i < SIZE; i++)
+        for(std::size_t j = 0; j < SIZE; j++)
             REQUIRE(std::abs(res[i,j] - res_cpu[i,j]) <= tolerance);
 }
 

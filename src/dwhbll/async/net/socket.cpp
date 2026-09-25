@@ -1,18 +1,18 @@
-#include <dwhbll/async/net/socket.h>
-
 #include <netinet/in.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <cstring>
-#include <utility>
 #include <netinet/tcp.h>
+#include <unistd.h>
+#include <cerrno>
 
-#include <dwhbll/concurrency/coroutine/wrappers/syscall_wrappers.h>
-#include <dwhbll/network/address.h>
-#include <dwhbll/stl_ext/option.h>
+import std;
+import dwhbll.async.net;
+import dwhbll.concurrency.coroutine;
+import dwhbll.network;
+import dwhbll.stl_ext;
+import dwhbll.debug;
+import dwhbll.sanify;
 
-#define DWHBLL_SANIFY_EXPORT
-#include <dwhbll/sanify/coroutines.h>
+using namespace dwhbll::concurrency::coroutine;
+using namespace dwhbll::concurrency::coroutine::wrappers;
 
 namespace dwhbll::async::net {
     task<stl_ext::Result<std::unique_ptr<socket>, int>> socket::connect_internal(bool use_ipv6, const network::address &endpoint, int socktype) {
@@ -23,7 +23,7 @@ namespace dwhbll::async::net {
             debug::todo();
         case network::address::IPV4: {
             use_ipv6 = false;
-            auto& v4addr = std::get<std::array<std::uint8_t, 4>>(endpoint.host);
+            auto& v4addr = std::get<std::array<u8, 4>>(endpoint.host);
             auto* v4 = reinterpret_cast<sockaddr_in*>(&addr);
             v4->sin_family = AF_INET;
             v4->sin_addr.s_addr = v4addr[3] << 24 | v4addr[2] << 16 | v4addr[1] << 8 | v4addr[0];
@@ -89,7 +89,7 @@ namespace dwhbll::async::net {
         nodelay_ = state;
         int val = state;
         if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &val, sizeof(val)) < 0) {
-            debug::panic(strerror(errno));
+            debug::panic(std::strerror(errno));
         }
     }
 
@@ -119,7 +119,7 @@ namespace dwhbll::async::net {
         return connect_internal(use_ipv6, endpoint, SOCK_DGRAM);
     }
 
-    task<stl_ext::Result<stl_ext::UNIT, int>> socket::read(std::span<std::uint8_t> buffer) {
+    task<stl_ext::Result<stl_ext::UNIT, int>> socket::read(std::span<u8> buffer) {
         if (!has_socket())
             debug::panic();
 
@@ -142,7 +142,7 @@ namespace dwhbll::async::net {
         co_return stl_ext::Ok();
     }
 
-    task<stl_ext::Result<stl_ext::UNIT, int>> socket::write(std::span<const std::uint8_t> buffer) {
+    task<stl_ext::Result<stl_ext::UNIT, int>> socket::write(std::span<const u8> buffer) {
         if (!has_socket())
             debug::panic();
 
@@ -160,7 +160,7 @@ namespace dwhbll::async::net {
         co_return stl_ext::Ok();
     }
 
-    task<stl_ext::Result<ssize_t, int>> socket::read_some(std::span<std::uint8_t> buffer) {
+    task<stl_ext::Result<ssize_t, int>> socket::read_some(std::span<u8> buffer) {
         if (!has_socket())
             debug::panic();
 
@@ -172,7 +172,7 @@ namespace dwhbll::async::net {
         co_return r;
     }
 
-    task<stl_ext::Result<ssize_t, int>> socket::write_some(std::span<const std::uint8_t> buffer) {
+    task<stl_ext::Result<ssize_t, int>> socket::write_some(std::span<const u8> buffer) {
         if (!has_socket())
             debug::panic();
 

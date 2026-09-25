@@ -1,15 +1,10 @@
-#include <dwhbll/json/json.h>
-
-#include <dwhbll/debug/debug.h>
-#include <dwhbll/console/logging.h>
 #include <dwhbll/stl_ext/try.h>
-#include <dwhbll/stl_ext/string.h>
 
-#include <charconv>
-#include <sstream>
-#include <string>
-#include <utility>
-#include <cmath>
+import std;
+import dwhbll.json;
+import dwhbll.debug;
+import dwhbll.stl_ext;
+import dwhbll.sanify;
 
 namespace dwhbll::json {
 
@@ -257,7 +252,7 @@ std::expected<std::string, std::string> json_parser::string() {
                     s += '\t';
                     break;
                 case 'u': {
-                    uint32_t cp = 0;
+                    u32 cp = 0;
                     for(int i = 0; i < 4; i++) {
                         char h = TRY(consume());
                         cp <<= 4;
@@ -289,10 +284,10 @@ std::expected<std::string, std::string> json_parser::string() {
     return s;
 }
 
-std::expected<sanify::f64, std::string> json_parser::number() {
+std::expected<f64, std::string> json_parser::number() {
     const char* start = data.data() + idx;
     const char* end = data.data() + data.size();
-    sanify::f64 num;
+    f64 num;
     auto [ptr, ec] = std::from_chars(start, end, num);
     if(ec != std::errc())
         return std::unexpected("Invalid number");

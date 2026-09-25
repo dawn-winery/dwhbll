@@ -1,9 +1,9 @@
-#include <dwhbll/concurrency/coroutine/async_semaphore.h>
-
-#include <dwhbll/concurrency/coroutine/reactor.h>
+import std;
+import dwhbll.concurrency.coroutine;
+import dwhbll.sanify;
 
 namespace dwhbll::concurrency::coroutine {
-    async_semaphore::async_semaphore(std::int32_t initial): permits_(initial) {}
+    async_semaphore::async_semaphore(i32 initial): permits_(initial) {}
 
     async_semaphore::semaphore_awaitable::semaphore_awaitable(
         async_semaphore *semaphore): semaphore(semaphore) {

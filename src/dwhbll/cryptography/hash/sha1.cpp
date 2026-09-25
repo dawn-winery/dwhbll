@@ -1,23 +1,26 @@
-#include <dwhbll/cryptography/hash/sha1.h>
-
 #include <cstring>
-#include <dwhbll/debug/debug.h>
+#include <dwhbll/macros/debug.h>
+
+import std;
+import dwhbll.cryptography;
+import dwhbll.debug;
+import dwhbll.sanify;
 
 namespace dwhbll::cryptography {
     void SHA1::digest_chunk() {
-        for (std::uint8_t i = 0; i < 64; i += 4)
-            w[i / 4] = ((static_cast<std::uint32_t>(block[i]) << 24) & 0xFF000000) |
-                       ((static_cast<std::uint32_t>(block[i + 1]) << 16) & 0x00FF0000) |
-                       ((static_cast<std::uint32_t>(block[i + 2]) << 8) & 0x0000FF00) |
-                       (static_cast<std::uint32_t>(block[i + 3]) & 0x000000FF);
+        for (u8 i = 0; i < 64; i += 4)
+            w[i / 4] = ((static_cast<u32>(block[i]) << 24) & 0xFF000000) |
+                       ((static_cast<u32>(block[i + 1]) << 16) & 0x00FF0000) |
+                       ((static_cast<u32>(block[i + 2]) << 8) & 0x0000FF00) |
+                       (static_cast<u32>(block[i + 3]) & 0x000000FF);
 
-        for (std::uint8_t i = 16; i < 80; i++)
-            w[i] = std::rotl<std::uint32_t>(w[i - 3] ^ w[i - 8] ^ w[i - 14] ^ w[i - 16], 1);
+        for (u8 i = 16; i < 80; i++)
+            w[i] = std::rotl<u32>(w[i - 3] ^ w[i - 8] ^ w[i - 14] ^ w[i - 16], 1);
 
-        std::uint32_t a = h[0], b = h[1], c = h[2], d = h[3], e = h[4];
+        u32 a = h[0], b = h[1], c = h[2], d = h[3], e = h[4];
 
-        for (std::uint8_t i = 0; i < 80; i++) {
-            std::uint32_t f, k;
+        for (u8 i = 0; i < 80; i++) {
+            u32 f, k;
             if (i <= 19) {
                 f = (b & c) | ((~b) & d);
                 k = 0x5A827999;
@@ -32,10 +35,10 @@ namespace dwhbll::cryptography {
                 k = 0xCA62C1D6;
             }
 
-            const std::uint32_t temp = std::rotl<std::uint32_t>(a, 5) + f + e + k + w[i];
+            const u32 temp = std::rotl<u32>(a, 5) + f + e + k + w[i];
             e = d;
             d = c;
-            c = std::rotl<std::uint32_t>(b, 30);
+            c = std::rotl<u32>(b, 30);
             b = a;
             a = temp;
         }
@@ -78,7 +81,7 @@ namespace dwhbll::cryptography {
         h[4] = 0xC3D2E1F0;
     }
 
-    void SHA1::update(const std::span<const std::uint8_t> &in) {
+    void SHA1::update(const std::span<const u8> &in) {
         auto length = in.size();
         auto data = in.data();
 
@@ -92,7 +95,7 @@ namespace dwhbll::cryptography {
             message_length += length;
             return;
         }
-        auto copied = static_cast<std::uint64_t>(64 - block_head);
+        auto copied = static_cast<u64>(64 - block_head);
         std::memcpy(block + block_head, data, copied);
         length -= copied;
         data += copied;
@@ -116,7 +119,7 @@ namespace dwhbll::cryptography {
         }
     }
 
-    void SHA1::finalize(std::span<std::uint8_t> output) {
+    void SHA1::finalize(std::span<u8> output) {
         if (output.size() < HASHLEN)
             debug::panic("SHA-1 finalize buffer cannot fit hash!");
 
@@ -153,10 +156,10 @@ namespace dwhbll::cryptography {
         digest_chunk(); // consume final chunk
 
         for (int i = 0; i < 5; ++i) {
-            output[i * 4 + 0] = static_cast<uint8_t>(h[i] >> 24);
-            output[i * 4 + 1] = static_cast<uint8_t>(h[i] >> 16);
-            output[i * 4 + 2] = static_cast<uint8_t>(h[i] >> 8);
-            output[i * 4 + 3] = static_cast<uint8_t>(h[i]);
+            output[i * 4 + 0] = static_cast<u8>(h[i] >> 24);
+            output[i * 4 + 1] = static_cast<u8>(h[i] >> 16);
+            output[i * 4 + 2] = static_cast<u8>(h[i] >> 8);
+            output[i * 4 + 3] = static_cast<u8>(h[i]);
         }
 
         // erase all state

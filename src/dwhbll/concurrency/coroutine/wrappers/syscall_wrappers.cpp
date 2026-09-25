@@ -1,10 +1,11 @@
-#include <dwhbll/concurrency/coroutine/wrappers/syscall_wrappers.h>
+#include <cstring>
+#include <liburing.h>
 
-#include <dwhbll/concurrency/coroutine/uring_promise.h>
-#include <dwhbll/concurrency/coroutine/reactor.h>
-#include <dwhbll/concurrency/coroutine/uring_sqe_awaitable.h>
-
-#include <sys/socket.h>
+import std;
+import dwhbll.concurrency.coroutine;
+import dwhbll.exceptions;
+import dwhbll.stl_ext;
+import dwhbll.sanify;
 
 #define MAKE_PROMISE \
 uring_promise promise; \
@@ -52,7 +53,7 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
             throw exceptions::rt_exception_base("closing {} failed ({})!", fd, strerror(-result->res));
     }
 
-    task<ssize_t> read(int fd, void *buf, uint32_t count, off_t offset) {
+    task<ssize_t> read(int fd, void *buf, u32 count, off_t offset) {
         MAKE_PROMISE
 
         io_uring_prep_read(sqe, fd, buf, count, offset);
@@ -64,7 +65,7 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
         co_return result->res;
     }
 
-    task<ssize_t> write(int fd, void *buf, uint32_t count, off_t offset) {
+    task<ssize_t> write(int fd, void *buf, u32 count, off_t offset) {
         MAKE_PROMISE
 
         io_uring_prep_write(sqe, fd, buf, count, offset);
