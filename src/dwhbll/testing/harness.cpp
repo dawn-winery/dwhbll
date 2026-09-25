@@ -1,15 +1,13 @@
-#include <dwhbll/testing/testing.h>
-#include <dwhbll/testing/harness.h>
-#include <dwhbll/console/ansi_escape.h>
-#include <dwhbll/stl_ext/string.h>
-
-#include <print>
-#include <fstream>
-#include <thread>
-#include <cstring>
 #include <sys/epoll.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <cstring>
+#include <cstdio>
+
+import std;
+import dwhbll.testing;
+import dwhbll.stl_ext;
+import dwhbll.console;
 
 namespace dwhbll::test {
 
@@ -23,7 +21,7 @@ std::string_view status_color(test_status status) {
         case test_status::fail: return color::red;
         case test_status::xfail: return color::yellow;
         case test_status::xpass: return color::magenta;
-        case test_status::unsupported: return color::yellow;
+        case test_status::skip: return color::yellow;
         case test_status::unresolved: return color::red;
         case test_status::untested: return color::dim;
     }
@@ -47,11 +45,11 @@ std::string get_source_line(std::string_view file_path, std::uint32_t line_num) 
     return "";
 }
 
-void print_test_result(FILE* out, const test_result& tr, bool use_color) {
+void print_test_result(std::FILE* out, const test_result& tr, bool use_color) {
     auto st_str = to_status_string(tr.status);
 
     bool has_reason = !tr.message.empty() &&
-        (tr.status == test_status::unsupported ||
+        (tr.status == test_status::skip ||
          tr.status == test_status::xfail ||
          tr.status == test_status::xpass);
 
@@ -86,7 +84,7 @@ std::string_view to_status_string(test_status status) {
         case test_status::fail: return "FAIL";
         case test_status::xfail: return "XFAIL";
         case test_status::xpass: return "XPASS";
-        case test_status::unsupported: return "UNSUPPORTED";
+        case test_status::skip: return "SKIP";
         case test_status::unresolved: return "UNRESOLVED";
         case test_status::untested: return "UNTESTED";
     }
@@ -231,7 +229,7 @@ suite_result default_harness::run(const options& options) {
     std::unordered_map<int, Worker> active_workers;
     std::size_t next_work_idx = 0;
 
-    FILE* console_out = options.console_out ? options.console_out : stdout;
+    std::FILE* console_out = options.console_out ? options.console_out : stdout;
 
     auto spawn_worker = [&](std::size_t test_list_idx) -> bool {
         std::size_t reg_idx = test_indices[test_list_idx];
@@ -240,7 +238,7 @@ suite_result default_harness::run(const options& options) {
         if (t.is_skip) {
             test_result tr;
             tr.name = std::string(t.name);
-            tr.status = test_status::unsupported;
+            tr.status = test_status::skip;
             tr.message = std::string(t.skip_reason);
             std::println(stdout, "\n=== RUNNING: {} ===", t.name);
             std::println(stdout, "=== END: {} ({}) ===", t.name, to_status_string(tr.status));

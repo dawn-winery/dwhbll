@@ -1,7 +1,6 @@
-#include <dwhbll/uuid/uuid.h>
-
-#include <format>
-#include <dwhbll/debug/debug.h>
+import std;
+import dwhbll.uuid;
+import dwhbll.sanify;
 
 namespace dwhbll::uuid {
     const UUID UUID::_max_uuid = UUID{{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}};
@@ -10,7 +9,7 @@ namespace dwhbll::uuid {
 
     UUID::UUID() : _data(_nil_uuid._data) {}
 
-    UUID::UUID(const std::array<std::uint8_t, 16> &data) : _data(data) {}
+    UUID::UUID(const std::array<u8, 16> &data) : _data(data) {}
 
     UUID::UUID(const UUID &other): _data(other._data) {
     }

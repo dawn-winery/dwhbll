@@ -1,4 +1,5 @@
-#include <dwhbll/sanify/deferred.h>
+import std;
+import dwhbll.sanify;
 
 namespace dwhbll::sanify {
     deferred::deferred(const std::function<void()> &deferred_function): deferred_function(deferred_function) {}

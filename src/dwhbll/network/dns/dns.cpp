@@ -1,11 +1,9 @@
-#include <dwhbll/network/dns/dns.h>
+#include <arpa/inet.h>
 
-#include <exception>
-#include <format>
-#include <iostream>
-#include <numeric>
-
-#include <dwhbll/console/logging.h>
+import std;
+import dwhbll.network;
+import dwhbll.console;
+import dwhbll.sanify;
 
 namespace dwhbll::network::dns {
     Resolver default_resolver;
@@ -14,32 +12,32 @@ namespace dwhbll::network::dns {
         return default_resolver.query_dns(domain);
     }
 
-    std::uint8_t MemoryStream::get_uint8() {
+    u8 MemoryStream::get_uint8() {
         return data[current_head++];
     }
 
-    std::uint16_t MemoryStream::get_uint16() {
-        const std::uint8_t high = get_uint8();
-        const std::uint8_t low = get_uint8();
+    u16 MemoryStream::get_uint16() {
+        const u8 high = get_uint8();
+        const u8 low = get_uint8();
         return (high << 8) | low;
     }
 
-    std::uint32_t MemoryStream::get_uint32() {
-        const std::uint16_t high = get_uint16();
-        const std::uint16_t low = get_uint16();
+    u32 MemoryStream::get_uint32() {
+        const u16 high = get_uint16();
+        const u16 low = get_uint16();
         return (high << 16) | low;
     }
 
-    void MemoryStream::write_uint8(const std::uint8_t value) {
+    void MemoryStream::write_uint8(const u8 value) {
         data.push_back(value);
     }
 
-    void MemoryStream::write_uint16(std::uint16_t value) {
+    void MemoryStream::write_uint16(u16 value) {
         data.push_back(value >> 8);
         data.push_back(value & 0xFF);
     }
 
-    void MemoryStream::write_uint32(std::uint32_t value) {
+    void MemoryStream::write_uint32(u32 value) {
         write_uint16(value >> 16);
         write_uint16(value & 0xFFFF);
     }
@@ -110,7 +108,7 @@ namespace dwhbll::network::dns {
         auto head = stream.current_head;
 
         while (stream.data[head] != 0) {
-            const std::uint16_t size = static_cast<unsigned char>(stream.data[head++]);
+            const u16 size = static_cast<unsigned char>(stream.data[head++]);
             if ((size & 0xC0) == 0xC0) {
                 // if not already reading compressed data
                 if (!inCompressed) {
@@ -121,7 +119,7 @@ namespace dwhbll::network::dns {
                 // compressed
                 inCompressed = true;
 
-                std::uint16_t sbyte = static_cast<std::uint16_t>(stream.data[head++]) & 0xFF;
+                u16 sbyte = static_cast<u16>(stream.data[head++]) & 0xFF;
 
                 head = size & 0x3F;
                 head <<= 8;
@@ -224,7 +222,7 @@ namespace dwhbll::network::dns {
             case QTYPE::STAR:
                 return "*";
             default:
-                return std::format("UNKNOWN({:#x})", static_cast<std::uint16_t>(type));
+                return std::format("UNKNOWN({:#x})", static_cast<u16>(type));
         }
     }
 
@@ -241,7 +239,7 @@ namespace dwhbll::network::dns {
             case QCLASS::STAR:
                 return "*";
             default:
-                return std::format("UNKNOWN({:#x})", static_cast<std::uint16_t>(clazz));
+                return std::format("UNKNOWN({:#x})", static_cast<u16>(clazz));
         }
     }
 
@@ -309,7 +307,7 @@ namespace dwhbll::network::dns {
                 std::size_t eaten = 0;
                 while (eaten < rdlength) {
                     std::string r;
-                    std::uint8_t size = stream.get_uint8();
+                    u8 size = stream.get_uint8();
                     r.reserve(size);
                     eaten += size;
                     for (int i = 0; i < size; i++)
@@ -326,7 +324,7 @@ namespace dwhbll::network::dns {
                 std::size_t eaten = 0;
                 record.map.reserve(8 * (rdlength - 5));
                 while (eaten < rdlength) {
-                    std::uint8_t data = stream.get_uint8();
+                    u8 data = stream.get_uint8();
                     eaten++;
                     for (int i = 0; i < 8; i++) {
                         record.map.emplace_back(data & 0x80);
@@ -337,7 +335,7 @@ namespace dwhbll::network::dns {
                 return;
             }
             default:
-                console::warn("Unknown DNS record type of {:#x}", static_cast<std::uint16_t>(type));
+                console::warn("Unknown DNS record type of {:#x}", static_cast<u16>(type));
                 for (int i = 0; i < rdlength; i++)
                     stream.get_uint8();
                 rdata = std::monostate{};
@@ -420,7 +418,7 @@ namespace dwhbll::network::dns {
         id = stream.get_uint16();
 
         // unpack the next byte
-        std::uint16_t b2 = stream.get_uint16();
+        u16 b2 = stream.get_uint16();
         qr = b2 >> 15 & 0x1;
         opcode = static_cast<OPCODE>(b2 >> 11 & 0xF);
         aa = b2 >> 10 & 0x1;
@@ -440,14 +438,14 @@ namespace dwhbll::network::dns {
         stream.write_uint16(id);
 
         // package the next byte
-        std::uint16_t b2 = static_cast<std::uint16_t>(qr) << 15;
-        b2 |= static_cast<std::uint16_t>(opcode) << 11;
-        b2 |= static_cast<std::uint16_t>(aa) << 10;
-        b2 |= static_cast<std::uint16_t>(tc) << 9;
-        b2 |= static_cast<std::uint16_t>(rd) << 8;
-        b2 |= static_cast<std::uint16_t>(ra) << 7;
-        b2 |= static_cast<std::uint16_t>(z) << 4;
-        b2 |= static_cast<std::uint16_t>(rcode);
+        u16 b2 = static_cast<u16>(qr) << 15;
+        b2 |= static_cast<u16>(opcode) << 11;
+        b2 |= static_cast<u16>(aa) << 10;
+        b2 |= static_cast<u16>(tc) << 9;
+        b2 |= static_cast<u16>(rd) << 8;
+        b2 |= static_cast<u16>(ra) << 7;
+        b2 |= static_cast<u16>(z) << 4;
+        b2 |= static_cast<u16>(rcode);
 
         stream.write_uint16(b2);
         stream.write_uint16(qdcount);
@@ -465,7 +463,7 @@ namespace dwhbll::network::dns {
             case OPCODE::STATUS:
                 return "STATUS";
             default:
-                return std::format("UNKNOWN({:#x})", static_cast<std::uint8_t>(code));
+                return std::format("UNKNOWN({:#x})", static_cast<u8>(code));
         }
     }
 
@@ -484,7 +482,7 @@ namespace dwhbll::network::dns {
             case RCODE::REFUSED:
                 return "REFUSED";
             default:
-                return std::format("UNKNOWN({:#x})", static_cast<std::uint8_t>(code));
+                return std::format("UNKNOWN({:#x})", static_cast<u8>(code));
         }
     }
 
@@ -514,8 +512,8 @@ namespace dwhbll::network::dns {
 
     void MessageQuestion::pack(MemoryStream &stream) const {
         Domain::pack(qname, stream);
-        stream.write_uint16(static_cast<std::uint16_t>(type));
-        stream.write_uint16(static_cast<std::uint16_t>(clazz));
+        stream.write_uint16(static_cast<u16>(type));
+        stream.write_uint16(static_cast<u16>(clazz));
     }
 
     std::string MessageQuestion::to_string() const {
@@ -583,16 +581,16 @@ namespace dwhbll::network::dns {
         return result;
     }
 
-    std::string addr_to_string(const std::uint32_t address) {
-        std::uint8_t octet1 = (address >> 24) & 0xFF;
-        std::uint8_t octet2 = (address >> 16) & 0xFF;
-        std::uint8_t octet3 = (address >> 8) & 0xFF;
-        std::uint8_t octet4 = address & 0xFF;
+    std::string addr_to_string(const u32 address) {
+        u8 octet1 = (address >> 24) & 0xFF;
+        u8 octet2 = (address >> 16) & 0xFF;
+        u8 octet3 = (address >> 8) & 0xFF;
+        u8 octet4 = address & 0xFF;
 
         return std::format("A: {}.{}.{}.{}", octet4, octet3, octet2, octet1);
     }
 
-    std::uint16_t Resolver::queryID = 0;
+    u16 Resolver::queryID = 0;
 
     std::optional<in_addr> Resolver::get_from_msg(const Message &msg, const Domain &domain) {
         for (int i = 0; i < msg.header.ancount; i++) {
@@ -647,7 +645,7 @@ namespace dwhbll::network::dns {
         return std::nullopt;
     }
 
-    std::optional<in_addr> Resolver::query_dns(std::uint32_t addr, const Domain &domain) {
+    std::optional<in_addr> Resolver::query_dns(u32 addr, const Domain &domain) {
         MemoryStream stream;
 
         Message msg {
@@ -678,7 +676,7 @@ namespace dwhbll::network::dns {
 
         msg.pack(stream);
 
-        std::uint16_t size = stream.data.size();
+        u16 size = stream.data.size();
         stream.data.push_front(size & 0xFF);
         stream.data.push_front((size >> 0x8) & 0xFF);
         stream.data.make_cont();
@@ -716,7 +714,7 @@ namespace dwhbll::network::dns {
 
             std::vector<char> buf(2);
             socket->recv(buf); // get the length
-            size = (static_cast<std::uint16_t>(buf[0]) << 8 & 0xFF00) | (static_cast<std::uint16_t>(buf[1]) & 0xFF);
+            size = (static_cast<u16>(buf[0]) << 8 & 0xFF00) | (static_cast<u16>(buf[1]) & 0xFF);
 
             MemoryStream recvStream;
             recvStream.data.resize(size);
@@ -767,7 +765,7 @@ namespace dwhbll::network::dns {
         return std::nullopt;
     }
 
-    std::optional<in_addr> Resolver::query_dns(std::uint32_t addr, const std::string &domain) {
+    std::optional<in_addr> Resolver::query_dns(u32 addr, const std::string &domain) {
         Domain d = Domain::parse(domain);
         return query_dns(addr, d);
     }
@@ -775,7 +773,7 @@ namespace dwhbll::network::dns {
     std::optional<in_addr> Resolver::query_dns(const std::string &domain) {
         // query one of the root servers to start with.
         std::optional<in_addr> result;
-        for (std::uint32_t target : root_servers) {
+        for (u32 target : root_servers) {
             console::trace("sending a dns query to {} for {}", addr_to_string(target), domain);
             result = query_dns(target, domain);
             if (result.has_value()) {
@@ -910,10 +908,10 @@ namespace dwhbll::network::dns {
         }
 
         std::string A::to_string() const {
-            std::uint8_t octet1 = (address >> 24) & 0xFF;
-            std::uint8_t octet2 = (address >> 16) & 0xFF;
-            std::uint8_t octet3 = (address >> 8) & 0xFF;
-            std::uint8_t octet4 = address & 0xFF;
+            u8 octet1 = (address >> 24) & 0xFF;
+            u8 octet2 = (address >> 16) & 0xFF;
+            u8 octet3 = (address >> 8) & 0xFF;
+            u8 octet4 = address & 0xFF;
 
             return std::format("A: {}.{}.{}.{}", octet1, octet2, octet3, octet4);
         }

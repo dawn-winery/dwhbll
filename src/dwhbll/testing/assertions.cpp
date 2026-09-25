@@ -1,11 +1,12 @@
-#include <cstring>
-#include <dwhbll/testing/assertions.h>
-#include <dwhbll/debug/debug.h>
-
 #include <fcntl.h>
-#include <regex>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <cstring>
+#include <dwhbll/macros/debug.h>
+
+import std;
+import dwhbll.testing;
+import dwhbll.debug;
 
 namespace dwhbll::test {
 

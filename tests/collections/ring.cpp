@@ -1,5 +1,8 @@
-#include <dwhbll/testing/testing.h>
-#include <dwhbll/collections/ring.h>
+#include <dwhbll/macros/testing.h>
+
+import dwhbll.testing;
+import dwhbll.collections;
+import std;
 
 using namespace dwhbll::test;
 

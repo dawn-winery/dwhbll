@@ -1,17 +1,12 @@
-#include <dwhbll/debug/panic.h>
+#include <version>
 
-#include <dwhbll/debug/debug.h>
-
-#include <atomic>
-#include <iostream>
-#include <stacktrace>
-#include <filesystem>
-#include <ranges>
-
-// TODO: other architectures like i386 exists too
 #if defined(__x86_64) || defined(__x86_64__)
 #include <xmmintrin.h>
 #endif
+
+import std;
+import dwhbll.debug;
+import dwhbll.sanify;
 
 namespace dwhbll::debug {
 

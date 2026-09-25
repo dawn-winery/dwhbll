@@ -1,7 +1,6 @@
-#include <dwhbll/debug/debug.h>
-#include <dwhbll/files/filejar/file_mgr.h>
-
-#include <dwhbll/files/filejar/file.h>
+import std;
+import dwhbll.files;
+import dwhbll.debug;
 
 namespace dwhbll::files::filejar {
     std::atomic_uint64_t file_mgr::id_alloc = 0;

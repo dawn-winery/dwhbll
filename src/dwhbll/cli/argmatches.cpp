@@ -1,4 +1,10 @@
-#include <dwhbll/cli/command.h>
+#include <cstddef>
+#include <cstdint>
+
+import std;
+import dwhbll.cli;
+import dwhbll.stl_ext;
+import dwhbll.sanify;
 
 using dwhbll::stl_ext::Option;
 
@@ -102,17 +108,17 @@ template<typename T>
         try {
             if constexpr (std::is_same_v<T, int>) {
                 return Option<T>(std::stoi(opt.unwrap()));
-            } else if constexpr (std::is_same_v<T, uint8_t>) {
-                return Option<T>(static_cast<uint8_t>(std::stoi(opt.unwrap())));
-            } else if constexpr (std::is_same_v<T, uint16_t>) {
-                return Option<T>(static_cast<uint16_t>(std::stoi(opt.unwrap())));
-            } else if constexpr (std::is_same_v<T, uint32_t>) {
-                return Option<T>(static_cast<uint32_t>(std::stoul(opt.unwrap())));
-            } else if constexpr (std::is_same_v<T, uint64_t>) {
+            } else if constexpr (std::is_same_v<T, u8>) {
+                return Option<T>(static_cast<u8>(std::stoi(opt.unwrap())));
+            } else if constexpr (std::is_same_v<T, u16>) {
+                return Option<T>(static_cast<u16>(std::stoi(opt.unwrap())));
+            } else if constexpr (std::is_same_v<T, u32>) {
+                return Option<T>(static_cast<u32>(std::stoul(opt.unwrap())));
+            } else if constexpr (std::is_same_v<T, u64>) {
                 return Option<T>(std::stoull(opt.unwrap()));
-            } else if constexpr (std::is_same_v<T, float>) {
+            } else if constexpr (std::is_same_v<T, f32>) {
                 return Option<T>(std::stof(opt.unwrap()));
-            } else if constexpr (std::is_same_v<T, double>) {
+            } else if constexpr (std::is_same_v<T, f64>) {
                 return Option<T>(std::stod(opt.unwrap()));
             } else if constexpr (std::is_same_v<T, bool>) {
                 return Option<T>(opt.unwrap() == "true" || opt.unwrap() == "1");

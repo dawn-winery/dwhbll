@@ -1,6 +1,6 @@
-#include <dwhbll/debug/perf.h>
-
-#include <dwhbll/console/logging.h>
+import std;
+import dwhbll.debug;
+import dwhbll.console;
 
 namespace dwhbll::debug {
 

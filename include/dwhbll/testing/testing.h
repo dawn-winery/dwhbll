@@ -111,6 +111,4 @@ int run_all(const options& options = {});
 
 } // namespace dwhbll::test
 
-#define TEST_REGISTER_FILE() \
-    namespace { static const bool _dwhbll_test_registered = \
-        (::dwhbll::meta::collect_annotated<::dwhbll::test::detail::discovery_traits, ^^::, ::dwhbll::meta::fixed_string(__FILE__)>(), true); }
+#include <dwhbll/macros/testing.h>

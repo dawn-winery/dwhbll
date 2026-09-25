@@ -1,9 +1,10 @@
-#include <dwhbll/concurrency/coroutine/wrappers/file.h>
-#include <dwhbll/files/executables/pe.h>
+#include <dwhbll/macros/debug.h>
 
-#include <dwhbll/console/logging.h>
-#include <dwhbll/files/parse_utils.h>
-#include <dwhbll/files/filejar/file.h>
+import std;
+import dwhbll.files;
+import dwhbll.debug;
+import dwhbll.console;
+import dwhbll.sanify;
 
 namespace dwhbll::files::executables {
     template<typename T>
@@ -12,12 +13,12 @@ namespace dwhbll::files::executables {
         return (value + (alignment - 1)) & ~(alignment - 1);
     }
 
-    static constexpr void write_pad_to(std::ostream &stream, const std::uint64_t size) {
-        const auto pad_len = size - static_cast<uint64_t>(stream.tellp());
+    static constexpr void write_pad_to(std::ostream &stream, const u64 size) {
+        const auto pad_len = size - static_cast<u64>(stream.tellp());
 
         constexpr char pad_buf[8] = {};
 
-        uint64_t i = 0;
+        u64 i = 0;
 
         for (; i + 8 < pad_len; i += 8)
             stream.write(pad_buf, 8);
@@ -26,7 +27,7 @@ namespace dwhbll::files::executables {
             stream.put(0);
     }
 
-    COFF_FILE_HEADER::COFF_FILE_HEADER(std::span<uint8_t> &file) {
+    COFF_FILE_HEADER::COFF_FILE_HEADER(std::span<u8> &file) {
         machine = static_cast<MACHINE_TYPE>(read_u16_le(file));
         num_of_sections = read_u16_le(file);
 
@@ -39,7 +40,7 @@ namespace dwhbll::files::executables {
     }
 
     void COFF_FILE_HEADER::write(std::ostream &stream) const {
-        write_u16_le(stream, static_cast<uint16_t>(machine));
+        write_u16_le(stream, static_cast<u16>(machine));
         write_u16_le(stream, num_of_sections);
 
         write_u32_le(stream, time_date_stamp);
@@ -47,15 +48,15 @@ namespace dwhbll::files::executables {
         write_u32_le(stream, number_of_symbols);
 
         write_u16_le(stream, size_of_optional_header);
-        write_u16_le(stream, static_cast<uint16_t>(characteristics));
+        write_u16_le(stream, static_cast<u16>(characteristics));
     }
 
-    DATA_DIRECTORY::DATA_DIRECTORY(std::span<uint8_t> &view) {
+    DATA_DIRECTORY::DATA_DIRECTORY(std::span<u8> &view) {
         virtual_address = read_u32_le(view);
         size = read_u32_le(view);
     }
 
-    void DATA_DIRECTORY::fill_data_view(const std::span<uint8_t> image_base, const PE_SECTION_TABLE &sections) {
+    void DATA_DIRECTORY::fill_data_view(const std::span<u8> image_base, const PE_SECTION_TABLE &sections) {
         if (virtual_address == 0)
             return;
         const auto addr = sections.resolve_phys_addr(virtual_address);
@@ -74,7 +75,7 @@ namespace dwhbll::files::executables {
         write_u32_le(stream, size);
     }
 
-    OPTIONAL_HEADER::OPTIONAL_HEADER(std::span<uint8_t> &file, const std::uint64_t header_size_limit) {
+    OPTIONAL_HEADER::OPTIONAL_HEADER(std::span<u8> &file, const u64 header_size_limit) {
         magic = read_u16_le(file);
 
         const bool pe32 = is_pe32();
@@ -180,8 +181,8 @@ namespace dwhbll::files::executables {
         write_u32_le(stream, size_of_headers);
         write_u32_le(stream, check_sum);
 
-        write_u16_le(stream, static_cast<uint16_t>(subsystem));
-        write_u16_le(stream, static_cast<uint16_t>(characteristics));
+        write_u16_le(stream, static_cast<u16>(subsystem));
+        write_u16_le(stream, static_cast<u16>(characteristics));
 
         if (is_pe32()) {
             write_u32_le(stream, size_of_stack_reserve);
@@ -202,7 +203,7 @@ namespace dwhbll::files::executables {
             dir.write(stream);
     }
 
-    NT_HEADER::NT_HEADER(std::span<uint8_t> &file) {
+    NT_HEADER::NT_HEADER(std::span<u8> &file) {
         magic = read_u32_le(file);
 
         if (magic != 0x4550)
@@ -221,7 +222,7 @@ namespace dwhbll::files::executables {
         optional_header.write(stream);
     }
 
-    PE_SECTION::PE_SECTION(std::span<uint8_t> &file) {
+    PE_SECTION::PE_SECTION(std::span<u8> &file) {
         char buf[9] = {};
 
         for (int i = 0; i < 8; i++)
@@ -244,18 +245,18 @@ namespace dwhbll::files::executables {
             debug::panic("Potentially adversarial file! (size_of_raw_data + pointer_to_raw_data overflowed uint32)!");
     }
 
-    void PE_SECTION::fill_data_view(const std::span<uint8_t> file_view) {
+    void PE_SECTION::fill_data_view(const std::span<u8> file_view) {
         raw_data_view = file_view.subspan(pointer_to_raw_data, size_of_raw_data);
     }
 
     void PE_SECTION::write(std::ostream &stream) {
-        uint8_t buf[8] = {};
+        u8 buf[8] = {};
 
         int i = 0;
         for (const char c : name)
             buf[i++] = c;
 
-        for (const uint8_t b : buf)
+        for (const u8 b : buf)
             write_u8(stream, b);
 
         write_u32_le(stream, virtual_size);
@@ -266,20 +267,20 @@ namespace dwhbll::files::executables {
         write_u32_le(stream, pointer_to_line_numbers);
         write_u16_le(stream, number_of_relocations);
         write_u16_le(stream, number_of_line_numbers);
-        write_u32_le(stream, static_cast<uint32_t>(characteristics));
+        write_u32_le(stream, static_cast<u32>(characteristics));
     }
 
-    PE_SECTION_TABLE::PE_SECTION_TABLE(std::span<uint8_t> &file, const std::uint16_t scn_count) {
+    PE_SECTION_TABLE::PE_SECTION_TABLE(std::span<u8> &file, const u16 scn_count) {
         for (int i = 0; i < scn_count; i++)
             sections.emplace_back(file);
     }
 
-    void PE_SECTION_TABLE::fill_data_views(const std::span<uint8_t> file_view) {
+    void PE_SECTION_TABLE::fill_data_views(const std::span<u8> file_view) {
         for (auto& scn : sections)
             scn.fill_data_view(file_view);
     }
 
-    std::optional<uint64_t> PE_SECTION_TABLE::resolve_phys_addr(const std::uint64_t RVA) const {
+    std::optional<u64> PE_SECTION_TABLE::resolve_phys_addr(const u64 RVA) const {
         for (auto& scn : sections) {
             if (scn.virtual_address > RVA)
                 continue;
@@ -295,7 +296,7 @@ namespace dwhbll::files::executables {
         return std::nullopt;
     }
 
-    PE_SECTION & PE_SECTION_TABLE::get_section(const uint64_t RVA) {
+    PE_SECTION & PE_SECTION_TABLE::get_section(const u64 RVA) {
         for (auto& scn : sections) {
             if (scn.virtual_address > RVA)
                 continue;
@@ -325,14 +326,14 @@ namespace dwhbll::files::executables {
                 continue; // has no raw data to emit.
 
             // pad to pointer
-            ASSERT(static_cast<uint64_t>(stream.tellp()) <= sec.pointer_to_raw_data);
+            ASSERT(static_cast<u64>(stream.tellp()) <= sec.pointer_to_raw_data);
             write_pad_to(stream, sec.pointer_to_raw_data);
 
             stream.write(reinterpret_cast<char*>(sec.raw_data_view.data()), static_cast<std::streamsize>(sec.raw_data_view.size()));
         }
     }
 
-    PE_SECTION & PE_IMAGE::get_section_va(uint64_t VA) {
+    PE_SECTION & PE_IMAGE::get_section_va(u64 VA) {
         return sections.get_section(VA - nt_header.optional_header.image_base);
     }
 
@@ -347,8 +348,8 @@ namespace dwhbll::files::executables {
         auto spn = file_view.subspan(phys_addr, reloc_data_dir.size);
 
         while (!spn.empty()) {
-            std::uint32_t page_rva;
-            std::uint32_t block_size;
+            u32 page_rva;
+            u32 block_size;
 
             page_rva = read_u32_le(spn);
             block_size = read_u32_le(spn);
@@ -369,7 +370,7 @@ namespace dwhbll::files::executables {
         }
     }
 
-    PE_IMAGE::PE_IMAGE(const std::span<uint8_t> file) {
+    PE_IMAGE::PE_IMAGE(const std::span<u8> file) {
         file_view = file;
 
         dos_image = DOS_IMAGE(file);
@@ -387,7 +388,7 @@ namespace dwhbll::files::executables {
         load_relocs();
     }
 
-    std::vector<uint8_t>& PE_IMAGE::adopt(std::vector<uint8_t> &&buffer) {
+    std::vector<u8>& PE_IMAGE::adopt(std::vector<u8> &&buffer) {
         adopted_buffers.emplace_back(std::move(buffer));
 
         return adopted_buffers.back();
@@ -409,20 +410,20 @@ namespace dwhbll::files::executables {
             nt_header.optional_header.directories.size();
 
         // fixup the size information
-        auto file_align = static_cast<std::uint64_t>(nt_header.optional_header.file_alignment);
-        auto sec_align = static_cast<std::uint64_t>(nt_header.optional_header.section_alignment);
+        auto file_align = static_cast<u64>(nt_header.optional_header.file_alignment);
+        auto sec_align = static_cast<u64>(nt_header.optional_header.section_alignment);
 
-        std::uint64_t max_sec_end_va = 0;
+        u64 max_sec_end_va = 0;
         // TODO: no idea how to actually compute these :xdd:
-        // std::uint64_t sum_code = 0;
-        // std::uint64_t sum_initialized = 0;
-        // std::uint64_t sum_uninitialized = 0;
-        std::uint64_t next_raw_data_ptr = align_up(static_cast<std::uint64_t>(stream.tellp())
+        // u64 sum_code = 0;
+        // u64 sum_initialized = 0;
+        // u64 sum_uninitialized = 0;
+        u64 next_raw_data_ptr = align_up(static_cast<u64>(stream.tellp())
             + 4 // magic number
             + 20 // coff header
             + nt_header.file_header.size_of_optional_header
             + 40 * nt_header.file_header.num_of_sections
-            , static_cast<std::uint64_t>(nt_header.optional_header.file_alignment));
+            , static_cast<u64>(nt_header.optional_header.file_alignment));
 
         nt_header.optional_header.size_of_headers = next_raw_data_ptr;
 
@@ -439,7 +440,7 @@ namespace dwhbll::files::executables {
             // TODO: maybe also align virtual_size?
 
             max_sec_end_va = std::max(max_sec_end_va,
-                static_cast<std::uint64_t>(sec.virtual_address) + sec.virtual_size);
+                static_cast<u64>(sec.virtual_address) + sec.virtual_size);
 
             // alignment unnecessary, size already aligned.
             next_raw_data_ptr = sec.pointer_to_raw_data + sec.size_of_raw_data;
@@ -454,11 +455,11 @@ namespace dwhbll::files::executables {
         sections.write(stream);
     }
 
-    uint64_t PE_IMAGE::va_to_phys(uint64_t VA) const {
+    u64 PE_IMAGE::va_to_phys(u64 VA) const {
         return rva_to_phys(VA - image_base());
     }
 
-    uint64_t PE_IMAGE::rva_to_phys(uint64_t RVA) const {
+    u64 PE_IMAGE::rva_to_phys(u64 RVA) const {
         for (auto& scn : sections.sections) {
             if (scn.virtual_address > RVA)
                 continue;

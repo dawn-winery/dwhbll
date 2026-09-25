@@ -5,7 +5,7 @@
 namespace dwhbll::stl_ext {
     struct UNIT {};
 
-    constexpr auto TO_UNIT = [](auto) -> UNIT { return {}; };
+    inline constexpr auto TO_UNIT = [](auto) -> UNIT { return {}; };
 
     namespace __detail {
         template <typename T>

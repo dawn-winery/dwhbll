@@ -1,12 +1,9 @@
-#include <dwhbll/console/ansi_escape.h>
-#include <dwhbll/testing/harness.h>
-
 #include <fcntl.h>
 #include <unistd.h>
 
-#include <cstdio>
-#include <filesystem>
-#include <print>
+import std;
+import dwhbll.testing;
+import dwhbll.console;
 
 namespace dwhbll::test {
 
@@ -14,7 +11,7 @@ namespace {
 
 namespace color = console::ansi_escape::color;
 
-void print_summary_block(FILE* out, std::string_view suite_name,
+void print_summary_block(std::FILE* out, std::string_view suite_name,
                          const summary_counts& counts, bool use_color) {
     auto print_line = [&](std::string_view label, std::size_t count,
                           std::string_view col, bool hide_if_zero = false) {
@@ -35,7 +32,7 @@ void print_summary_block(FILE* out, std::string_view suite_name,
     print_line("unexpected failures", counts.failures, color::red);
     print_line("expected failures", counts.xfails, color::yellow, true);
     print_line("unexpected successes", counts.xpasses, color::magenta, true);
-    print_line("unsupported tests", counts.unsupported, color::yellow, true);
+    print_line("skipped tests", counts.skipped, color::yellow, true);
     print_line("unresolved testcases", counts.unresolved, color::red, true);
     print_line("untested testcases", counts.untested, "", true);
     std::fflush(out);
@@ -87,8 +84,8 @@ int runner::run(const options& options) const {
         }
     }
 
-    FILE* console_out = options.console_out ? options.console_out : stdout;
-    FILE* duped_console_out = nullptr;
+    std::FILE* console_out = options.console_out ? options.console_out : stdout;
+    std::FILE* duped_console_out = nullptr;
 
     int log_fd = ::open(log_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (log_fd != -1) {

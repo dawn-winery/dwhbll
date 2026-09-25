@@ -1,22 +1,16 @@
-#include <dwhbll/bench/bench.h>
-
-#include <array>
-#include <cstdint>
-#include <memory>
-#include <mutex>
-#include <numeric>
-#include <cmath>
-#include <print>
-#include <string_view>
-
 #include <linux/perf_event.h>
-#include <sys/ioctl.h>
 #include <sys/syscall.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
 
-#include <dwhbll/console/ansi_escape.h>
-#include <dwhbll/debug/debug.h>
-#include <dwhbll/stl_ext/string.h>
+#include <dwhbll/macros/debug.h>
+
+import std;
+import dwhbll.bench;
+import dwhbll.console;
+import dwhbll.debug;
+import dwhbll.stl_ext;
+import dwhbll.sanify;
 
 namespace dwhbll::bench {
 
@@ -24,8 +18,8 @@ namespace detail {
 
 struct PerfGroup {
     struct Counter {
-        uint64_t nr;
-        uint64_t values[4];
+        u64 nr;
+        u64 values[4];
     };
 
     int fds[4] = {-1, -1, -1, -1};
@@ -36,7 +30,7 @@ struct PerfGroup {
         return static_cast<int>(syscall(SYS_perf_event_open, attr, 0, -1, group_fd, 0));
     }
 
-    static int open_counter(uint32_t type, uint64_t config, int group_fd) {
+    static int open_counter(u32 type, u64 config, int group_fd) {
         perf_event_attr attr{};
         attr.type = type;
         attr.size = sizeof(attr);
@@ -88,7 +82,7 @@ struct PerfGroup {
         ioctl(fds[0], PERF_EVENT_IOC_DISABLE, PERF_IOC_FLAG_GROUP);
     }
 
-    std::array<uint64_t, 4> read_counts() {
+    std::array<u64, 4> read_counts() {
         Counter buf{};
         if (read(fds[0], &buf, sizeof(buf)) < 0 || buf.nr < 4)
             return {};
@@ -254,7 +248,7 @@ stats State::compute_stats(std::vector<double>&& samples) {
     return s;
 }
 
-perf_stats State::compute_perf_stats(std::vector<std::array<uint64_t, 4>>&& samples) {
+perf_stats State::compute_perf_stats(std::vector<std::array<u64, 4>>&& samples) {
     perf_stats ps;
     if (samples.empty())
         return ps;

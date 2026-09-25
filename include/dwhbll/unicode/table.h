@@ -224,14 +224,14 @@ namespace dwhbll::unicode {
 
     /// Hangul constants
     namespace hangul {
-        constexpr char32_t LBASE = 0x1100;
-        constexpr char32_t SBASE = 0xAC00;
-        constexpr char32_t VBASE = 0x1161;
-        constexpr char32_t TBASE = 0x11A7;
-        constexpr uint32_t LCOUNT = 19;
-        constexpr uint32_t TCOUNT = 28;
-        constexpr uint32_t VCOUNT = 21;
-        constexpr uint32_t NCOUNT = VCOUNT * TCOUNT;
-        constexpr uint32_t SCOUNT = LCOUNT * NCOUNT;
+        inline constexpr char32_t LBASE = 0x1100;
+        inline constexpr char32_t SBASE = 0xAC00;
+        inline constexpr char32_t VBASE = 0x1161;
+        inline constexpr char32_t TBASE = 0x11A7;
+        inline constexpr uint32_t LCOUNT = 19;
+        inline constexpr uint32_t TCOUNT = 28;
+        inline constexpr uint32_t VCOUNT = 21;
+        inline constexpr uint32_t NCOUNT = VCOUNT * TCOUNT;
+        inline constexpr uint32_t SCOUNT = LCOUNT * NCOUNT;
     }
 }

@@ -1,6 +1,7 @@
-#include <dwhbll/concurrency/coroutine/detached_task.h>
-
-#include <dwhbll/debug/debug.h>
+import std;
+import dwhbll.concurrency.coroutine;
+import dwhbll.debug;
+import dwhbll.sanify;
 
 namespace dwhbll::concurrency::coroutine {
     DetachedTask DetachedTask::promise_type::get_return_object() noexcept {

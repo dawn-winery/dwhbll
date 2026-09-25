@@ -1,7 +1,10 @@
-#include <dwhbll/files/parse_utils.h>
+#include <dwhbll/macros/debug.h>
 
-#include <assert.h>
-#include <dwhbll/exceptions/rt_exception_base.h>
+import std;
+import dwhbll.files;
+import dwhbll.debug;
+import dwhbll.exceptions;
+import dwhbll.sanify;
 
 namespace dwhbll::files {
     void ParseUtils::check_refill() {
@@ -90,10 +93,10 @@ namespace dwhbll::files {
         }
     }
 
-    std::uint64_t ParseUtils::parse_u64(int read_exactly, int radix) {
-        assert(radix == 10);
+    u64 ParseUtils::parse_u64(int read_exactly, int radix) {
+        ASSERT(radix == 10);
 
-        std::uint64_t buffer = 0;
+        u64 buffer = 0;
 
         for (int i = 0; (i < read_exactly) || read_exactly == -1; i++) {
             check_refill();
