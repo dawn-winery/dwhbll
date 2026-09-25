@@ -1,6 +1,6 @@
-#include <dwhbll/concurrency/coroutine/sleep_task.h>
-
-#include <dwhbll/concurrency/coroutine/reactor.h>
+import std;
+import dwhbll.concurrency.coroutine;
+import dwhbll.sanify;
 
 namespace dwhbll::concurrency::coroutine {
     bool sleep_task::await_ready() const noexcept {

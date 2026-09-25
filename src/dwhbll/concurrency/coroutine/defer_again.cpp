@@ -1,6 +1,6 @@
-#include <dwhbll/concurrency/coroutine/defer_again.h>
-
-#include <dwhbll/concurrency/coroutine/reactor.h>
+import std;
+import dwhbll.concurrency.coroutine;
+import dwhbll.sanify;
 
 namespace dwhbll::concurrency::coroutine {
     bool defer_again_t::await_ready() const noexcept { return false; }
@@ -13,7 +13,9 @@ namespace dwhbll::concurrency::coroutine {
         cancellable_base::await_resume();
     }
 
-    defer_again_t coro::defer() {
-        return defer_again_t{};
+    namespace coro {
+        defer_again_t defer() {
+            return defer_again_t{};
+        }
     }
 }

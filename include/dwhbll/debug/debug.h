@@ -6,27 +6,11 @@
 #include <vector>
 #include <cxxabi.h>
 
-#ifdef NDEBUG
-    #define ASSERT(cond, ...) ((void)0)
-#else
-#define ASSERT(cond, ...)                                                   \
-    do {                                                                    \
-        if(!(cond)) {                                                       \
-            if(::dwhbll::debug::is_being_debugged())                        \
-                BREAKPOINT();                                               \
-            else                                                            \
-                ::dwhbll::debug::assert_internal(#cond, ##__VA_ARGS__);     \
-        }                                                                   \
-    } while(0)
-#endif
-
-#define BREAKPOINT() asm("int3")
+#include <dwhbll/macros/debug.h>
 
 namespace dwhbll::debug {
 
-#ifdef NDEBUG
-#define WITH_CONTEXT(fmt, ...) ((void)0)
-#else
+#ifndef NDEBUG
 class task_deferral {
     std::string name;
 
@@ -39,9 +23,6 @@ public:
 };
 
 const std::vector<task_deferral*>& running_tasks();
-
-// TODO: to minimize cost we could probably just store FMT args and format on demand.
-#define WITH_CONTEXT(fmt, ...) auto _ = ::dwhbll::debug::task_deferral(std::format(fmt __VA_OPT__(,) __VA_ARGS__))
 #endif
 
 

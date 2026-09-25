@@ -51,7 +51,7 @@ struct Response {
 
 }; // namespace dwhbll::network::http_server
 
-namespace {
+namespace detail {
 
 struct string_hash {
   using hash_type = std::hash<std::string_view>;
@@ -340,7 +340,7 @@ static std::string to_lower_case(const std::string_view &str) {
 }
 
 // TODO: switch to error enum for caller to build response
-static bool build_request(dwhbll::network::http_server::Request &request,
+bool build_request(dwhbll::network::http_server::Request &request,
                           Socket &reader) {
   request.reset();
 
@@ -425,7 +425,7 @@ static bool build_request(dwhbll::network::http_server::Request &request,
   return true;
 }
 
-} // anonymous namespace
+} // namespace detail
 
 namespace dwhbll::network::http_server {
 
@@ -440,12 +440,12 @@ concept HandlerFactory = requires(F factory) {
 };
 
 template <HandlerFactory F>
-static void executor(const int listen_socket,
+void executor(const int listen_socket,
                      std::unordered_map<std::string, F> &rt) {
   dwhbll::console::info("executor");
   sockaddr inaddr_buf;
   socklen_t inaddr_bufsize;
-  Socket socket;
+  detail::Socket socket;
   Request request;
   Response response;
 
@@ -529,7 +529,7 @@ public:
       return -1;
     }
 
-    SocketBuilder sock;
+    detail::SocketBuilder sock;
 
     if (sock.create_socket()) {
       return -1;

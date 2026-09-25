@@ -1,6 +1,6 @@
-#include <dwhbll/testing/testing.h>
-#include <dwhbll/testing/harness.h>
-#include <dwhbll/stl_ext/string.h>
+import std;
+import dwhbll.testing;
+import dwhbll.stl_ext;
 
 namespace dwhbll::test {
 
@@ -10,7 +10,7 @@ std::string_view to_status_string(test_status status) {
         case test_status::fail: return "FAIL";
         case test_status::xfail: return "XFAIL";
         case test_status::xpass: return "XPASS";
-        case test_status::unsupported: return "UNSUPPORTED";
+        case test_status::skip: return "SKIP";
         case test_status::unresolved: return "UNRESOLVED";
         case test_status::untested: return "UNTESTED";
     }
@@ -61,7 +61,7 @@ suite_result default_harness::run(const options& options) {
         tr.suite = std::string(name());
 
         if (t.is_skip) {
-            tr.status = test_status::unsupported;
+            tr.status = test_status::skip;
             tr.message = std::string(t.skip_reason);
             if (options.on_test_end)
                 options.on_test_end(tr);

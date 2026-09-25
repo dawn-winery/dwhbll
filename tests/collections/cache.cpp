@@ -1,11 +1,19 @@
-#include <dwhbll/testing/testing.h>
+// HACK: include these here prevents them from being included in the cache.h
+// below, so the `#define private public` does not fuck with them. This should really
+// be fixed somehow...
+
+#include <mutex>
+#include <list>
+#include <chrono>
 
 #define private public
 #include <dwhbll/collections/cache.h>
 #undef private
+#include <dwhbll/macros/testing.h>
 
-#include <chrono>
-#include <thread>
+import dwhbll.testing;
+import dwhbll.collections;
+import std;
 
 using namespace dwhbll::test;
 

@@ -1,7 +1,8 @@
-#include <dwhbll/testing/testing.h>
-#include <dwhbll/cli/command.h>
-
 #include <unistd.h>
+
+import std;
+import dwhbll.testing;
+import dwhbll.cli;
 
 int main(int argc, char** argv) {
     using namespace dwhbll::cli;

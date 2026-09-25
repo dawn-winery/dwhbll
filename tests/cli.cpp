@@ -1,10 +1,12 @@
-#include <dwhbll/cli/command.h>
-#include <dwhbll/testing/testing.h>
+#include <dwhbll/macros/testing.h>
+#include <dwhbll/cli/cli.h>
 
-#include <iostream>
-#include <vector>
+import std;
+import dwhbll.testing;
+import dwhbll.cli;
 
 using namespace dwhbll::cli;
+using namespace dwhbll::cli::literals;
 using namespace dwhbll::test;
 
 namespace cli {
@@ -295,7 +297,6 @@ void required_argument_missing()
 [[=test]]
 void literals()
 {
-    using namespace dwhbll::cli::literals;
     Arg a = "test_literal2"_Arg;
     REQUIRE_EQ(a.id(), "test_literal2");
 }

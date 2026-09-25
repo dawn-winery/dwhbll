@@ -1,11 +1,19 @@
-#include <dwhbll/async/net/buffered_socket.h>
+// Apparently ssize_t is not in `import std`?
+#include <sys/types.h>
 
-#define DWHBLL_SANIFY_EXPORT
-#include <dwhbll/sanify/coroutines.h>
-#include <dwhbll/sanify/stl_ext.h>
+import std;
+import dwhbll.async.net;
+import dwhbll.concurrency.coroutine;
+import dwhbll.stl_ext;
+import dwhbll.debug;
+import dwhbll.sanify;
+
+using namespace dwhbll::stl_ext;
+using namespace dwhbll::concurrency::coroutine;
+using namespace dwhbll::concurrency::coroutine::wrappers;
 
 namespace dwhbll::async::net {
-    ssize_t buffered_socket::read_from_buffer(std::span<std::uint8_t> buffer) {
+    ssize_t buffered_socket::read_from_buffer(std::span<u8> buffer) {
         auto copy_size = std::min(buffer.size(), inbound_size);
 
         std::copy_n(inbound_buffer.begin() + inbound_head, copy_size, buffer.begin());
@@ -15,7 +23,7 @@ namespace dwhbll::async::net {
         return copy_size;
     }
 
-    task<Result<UNIT, int>> buffered_socket::read(std::span<std::uint8_t> buffer) {
+    task<Result<UNIT, int>> buffered_socket::read(std::span<u8> buffer) {
         auto buf = buffer;
 
         while (!buf.empty()) {
@@ -30,11 +38,11 @@ namespace dwhbll::async::net {
         co_return Ok();
     }
 
-    task<Result<UNIT, int>> buffered_socket::write(std::span<const std::uint8_t> buffer) {
+    task<Result<UNIT, int>> buffered_socket::write(std::span<const u8> buffer) {
         co_return (co_await buffered_socket::write_some(buffer)).map(TO_UNIT);
     }
 
-    task<Result<ssize_t, int>> buffered_socket::read_some(std::span<std::uint8_t> buffer) {
+    task<Result<ssize_t, int>> buffered_socket::read_some(std::span<u8> buffer) {
         auto requested = buffer.size();
 
         if (inbound_size != 0)
@@ -52,7 +60,7 @@ namespace dwhbll::async::net {
         co_return Ok(read_from_buffer(buffer));
     }
 
-    task<Result<ssize_t, int>> buffered_socket::write_some(std::span<const std::uint8_t> buffer) {
+    task<Result<ssize_t, int>> buffered_socket::write_some(std::span<const u8> buffer) {
         bool total_larger = outbound_size + buffer.size() >= BUFFER_SIZE;
         bool high_water = buffer.size() >= HIGH_WATERMARK;
 

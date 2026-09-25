@@ -1,10 +1,9 @@
-#include <dwhbll/testing/testing.h>
-#include <dwhbll/graphics/bitmap/bitmap.h>
+#include <dwhbll/macros/testing.h>
 
-#include <complex>
-#include <cstdint>
-#include <filesystem>
-#include <print>
+import std;
+import dwhbll.sanify;
+import dwhbll.testing;
+import dwhbll.graphics;
 
 using namespace dwhbll::test;
 
@@ -41,7 +40,7 @@ void fractal()
             double fx = (x - width / 2.0) * 2.0 / width;
             double fy = (y - height / 2.0) * 2.0 / height;
             int iters = get_iters(fx, fy);
-            uint8_t color = 256 * iters / max_iters;
+            u8 color = 256 * iters / max_iters;
             (void)b->set_pixel(x, y, color, color, color);
         }
     }

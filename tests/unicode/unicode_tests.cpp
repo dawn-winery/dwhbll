@@ -1,13 +1,12 @@
-#include <dwhbll/testing/testing.h>
 #include <dwhbll/testing/config.h>
-#include <dwhbll/debug/debug.h>
-#include <dwhbll/console/logging.h>
-#include <dwhbll/unicode/helpers.h>
+#include <dwhbll/macros/testing.h>
 
-#include <fstream>
-#include <iostream>
-#include <unordered_set>
-#include <vector>
+import std;
+import dwhbll.sanify;
+import dwhbll.testing;
+import dwhbll.unicode;
+import dwhbll.console;
+import dwhbll.debug;
 
 using namespace dwhbll::test;
 
@@ -34,7 +33,7 @@ std::string format_codepoints(const std::u32string &str) {
     std::string data;
 
     for (char32_t c : str)
-        data += std::format("U+{:04X} ", (uint32_t)c);
+        data += std::format("U+{:04X} ", (u32)c);
 
     return data;
 }
@@ -141,11 +140,11 @@ void normalization()
     bool part1 = false;
     std::unordered_set<char32_t> individual_tested;
 
-    size_t pass = 0;
-    size_t total = 0;
+    std::size_t pass = 0;
+    std::size_t total = 0;
 
-    size_t overall_pass = 0;
-    size_t overall = 0;
+    std::size_t overall_pass = 0;
+    std::size_t overall = 0;
 
     std::string line;
     while (std::getline(file, line)) {

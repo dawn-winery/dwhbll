@@ -1,7 +1,9 @@
-#include <dwhbll/bench/bench.h>
-#include <dwhbll/cli/command.h>
-
 #include <unistd.h>
+
+import std;
+import dwhbll.bench;
+import dwhbll.cli;
+import dwhbll.sanify;
 
 int main(int argc, char** argv) {
     using namespace dwhbll::cli;

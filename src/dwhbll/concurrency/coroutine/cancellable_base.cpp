@@ -1,6 +1,7 @@
-#include <dwhbll/concurrency/coroutine/cancellable_base.h>
-#include <dwhbll/concurrency/coroutine/cancellation_exception.h>
-#include <dwhbll/debug/debug.h>
+import std;
+import dwhbll.concurrency.coroutine;
+import dwhbll.debug;
+import dwhbll.sanify;
 
 namespace dwhbll::concurrency::coroutine {
     void cancellable_base::cancel() noexcept {

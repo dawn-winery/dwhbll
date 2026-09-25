@@ -1,12 +1,14 @@
-#include <dwhbll/files/binary_file.h>
-
-#include <dwhbll/debug/debug.h>
-#include <dwhbll/console/logging.h>
-
+#include <version>
+#include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
-#include <unistd.h>
+
+import std;
+import dwhbll.files;
+import dwhbll.debug;
+import dwhbll.console;
+import dwhbll.sanify;
 
 namespace dwhbll::files {
     void binary_file::load(const std::filesystem::path &path) {
@@ -51,7 +53,7 @@ namespace dwhbll::files {
         if (mapping == MAP_FAILED)
             debug::panic("Failed to map file: {}", fname);
 
-        file = static_cast<std::uint8_t*>(mapping);
+        file = static_cast<u8*>(mapping);
     }
 
     void binary_file::unload() {

@@ -1,18 +1,17 @@
-#include <dwhbll/graphics/bitmap/bitmap.h>
-#include <dwhbll/graphics/bitmap/file_header.h>
-#include <dwhbll/graphics/bitmap/info_header.h>
-#include <fstream>
+import std;
+import dwhbll.graphics;
+import dwhbll.sanify;
 
 namespace dwhbll::graphics::bitmap {
     bitmap::bitmap(const int width, const int height) : width(width), height(height) {
-        pixels = new uint8_t[width * height * 3]();
+        pixels = new u8[width * height * 3]();
     }
 
     bitmap::~bitmap() {
         delete[] pixels;
     }
 
-    bool bitmap::set_pixel(const int x, const int y, const uint8_t r, const uint8_t g, const uint8_t b) const {
+    bool bitmap::set_pixel(const int x, const int y, const u8 r, const u8 g, const u8 b) const {
         if (const int offset = y * width * 3 + x * 3; offset + 2 < width * height * 3) {
             pixels[offset] = b;
             pixels[offset + 1] = g;

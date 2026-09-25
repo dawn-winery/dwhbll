@@ -4,8 +4,9 @@
 #include <vector>
 #include <unordered_map>
 #include <functional>
-#include <dwhbll/stl_ext/option.h>
 #include <dwhbll/cli/cli.h>
+
+#include <dwhbll/stl_ext/option.h>
 
 namespace dwhbll::cli {
 

@@ -1,7 +1,12 @@
-#include <dwhbll/network/http.h>
+#include <arpa/inet.h>
 
-#include <dwhbll/console/logging.h>
-#include <dwhbll/exceptions/rt_exception_base.h>
+import std;
+import dwhbll.network;
+import dwhbll.exceptions;
+import dwhbll.console;
+import dwhbll.memory;
+import dwhbll.files;
+import dwhbll.sanify;
 
 #define CRLF "\r\n"
 
@@ -108,7 +113,7 @@ namespace dwhbll::network {
         }
     }
 
-    void HTTP::write_body(const std::span<sanify::u8>& body) {
+    void HTTP::write_body(const std::span<u8>& body) {
         write_request_header("Content-Length", std::to_string(body.size()));
 
         // CRLFCRLF

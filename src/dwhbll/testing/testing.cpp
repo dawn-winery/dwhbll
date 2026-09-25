@@ -1,5 +1,8 @@
-#include <dwhbll/testing/testing.h>
-#include <dwhbll/debug/debug.h>
+#include <dwhbll/macros/debug.h>
+
+import std;
+import dwhbll.testing;
+import dwhbll.debug;
 
 namespace dwhbll::test {
 

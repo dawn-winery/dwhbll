@@ -34,4 +34,4 @@ namespace dwhbll::debug {
  * }
  * ```
  */
-#define timeit(stage) if (::dwhbll::debug::time __dwhbll_scope_timer__(stage); true)
+#include <dwhbll/macros/debug.h>

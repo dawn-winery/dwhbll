@@ -1,5 +1,8 @@
-#include <dwhbll/testing/testing.h>
-#include <dwhbll/memory/pool.h>
+#include <dwhbll/macros/testing.h>
+
+import dwhbll.testing;
+import dwhbll.memory;
+import std;
 
 using namespace dwhbll::test;
 

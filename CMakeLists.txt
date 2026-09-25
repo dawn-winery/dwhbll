@@ -1,21 +1,35 @@
 cmake_minimum_required(VERSION 3.31)
-project(dwhbll LANGUAGES C CXX)
 
-include(CheckCXXSymbolExists)
-include(CheckCXXCompilerFlag)
+# Projects that depend on dwhbll should run this before project()
+function(setup_bs)
+    # Dear fucking god I hate this
+    # There seems to be some discussion to drop the gate:
+    # https://gitlab.kitware.com/cmake/cmake/-/work_items/28014
+    # but we'll probably have to keep this around at least until debian gets that release
+    if(CMAKE_VERSION VERSION_LESS "4.0")
+        set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "0e5b6991-d74f-4b3d-a41c-cf096e0b2508" PARENT_SCOPE)
+    elseif(CMAKE_VERSION VERSION_LESS "4.1")
+        set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "a9e1cf81-9932-4810-974b-6eccaf14e457" PARENT_SCOPE)
+    elseif(CMAKE_VERSION VERSION_LESS "4.3")
+        set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "d0edc3af-4c50-42ea-a356-e2862fe7a444" PARENT_SCOPE)
+    elseif(CMAKE_VERSION VERSION_LESS "4.4")
+        set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "451f2fe2-a8a2-47c3-bc32-94786d8fc91b" PARENT_SCOPE)
+    elseif(CMAKE_VERSION VERSION_EQUAL "4.4")
+        set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "f35a9ac6-8463-4d38-8eec-5d6008153e7d" PARENT_SCOPE)
+    else()
+        set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "25d6f6aa-be65-4692-b44e-87b23e96d4e1" PARENT_SCOPE)
+    endif()
 
-find_package(PkgConfig REQUIRED)
+    set(CMAKE_CXX_STANDARD 26 PARENT_SCOPE)
+    set(CMAKE_CXX_MODULE_STD ON PARENT_SCOPE)
 
-set(CMAKE_CXX_STANDARD 26)
-set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
-
-# Maybe only in debug builds?
-add_compile_options(
-    -Wall
-    -Wextra
-    -Wnon-virtual-dtor
-    -Wno-interference-size
-)
+    if (DWHBLL_REFLECTION)
+        message(STATUS "Enabling reflection features")
+        # If this doesn't get set before project(), it will build the std module
+        # without -freflection, which then will prevent linking with reflection stuff...
+        add_compile_options("-freflection")
+    endif()
+endfunction()
 
 option(BUILD_HARDEN "enable hardening on the library." OFF)
 option(BUILD_HARDEN_EXPENSIVE "enable expensive hardening features on the library." OFF)
@@ -26,14 +40,32 @@ option(DWHBLL_UNICODE_SUPPORT "Build with unicode support (requires internet con
 option(DWHBLL_DWCC_CPP "Build DWCC C++ compiler" ON)
 option(DWHBLL_TESTS "Build dwhbll tests. Note that this doesn't affect whether the testing library is build." OFF)
 option(DWHBLL_BENCHMARKS "Build dwhbll benchmarks. Note that this doesn't affect whether the benchmark library is build" OFF)
+option(DWHBLL_REFLECTION "Enable reflection-related features (needs gcc 16+)" ON)
 
+setup_bs()
+
+project(dwhbll LANGUAGES C CXX)
+
+include(CheckCXXSymbolExists)
+include(CheckCXXCompilerFlag)
+
+find_package(PkgConfig REQUIRED)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+
+# Maybe only in debug builds?
+add_compile_options(
+    -Wall
+    -Wextra
+    -Wnon-virtual-dtor
+    -Wno-interference-size
+)
 
 check_cxx_compiler_flag("-freflection" COMPILER_HAS_REFLECTION)
-if (COMPILER_HAS_REFLECTION)
-    add_compile_options("-freflection")
-else()
-    message(WARNING "Compiler does not support reflection. Reflection parts of the library will be disabled.")
+if (NOT COMPILER_HAS_REFLECTION)
+    message(FATAL_ERROR "DWHBLL_REFLECTION enabled but compiler has no reflection support.")
 endif()
+
 
 if (DWHBLL_DWCC_CPP AND NOT DWHBLL_UNICODE_SUPPORT)
     message(FATAL_ERROR
@@ -219,7 +251,6 @@ set(DWHBLL_SOURCES
     include/dwhbll/sanify/all.h
     include/dwhbll/sanify/coroutines.h
     include/dwhbll/sanify/deferred.h
-    include/dwhbll/sanify/lang_ext.h
     include/dwhbll/sanify/stl_ext.h
     include/dwhbll/sanify/sugar/all.h
     include/dwhbll/sanify/sugar/ranges.h
@@ -245,7 +276,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/bench/bench.h
 )
 
-if(COMPILER_HAS_REFLECTION)
+if(DWHBLL_REFLECTION)
     list(APPEND DWHBLL_SOURCES
         src/dwhbll/testing/testing.cpp
         src/dwhbll/testing/harness.cpp
@@ -388,12 +419,59 @@ target_include_directories(dwhbll_core
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
+if (DWHBLL_REFLECTION)
+    target_compile_options(dwhbll_core PUBLIC "-freflection")
+endif()
+
+target_sources(dwhbll_core
+    PUBLIC
+        FILE_SET CXX_MODULES TYPE CXX_MODULES
+        BASE_DIRS modules
+        FILES
+            modules/dwhbll.cppm
+
+            modules/dwhbll/async.cppm
+            modules/dwhbll/async/net.cppm
+
+            modules/dwhbll/concurrency.cppm
+            modules/dwhbll/concurrency/coroutine.cppm
+
+            modules/dwhbll/bench.cppm
+            modules/dwhbll/cli.cppm
+            modules/dwhbll/collections.cppm
+            modules/dwhbll/console.cppm
+            modules/dwhbll/cryptography.cppm
+            modules/dwhbll/debug.cppm
+            modules/dwhbll/exceptions.cppm
+            modules/dwhbll/files.cppm
+            modules/dwhbll/graphics.cppm
+            modules/dwhbll/json.cppm
+            modules/dwhbll/lang.cppm
+            modules/dwhbll/linalg.cppm
+            modules/dwhbll/math.cppm
+            modules/dwhbll/memory.cppm
+            modules/dwhbll/meta.cppm
+            modules/dwhbll/network.cppm
+            modules/dwhbll/platform.cppm
+            modules/dwhbll/stl_ext.cppm
+            modules/dwhbll/subprocess.cppm
+            modules/dwhbll/testing.cppm
+            modules/dwhbll/unicode.cppm
+            modules/dwhbll/uuid.cppm
+
+            modules/dwhbll/sanify.cppm
+)
+if(CMAKE_VERSION VERSION_LESS_EQUAL "4.4")
+    set_property(TARGET dwhbll_core APPEND PROPERTY CXX_MODULE_STD)
+endif()
+
 target_link_libraries(dwhbll_core PUBLIC stdc++exp)
 
 install(TARGETS dwhbll_core
     EXPORT dwhbllTargets
     ARCHIVE DESTINATION lib
     INCLUDES DESTINATION include
+    FILE_SET CXX_MODULES DESTINATION modules
 )
 
 # find liburing
@@ -450,7 +528,7 @@ install(TARGETS dwhbll
     EXPORT dwhbllTargets
 )
 
-if (COMPILER_HAS_REFLECTION)
+if (DWHBLL_REFLECTION)
     add_library(dwhbll_test_main STATIC src/dwhbll/testing/test_main.cpp)
     target_link_libraries(dwhbll_test_main PUBLIC dwhbll_core)
 
@@ -498,11 +576,12 @@ configure_file(
     @ONLY
 )
 
-if (DWHBLL_TESTS AND COMPILER_HAS_REFLECTION)
+if (DWHBLL_TESTS AND DWHBLL_REFLECTION)
     set(DWHBLL_TEST_SOURCES
         tests/cli.cpp
         tests/matrix.cpp
         tests/pool.cpp
+        tests/stl_ext/string.cpp
         tests/collections/ring.cpp
         tests/collections/cache.cpp
         tests/cryptography/arc4.cpp
@@ -526,7 +605,7 @@ if (DWHBLL_TESTS AND COMPILER_HAS_REFLECTION)
     endif()
 endif()
 
-if (DWHBLL_BENCHMARKS AND COMPILER_HAS_REFLECTION)
+if (DWHBLL_BENCHMARKS AND DWHBLL_REFLECTION)
     add_executable(dwhbll_bench
         bench/bounded_spsc_int_bench.cpp
         bench/bounded_mpsc_int_bench.cpp

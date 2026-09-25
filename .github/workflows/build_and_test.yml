@@ -35,7 +35,8 @@ jobs:
             -DBUILD_HARDEN=ON -DBUILD_HARDEN_EXPENSIVE=ON \
             -DDWHBLL_SANITIZER=${{ matrix.sanitizer }} \
             -DDWHBLL_TESTS=ON -DDWHBLL_BENCHMARKS=ON \
-            -DDWHBLL_UNICODE_SUPPORT=ON -DDWHBLL_DWCPP_CPP=ON
+            -DDWHBLL_UNICODE_SUPPORT=ON -DDWHBLL_DWCPP_CPP=ON \
+            -DDWHBLL_REFLECTION=ON -DDWHBLL_MODULES=ON
           cmake --build build
 
       - name: Test

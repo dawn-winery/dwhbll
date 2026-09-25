@@ -1,13 +1,12 @@
-#include <dwhbll/console/ansi_escape.h>
-#include <dwhbll/testing/harness.h>
-
+#include <version>
+#include <cstdio>
 #include <fcntl.h>
 #include <unistd.h>
 
-#include <cstdio>
-#include <filesystem>
-#include <fstream>
-#include <print>
+import std;
+import dwhbll.testing;
+import dwhbll.console;
+import dwhbll.sanify;
 
 namespace dwhbll::test {
 
@@ -21,21 +20,21 @@ std::string_view status_color(test_status status) {
         case test_status::fail: return color::red;
         case test_status::xfail: return color::yellow;
         case test_status::xpass: return color::magenta;
-        case test_status::unsupported: return color::yellow;
+        case test_status::skip: return color::yellow;
         case test_status::unresolved: return color::red;
         case test_status::untested: return color::dim;
     }
     return color::reset;
 }
 
-std::string get_source_line(std::string_view file_path, std::uint32_t line_num) {
+std::string get_source_line(std::string_view file_path, u32 line_num) {
     if (file_path.empty() || line_num == 0)
         return "";
     std::ifstream file{std::string(file_path)};
     if (!file.is_open())
         return "";
     std::string line;
-    std::uint32_t current_line = 0;
+    u32 current_line = 0;
     while (std::getline(file, line)) {
         if (++current_line == line_num) {
             auto start = line.find_first_not_of(" \t");
@@ -45,7 +44,7 @@ std::string get_source_line(std::string_view file_path, std::uint32_t line_num) 
     return "";
 }
 
-void print_summary_block(FILE* out, std::string_view suite_name,
+void print_summary_block(std::FILE* out, std::string_view suite_name,
                          const summary_counts& counts, bool use_color) {
     auto print_line = [&](std::string_view label, std::size_t count,
                           std::string_view col, bool hide_if_zero = false) {
@@ -67,10 +66,10 @@ void print_summary_block(FILE* out, std::string_view suite_name,
     print_line("unexpected failures", counts.failures, color::red);
     print_line("expected failures", counts.xfails, color::yellow, true);
     print_line("unexpected successes", counts.xpasses, color::magenta, true);
-    print_line("unsupported tests", counts.unsupported, color::yellow, true);
+    print_line("skipped tests", counts.skipped, color::yellow, true);
     print_line("unresolved testcases", counts.unresolved, color::red, true);
     print_line("untested testcases", counts.untested, "", true);
-    std::fflush(out);
+    fflush(out);
 }
 
 } // namespace
@@ -114,8 +113,8 @@ int runner::run(const options& options) const {
         log_path = (std::filesystem::read_symlink("/proc/self/exe").parent_path() / "dwhbll_test.log").string();
 #endif
 
-    FILE* console_out = stdout;
-    int log_fd = ::open(log_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    std::FILE* console_out = stdout;
+    int log_fd = open(log_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (log_fd != -1) {
         int orig_stdout = ::dup(STDOUT_FILENO);
         if (orig_stdout != -1) {
@@ -137,7 +136,7 @@ int runner::run(const options& options) const {
                 extra = " [xfail]";
             std::println(console_out, "  {}:{}{}", t.suite, t.name, extra);
         }
-        std::fflush(console_out);
+        fflush(console_out);
         return 0;
     }
 
@@ -145,14 +144,14 @@ int runner::run(const options& options) const {
     if (!exec_options.on_test_start) {
         exec_options.on_test_start = [console_out, &exec_options](const test_info& info) {
             std::println("\n=== RUNNING: {} ===", info.name);
-            std::fflush(stdout);
+            fflush(stdout);
 
             if (exec_options.color) {
                 std::print(console_out, "{}{}:{} {}", color::cyan, "RUNNING", color::reset, info.name);
             } else {
                 std::print(console_out, "RUNNING: {}", info.name);
             }
-            std::fflush(console_out);
+            fflush(console_out);
         };
     }
 
@@ -160,10 +159,10 @@ int runner::run(const options& options) const {
         exec_options.on_test_end = [console_out, &exec_options](const test_result& tr) {
             auto st_str = to_status_string(tr.status);
             std::println("=== END: {} ({}) ===", tr.name, st_str);
-            std::fflush(stdout);
+            fflush(stdout);
 
             bool has_reason = !tr.message.empty() &&
-                (tr.status == test_status::unsupported ||
+                (tr.status == test_status::skip ||
                  tr.status == test_status::xfail ||
                  tr.status == test_status::xpass);
 
@@ -206,7 +205,7 @@ int runner::run(const options& options) const {
                     std::println(console_out, "      {}", f.msg);
                 }
             }
-            std::fflush(console_out);
+            fflush(console_out);
         };
     }
 

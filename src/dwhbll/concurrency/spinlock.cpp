@@ -1,10 +1,12 @@
-#include <dwhbll/concurrency/spinlock.h>
-#include <dwhbll/console/logging.h>
-#include <dwhbll/exceptions/concurrency_exception.h>
-
 #if defined(__x86_64__) || defined(__i386__)
 #include <xmmintrin.h>
 #endif
+
+import std;
+import dwhbll.concurrency;
+import dwhbll.console;
+import dwhbll.exceptions;
+import dwhbll.sanify;
 
 namespace dwhbll::concurrency {
     spinlock::~spinlock() {
@@ -19,7 +21,7 @@ namespace dwhbll::concurrency {
 #endif
     }
 
-    sanify::deferred spinlock::lock() {
+    dwhbll::sanify::deferred spinlock::lock() {
         while (_lock.test_and_set(std::memory_order_acquire)) {
 #if defined(__x86_64__) || defined(__i386__)
             _mm_pause();

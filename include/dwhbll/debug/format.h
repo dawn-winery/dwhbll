@@ -104,15 +104,6 @@ constexpr std::string dbg(T const& val, int depth = 0, int step = 4, bool first_
         return dbg_print_value(val, depth, step);
 }
 
-#define 🦀 dbg
-
-#define LOG_FUNC(func) \
-    constexpr std::string_view __id = std::meta::identifier_of(^^func); \
-    std::string __s; \
-    template for (constexpr auto __e : std::define_static_array(std::meta::parameters_of(^^func))) { \
-        using __T = [: std::meta::type_of(__e) :]; \
-        __s += std::format("{}{} = {}\n", get_indentation(2, 5), std::meta::identifier_of(__e), dbg([: std::meta::variable_of(__e) :], 2, 5, false)); \
-    } \
-    trace(std::format("function {}:\n{}", __id, __s));
+#include <dwhbll/macros/debug.h>
 
 } // namespace dwhbll::meta

@@ -1,13 +1,16 @@
-#include <dwhbll/concurrency/coroutine/wrappers/file.h>
-
-#include <fcntl.h>
 #include <version>
+#include <fcntl.h>
 #include <unistd.h>
 #include <sys/poll.h>
-#include <dwhbll/concurrency/coroutine/wrappers/syscall_wrappers.h>
-#include <dwhbll/debug/debug.h>
-#include <dwhbll/console/logging.h>
-#include <dwhbll/sanify/coroutines.h>
+#include <sys/types.h>
+
+import std;
+import dwhbll.concurrency.coroutine;
+import dwhbll.concurrency;
+import dwhbll.debug;
+import dwhbll.console;
+import dwhbll.exceptions;
+import dwhbll.sanify;
 
 namespace dwhbll::concurrency::coroutine::wrappers {
     int file::compute_openmode_flags(std::ios::openmode mode) {
@@ -169,7 +172,7 @@ namespace dwhbll::concurrency::coroutine::wrappers {
             } else {
                 std::memcpy(result.data() + b2s, buffer, n - b2s);
                 auto consumed = n - b2s;
-                rdbuf.write_vector(std::span{(sanify::u8*)buffer + consumed, (sanify::u8*)buffer + read});
+                rdbuf.write_vector(std::span{(u8*)buffer + consumed, (u8*)buffer + read});
             }
 
             if (read == 0)
@@ -218,9 +221,9 @@ namespace dwhbll::concurrency::coroutine::wrappers {
             write_head += wrote;
 
             if (wrote != static_cast<ssize_t>(data.size()))
-                wrbuf.write_vector(std::span{(sanify::u8*)data.data() + wrote, (sanify::u8*)data.data() + data.size()});
+                wrbuf.write_vector(std::span{(u8*)data.data() + wrote, (u8*)data.data() + data.size()});
         } else
-            wrbuf.write_vector(std::span{(sanify::u8*)data.data(), (sanify::u8*)data.data() + data.size()});
+            wrbuf.write_vector(std::span{(u8*)data.data(), (u8*)data.data() + data.size()});
     }
 
     task<> file::drain() {

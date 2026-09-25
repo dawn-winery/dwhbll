@@ -34,6 +34,17 @@ namespace dwhbll::stl_ext {
     }
 
     constexpr std::string replace_all(std::string_view str, std::string_view from, std::string_view to) {
+        if (from.empty()) {
+            std::string result;
+            result.reserve(str.size() + (str.size() + 1) * to.size());
+            result += to;
+            for (char c : str) {
+                result += c;
+                result += to;
+            }
+            return result;
+        }
+
         return str
             | std::views::split(from)
             | std::views::join_with(to)

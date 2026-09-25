@@ -1,6 +1,5 @@
-#include <dwhbll/files/filejar/file.h>
-
-#include <fstream>
+import std;
+import dwhbll.files;
 
 namespace dwhbll::files::filejar {
     file::file(const std::filesystem::path &path) : _path(path),

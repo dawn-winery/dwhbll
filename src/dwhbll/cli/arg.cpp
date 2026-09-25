@@ -1,6 +1,7 @@
-#include <dwhbll/cli/cli.h>
-#include <utility>
-#include <dwhbll/stl_ext/common_helpers.h>
+import std;
+import dwhbll.cli;
+import dwhbll.stl_ext;
+import dwhbll.sanify;
 
 using dwhbll::stl_ext::Option;
 
@@ -231,8 +232,8 @@ Arg &Arg::value_parser(std::initializer_list<std::string> vals) {
     return value_parser(detail::make_value_parser(vals));
 }
 
-Arg &Arg::index(size_t idx) {
-    index_ = Option<size_t>(std::move(idx));
+Arg &Arg::index(std::size_t idx) {
+    index_ = Option<std::size_t>(std::move(idx));
     return *this;
 }
 
@@ -298,7 +299,7 @@ Arg &Arg::raw(bool yes) {
     return *this;
 }
 
-Arg &Arg::display_order(size_t order) {
+Arg &Arg::display_order(std::size_t order) {
     display_order_ = dwhbll::stl_ext::Some(order);
     return *this;
 }

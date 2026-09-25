@@ -1,15 +1,13 @@
-#include <chrono>
 #include <csignal>
-#include <dwhbll/console/logging.h>
-#include <dwhbll/exceptions/timeout_exception.h>
-#include <dwhbll/subprocess/pipe_wrapper.h>
-#include <dwhbll/subprocess/process.h>
+#include <cerrno>
 #include <fcntl.h>
-#include <stdexcept>
 #include <sys/wait.h>
-#include <unistd.h>
-#include <vector>
-#include <dwhbll/debug/debug.h>
+
+import std;
+import dwhbll.subprocess;
+import dwhbll.console;
+import dwhbll.exceptions;
+import dwhbll.debug;
 
 namespace dwhbll::subprocess {
     process::process(const std::initializer_list<std::string> &args) {

@@ -7,6 +7,14 @@
 #include <string_view>
 #include <vector>
 
+/**
+ *   TODO:
+ * - Signal handlers
+ * - fork() for tests
+ * - {EXPECT,REQUIRE}_DEATH (requires forking)
+ * - Proper sanitizer handling
+ */
+
 namespace dwhbll::test {
 
 struct failure {
@@ -19,7 +27,7 @@ enum class test_status {
     fail,
     xfail,
     xpass,
-    unsupported,
+    skip,
     unresolved,
     untested
 };
@@ -43,7 +51,7 @@ struct test_result {
     }
 
     [[nodiscard]] bool skipped() const {
-        return status == test_status::unsupported || status == test_status::untested;
+        return status == test_status::skip || status == test_status::untested;
     }
 };
 
@@ -74,7 +82,7 @@ struct summary_counts {
     std::size_t failures = 0;
     std::size_t xfails = 0;
     std::size_t xpasses = 0;
-    std::size_t unsupported = 0;
+    std::size_t skipped = 0;
     std::size_t unresolved = 0;
     std::size_t untested = 0;
 
@@ -88,8 +96,8 @@ struct summary_counts {
                 ++xfails; break;
             case test_status::xpass:
                 ++xpasses; break;
-            case test_status::unsupported:
-                ++unsupported; break;
+            case test_status::skip:
+                ++skipped; break;
             case test_status::unresolved:
                 ++unresolved; break;
             case test_status::untested:
@@ -106,14 +114,14 @@ struct summary_counts {
         failures += other.failures;
         xfails += other.xfails;
         xpasses += other.xpasses;
-        unsupported += other.unsupported;
+        skipped += other.skipped;
         unresolved += other.unresolved;
         untested += other.untested;
         return *this;
     }
 
     [[nodiscard]] std::size_t total() const {
-        return passes + failures + xfails + xpasses + unsupported + unresolved + untested;
+        return passes + failures + xfails + xpasses + skipped + unresolved + untested;
     }
 
     [[nodiscard]] bool is_success() const {
