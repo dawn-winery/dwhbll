@@ -15,6 +15,9 @@
 
 namespace dwhbll::debug {
 
+    std::string header_text = "PANIC";
+    std::string trailing_text = "";
+
 [[noreturn]] void panic(std::string_view msg) {
     static std::atomic_flag panicking = false;
 
@@ -26,7 +29,7 @@ namespace dwhbll::debug {
 #endif
     }
 
-    std::cerr << "\n\e[1;91m============ [PANIC] ============\n";
+    std::cerr << "\n\e[1;91m============ [" << header_text << "] ============\n";
     std::cerr << msg << "\n\n";
     std::cerr << "Traceback (most recent call first):" << "\n";
 
@@ -73,6 +76,8 @@ namespace dwhbll::debug {
     }
 #endif
 
+    std::cerr << trailing_text << std::endl;
+
     std::cerr << "\e[0;0m" << std::endl;
 
     exit(1);
@@ -80,6 +85,14 @@ namespace dwhbll::debug {
 
 void panic() {
     panic("");
+}
+
+void set_header_name(const std::string &str) {
+    header_text = str;
+}
+
+void set_trailing_string(const std::string &str) {
+    trailing_text = str;
 }
 
 void panic(bool condition) {
