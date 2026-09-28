@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <vector>
+#include <utility>
 #include <cxxabi.h>
 
 #ifdef NDEBUG
