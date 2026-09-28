@@ -14,10 +14,25 @@ namespace dwhbll::memory {
 	class Pool {
 // #pragma pack(push, 1)
 		struct Obj {
-			std::size_t blockAvailable = BlockSize;
-			bool used[BlockSize] = {};
-			T object[BlockSize];
-			Obj* next{nullptr};
+			std::size_t blockAvailable;
+			bool used[BlockSize];
+		    // kindly ask the compiler not to initialize or deinit the pool
+		    union ObjUnion{
+		        T object[BlockSize];
+
+		        ObjUnion() {}
+
+		        ~ObjUnion() {}
+		    } object_data;
+			Obj* next;
+
+		    Obj() : blockAvailable{BlockSize}, used{}, next{nullptr} {}
+
+		    ~Obj() {
+		        for (std::size_t i = 0; i < BlockSize; i++)
+                    if (used[i])
+                        object_data.object[i].~T();
+            }
 		};
 // #pragma pack(pop)
 
@@ -37,6 +52,7 @@ namespace dwhbll::memory {
 
 	public:
 		~Pool() {
+		    auto _ = _lock.lock();
 			Obj* current = objects;
 			while (current != nullptr) {
 				Obj* last = current;
@@ -147,7 +163,7 @@ namespace dwhbll::memory {
 			}
 			--obj->blockAvailable;
 			obj->used[index] = true;
-			auto* f = obj->object;
+			auto* f = obj->object_data.object;
 			new(f + index)T(std::forward<Args>(args)...);
 			returning[f + index] = {obj, index};
 			return ObjectWrapper(this, f + index);
@@ -174,7 +190,7 @@ namespace dwhbll::memory {
 				if (returning.contains(object)) {
 					auto& [obj, index] = returning[object];
 					obj->used[index] = false;
-					obj->object[index].~T();
+					obj->object_data.object[index].~T();
 					++obj->blockAvailable;
 					returning.erase(object);
 					available++;
