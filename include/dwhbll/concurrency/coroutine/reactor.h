@@ -118,6 +118,14 @@ namespace dwhbll::concurrency::coroutine {
          */
         reactor(std::uint32_t size = 128);
 
+        reactor(const reactor &other) = delete;
+
+        reactor(reactor &&other) noexcept = delete;
+
+        reactor & operator=(const reactor &other) = delete;
+
+        reactor & operator=(reactor &&other) noexcept = delete;
+
         ~reactor();
 
         [[nodiscard]] bool empty() const;
