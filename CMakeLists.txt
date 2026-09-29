@@ -29,9 +29,7 @@ option(DWHBLL_BENCHMARKS "Build dwhbll benchmarks. Note that this doesn't affect
 
 
 check_cxx_compiler_flag("-freflection" COMPILER_HAS_REFLECTION)
-if (COMPILER_HAS_REFLECTION)
-    add_compile_options("-freflection")
-else()
+if (NOT COMPILER_HAS_REFLECTION)
     message(WARNING "Compiler does not support reflection. Reflection parts of the library will be disabled.")
 endif()
 
@@ -417,7 +415,6 @@ if (DWHBLL_GPU_ENABLED)
         enable_language(HIP)
         set(CMAKE_HIP_STANDARD 23)
 
-
         add_compile_definitions(LINALG_GPU_THRESHOLD=${LINALG_GPU_THRESHOLD_VALUE})
         add_compile_definitions(DWHBLL_GPU_ENABLED)
 
@@ -452,6 +449,9 @@ install(TARGETS dwhbll
 
 if (COMPILER_HAS_REFLECTION)
     add_library(dwhbll_test_main STATIC src/dwhbll/testing/test_main.cpp)
+    target_compile_options(dwhbll_core PRIVATE "-freflection")
+    target_compile_options(dwhbll_test_main PRIVATE "-freflection")
+
     target_link_libraries(dwhbll_test_main PUBLIC dwhbll_core)
 
     install(TARGETS dwhbll_test_main
@@ -461,6 +461,7 @@ if (COMPILER_HAS_REFLECTION)
     )
 
     add_library(dwhbll_bench_main STATIC src/dwhbll/bench/bench_main.cpp)
+    target_compile_options(dwhbll_bench_main PRIVATE "-freflection")
     target_link_libraries(dwhbll_bench_main PUBLIC dwhbll_core)
 
     install(TARGETS dwhbll_bench_main
@@ -515,6 +516,7 @@ if (DWHBLL_TESTS AND COMPILER_HAS_REFLECTION)
     endif()
 
     add_executable(dwhbll_test ${DWHBLL_TEST_SOURCES})
+    target_compile_options(dwhbll_test PRIVATE "-freflection")
     target_link_libraries(dwhbll_test PRIVATE dwhbll dwhbll_test_main)
     target_include_directories(dwhbll_test PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated/include")
 
@@ -533,5 +535,6 @@ if (DWHBLL_BENCHMARKS AND COMPILER_HAS_REFLECTION)
         bench/recycling_concurrent_stack_bench.cpp
         bench/matrix.cpp
     )
+    target_compile_options(dwhbll_bench PRIVATE "-freflection")
     target_link_libraries(dwhbll_bench PRIVATE dwhbll dwhbll_bench_main)
 endif()

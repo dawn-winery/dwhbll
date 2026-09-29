@@ -5,6 +5,7 @@
 #include <dwhbll/linalg/matrix.h>
 #include <hip/hip_runtime.h>
 #include <iostream>
+#include <print>
 
 #define HIP_CHECK(command) {                                                \
     hipError_t status = command;                                            \
@@ -38,14 +39,14 @@ __global__ void matmul(const T* A, const T* B, T* out, int M, int N, int K) {
 
 
 template <typename ComputeT>
-std::vector<ComputeT> matmul_gpu_wrapper(const std::vector<ComputeT>& A, const std::vector<ComputeT>& B, 
-                                         std::pair<size_t, size_t> dimA, std::pair<size_t, size_t> dimB) 
+std::vector<ComputeT> matmul_gpu_wrapper(const std::vector<ComputeT>& A, const std::vector<ComputeT>& B,
+                                         std::pair<size_t, size_t> dimA, std::pair<size_t, size_t> dimB)
 {
-    
+
     auto [rowA, colA] = dimA;
     auto [rowB, colB] = dimB;
     assert(colA == rowB);
-    
+
     // const ComputeT *h_A = static_cast<const ComputeT*>(matA);
     // const ComputeT *h_B = static_cast<const ComputeT*>(matB);
     size_t s = rowA * colB * sizeof(ComputeT);
@@ -82,10 +83,10 @@ std::vector<ComputeT> matmul_gpu_wrapper(const std::vector<ComputeT>& A, const s
 }
 
 
-template std::vector<float> matmul_gpu_wrapper<float>(const std::vector<float>& A, const std::vector<float>& B, 
+template std::vector<float> matmul_gpu_wrapper<float>(const std::vector<float>& A, const std::vector<float>& B,
                                                       std::pair<size_t, size_t> dimA, std::pair<size_t, size_t> dimB);
 
-template std::vector<double> matmul_gpu_wrapper<double>(const std::vector<double>& A, const std::vector<double>& B, 
+template std::vector<double> matmul_gpu_wrapper<double>(const std::vector<double>& A, const std::vector<double>& B,
                                                         std::pair<size_t, size_t> dimA, std::pair<size_t, size_t> dimB);
 
 }
