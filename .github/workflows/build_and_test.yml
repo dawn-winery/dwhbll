@@ -8,14 +8,21 @@ on:
 
 jobs:
   build:
+    name: ${{ matrix.build_type }} | Sanitizer:${{ matrix.sanitizer }},Harden:${{ matrix.harden }}/${{ matrix.harden_expensive }},DWCC:${{ matrix.dwcc }}
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        sanitizer:
-          - asan_ubsan
-          - tsan
-          - ubsan
-          - lsan
+        # github does not accept mroe than 256 matrix combinations, and this is 180
+        build_type: [Debug, Release, RelWithDebInfo]
+        sanitizer: [OFF, asan_ubsan, tsan, ubsan, lsan]
+        harden: ["OFF", "ON"]
+        harden_expensive: ["OFF", "ON"]
+        unicode: ["OFF", "ON"]
+        dwcc: ["OFF", "ON"]
+        exclude:
+          - unicode: "OFF"
+            dwcc: "ON"
 
     container:
       image: debian:forky
@@ -31,11 +38,15 @@ jobs:
 
       - name: Build
         run: |
-          CC=gcc-16 CXX=g++-16 cmake -B build . -G Ninja -DCMAKE_BUILD_TYPE=Debug \
-            -DBUILD_HARDEN=ON -DBUILD_HARDEN_EXPENSIVE=ON \
+          CC=gcc-16 CXX=g++-16 cmake -B build . -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DBUILD_HARDEN=${{ matrix.harden }} \
+            -DBUILD_HARDEN_EXPENSIVE=${{ matrix.harden_expensive }} \
             -DDWHBLL_SANITIZER=${{ matrix.sanitizer }} \
-            -DDWHBLL_TESTS=ON -DDWHBLL_BENCHMARKS=ON \
-            -DDWHBLL_UNICODE_SUPPORT=ON -DDWHBLL_DWCPP_CPP=ON
+            -DDWHBLL_TESTS=ON \
+            -DDWHBLL_BENCHMARKS=ON \
+            -DDWHBLL_UNICODE_SUPPORT=${{ matrix.unicode }} \
+            -DDWHBLL_DWCC_CPP=${{ matrix.dwcc }}
           cmake --build build
 
       - name: Test
