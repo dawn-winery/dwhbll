@@ -1,6 +1,7 @@
 #include <dwhbll/testing/testing.h>
 #include <dwhbll/cli/command.h>
 
+#include <string>
 #include <unistd.h>
 
 int main(int argc, char** argv) {
@@ -18,6 +19,12 @@ int main(int argc, char** argv) {
         .long_opt("fail-fast")
         .help("Stop on first test failure")
         .action(ArgAction::SetTrue));
+    cmd.arg(Arg("jobs")
+        .short_opt('j')
+        .long_opt("jobs")
+        .help("Number of worker processes for test execution pool (0 for auto)")
+        .action(ArgAction::Set)
+        .value_name("N"));
     cmd.arg(Arg("suite")
         .long_opt("suite")
         .help("Run only test suites matching <name>")
@@ -45,11 +52,13 @@ int main(int argc, char** argv) {
     dwhbll::test::options opts;
     opts.color = isatty(STDOUT_FILENO);
     opts.list_only = matches.get_flag("list");
-    opts.fail_fast = matches.get_flag("fail-fast");
 
-    if (matches.contains_id("suite")) {
-        opts.suite_filter = matches.get_one("suite").unwrap();
+    if (matches.contains_id("jobs")) {
+        auto val = matches.get_one("jobs").unwrap();
+        opts.jobs = std::stoul(std::string(val));
     }
+    if (matches.contains_id("suite"))
+        opts.suite_filter = matches.get_one("suite").unwrap();
     if (matches.contains_id("color")) {
         auto val = matches.get_one("color").unwrap();
         if (val == "never" || val == "false")

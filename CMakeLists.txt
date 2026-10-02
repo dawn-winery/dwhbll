@@ -240,6 +240,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/uuid/uuid.h
     include/dwhbll/testing/testing.h
     include/dwhbll/testing/harness.h
+    include/dwhbll/testing/assertions.h
     include/dwhbll/bench/bench.h
 )
 
@@ -248,6 +249,7 @@ if(COMPILER_HAS_REFLECTION)
         src/dwhbll/testing/testing.cpp
         src/dwhbll/testing/harness.cpp
         src/dwhbll/testing/runner.cpp
+        src/dwhbll/testing/assertions.cpp
         src/dwhbll/bench/bench.cpp
     )
 endif()
