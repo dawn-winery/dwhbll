@@ -12,7 +12,7 @@ namespace cli {
 [[=test]]
 void option_parsing()
 {
-    Command cmd("test1");
+    Command cmd("test");
     cmd.arg(Arg("config")
         .short_opt('c')
         .long_opt("config")
@@ -30,7 +30,7 @@ void option_parsing()
 [[=test]]
 void flag_parsing()
 {
-    Command cmd("test2");
+    Command cmd("test");
     cmd.arg(Arg("verbose")
         .short_opt('v')
         .long_opt("verbose")
@@ -46,7 +46,7 @@ void flag_parsing()
 [[=test]]
 void default_values()
 {
-    Command cmd("test3");
+    Command cmd("test");
     cmd.arg(Arg("count")
         .short_opt('n')
         .long_opt("count")
@@ -64,7 +64,7 @@ void default_values()
 [[=test]]
 void positional_arguments()
 {
-    Command cmd("test4");
+    Command cmd("test");
     cmd.arg(Arg("input").help("Input file"));
     cmd.arg(Arg("output").help("Output file"));
 
@@ -78,7 +78,7 @@ void positional_arguments()
 [[=test]]
 void long_option_with_equals()
 {
-    Command cmd("test5");
+    Command cmd("test");
     cmd.arg(Arg("config")
         .long_opt("config")
         .help("Configuration file")
@@ -94,7 +94,7 @@ void long_option_with_equals()
 [[=test]]
 void short_options_combined()
 {
-    Command cmd("test6");
+    Command cmd("test");
     cmd.arg(Arg("a").short_opt('a').action(ArgAction::SetTrue));
     cmd.arg(Arg("b").short_opt('b').action(ArgAction::SetTrue));
     cmd.arg(Arg("c").short_opt('c').action(ArgAction::SetTrue));
@@ -110,7 +110,7 @@ void short_options_combined()
 [[=test]]
 void value_delimiter()
 {
-    Command cmd("test7");
+    Command cmd("test");
     cmd.disable_help_flag(true).disable_version_flag(true);
     cmd.arg(Arg("items")
         .long_opt("items")
@@ -128,7 +128,7 @@ void value_delimiter()
 [[=test]]
 void count_action()
 {
-    Command cmd("test8");
+    Command cmd("test");
     cmd.arg(Arg("verbose")
         .short_opt('v')
         .long_opt("verbose")
@@ -239,7 +239,7 @@ void num_args_with_value_delimiter()
 [[=test]]
 void subcommands()
 {
-    Command cmd("test9");
+    Command cmd("test");
     cmd.subcommand(Command("sub1")
         .arg(Arg("arg1").help("Sub arg 1")));
 
@@ -384,7 +384,7 @@ void environment_variable_support()
     REQUIRE_EQ(result.matches.get_one("from_env").unwrap(), "env_value");
 
     unsetenv("TEST_CLI_ENV_VAR");
-    Command cmd2("test17b");
+    Command cmd2("test");
     cmd2.disable_help_flag(true).disable_version_flag(true);
     cmd2.arg(Arg("from_env_default").long_opt("from-env-default").action(ArgAction::Set)
         .env("NONEXISTENT_VAR", dwhbll::stl_ext::Option<std::string>(std::string("default_value"))));

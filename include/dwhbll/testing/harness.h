@@ -1,7 +1,8 @@
 #pragma once
 
 #include <chrono>
-#include <functional>
+#include <cstdint>
+#include <memory>
 #include <source_location>
 #include <string>
 #include <string_view>
@@ -11,7 +12,18 @@ namespace dwhbll::test {
 
 struct failure {
     std::string msg;
-    std::source_location loc;
+    std::string filename;
+    std::uint32_t line = 0;
+    std::string fname;
+
+    failure() = default;
+    failure(std::string msg_, std::source_location loc)
+        : msg(std::move(msg_))
+        , filename(loc.file_name() ? loc.file_name() : "")
+        , line(loc.line())
+        , fname(loc.function_name() ? loc.function_name() : "") {}
+    failure(std::string msg_, std::string file_, std::uint32_t line_, std::string func_ = "")
+        : msg(std::move(msg_)), filename(std::move(file_)), line(line_), fname(std::move(func_)) {}
 };
 
 enum class test_status {
@@ -28,11 +40,9 @@ std::string_view to_status_string(test_status status);
 
 struct test_result {
     std::string name;
-    std::string suite = "unit";
     test_status status = test_status::pass;
     std::vector<failure> failures;
     std::string message;
-    std::chrono::microseconds duration{0};
 
     [[nodiscard]] bool passed() const {
         return status == test_status::pass || status == test_status::xfail;
@@ -56,17 +66,13 @@ struct test_info {
     std::string_view xfail_reason;
 };
 
-using test_start_callback = std::function<void(const test_info&)>;
-using test_end_callback = std::function<void(const test_result&)>;
-
 struct options {
     std::string suite_filter;
     std::vector<std::string> patterns;
     bool list_only = false;
-    bool fail_fast = false;
     bool color = true;
-    test_start_callback on_test_start;
-    test_end_callback on_test_end;
+    std::size_t jobs = 0;
+    FILE* console_out = stdout;
 };
 
 struct summary_counts {
@@ -158,10 +164,6 @@ public:
     requires std::derived_from<H, test_harness>
     runner& add_harness(Args&&... args) {
         return add_harness(std::make_shared<H>(std::forward<Args>(args)...));
-    }
-
-    [[nodiscard]] const std::vector<std::shared_ptr<test_harness>>& harnesses() const {
-        return harnesses_;
     }
 
     [[nodiscard]] std::vector<test_info> list_all_tests() const;
