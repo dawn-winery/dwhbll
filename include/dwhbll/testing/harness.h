@@ -1,20 +1,11 @@
 #pragma once
 
-#include <chrono>
 #include <cstdint>
 #include <memory>
 #include <source_location>
 #include <string>
 #include <string_view>
 #include <vector>
-
-/**
- *   TODO:
- * - Signal handlers
- * - fork() for tests
- * - {EXPECT,REQUIRE}_DEATH (requires forking)
- * - Proper sanitizer handling
- */
 
 namespace dwhbll::test {
 
@@ -40,8 +31,7 @@ enum class test_status {
     xfail,
     xpass,
     skip,
-    unresolved,
-    untested
+    unresolved
 };
 
 std::string_view to_status_string(test_status status);
@@ -51,18 +41,6 @@ struct test_result {
     test_status status = test_status::pass;
     std::vector<failure> failures;
     std::string message;
-
-    [[nodiscard]] bool passed() const {
-        return status == test_status::pass || status == test_status::xfail;
-    }
-
-    [[nodiscard]] bool failed() const {
-        return status == test_status::fail || status == test_status::xpass || status == test_status::unresolved;
-    }
-
-    [[nodiscard]] bool skipped() const {
-        return status == test_status::skip || status == test_status::untested;
-    }
 };
 
 struct test_info {
@@ -90,7 +68,6 @@ struct summary_counts {
     std::size_t xpasses = 0;
     std::size_t skipped = 0;
     std::size_t unresolved = 0;
-    std::size_t untested = 0;
 
     void add(test_status status) {
         switch (status) {
@@ -106,13 +83,7 @@ struct summary_counts {
                 ++skipped; break;
             case test_status::unresolved:
                 ++unresolved; break;
-            case test_status::untested:
-                ++untested; break;
         }
-    }
-
-    void add(const test_result& result) {
-        add(result.status);
     }
 
     summary_counts& operator+=(const summary_counts& other) {
@@ -122,12 +93,7 @@ struct summary_counts {
         xpasses += other.xpasses;
         skipped += other.skipped;
         unresolved += other.unresolved;
-        untested += other.untested;
         return *this;
-    }
-
-    [[nodiscard]] std::size_t total() const {
-        return passes + failures + xfails + xpasses + skipped + unresolved + untested;
     }
 
     [[nodiscard]] bool is_success() const {

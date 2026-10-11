@@ -14,11 +14,6 @@ int main(int argc, char** argv) {
         .long_opt("list")
         .help("List available test suites and tests")
         .action(ArgAction::SetTrue));
-    cmd.arg(Arg("fail-fast")
-        .short_opt('x')
-        .long_opt("fail-fast")
-        .help("Stop on first test failure")
-        .action(ArgAction::SetTrue));
     cmd.arg(Arg("jobs")
         .short_opt('j')
         .long_opt("jobs")

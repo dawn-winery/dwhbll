@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <cstring>
 #include <cstdio>
+#include <cerrno>
 
 import std;
 import dwhbll.testing;
@@ -23,7 +24,6 @@ std::string_view status_color(test_status status) {
         case test_status::xpass: return color::magenta;
         case test_status::skip: return color::yellow;
         case test_status::unresolved: return color::red;
-        case test_status::untested: return color::dim;
     }
     return color::reset;
 }
@@ -86,7 +86,6 @@ std::string_view to_status_string(test_status status) {
         case test_status::xpass: return "XPASS";
         case test_status::skip: return "SKIP";
         case test_status::unresolved: return "UNRESOLVED";
-        case test_status::untested: return "UNTESTED";
     }
     return "UNKNOWN";
 }
@@ -229,7 +228,7 @@ suite_result default_harness::run(const options& options) {
     std::unordered_map<int, Worker> active_workers;
     std::size_t next_work_idx = 0;
 
-    std::FILE* console_out = options.console_out ? options.console_out : stdout;
+    FILE* console_out = options.console_out ? options.console_out : stdout;
 
     auto spawn_worker = [&](std::size_t test_list_idx) -> bool {
         std::size_t reg_idx = test_indices[test_list_idx];

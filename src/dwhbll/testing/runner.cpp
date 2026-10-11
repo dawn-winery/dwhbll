@@ -1,3 +1,5 @@
+#include <version>
+#include <cstdio>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -11,7 +13,7 @@ namespace {
 
 namespace color = console::ansi_escape::color;
 
-void print_summary_block(std::FILE* out, std::string_view suite_name,
+void print_summary_block(FILE* out, std::string_view suite_name,
                          const summary_counts& counts, bool use_color) {
     auto print_line = [&](std::string_view label, std::size_t count,
                           std::string_view col, bool hide_if_zero = false) {
@@ -34,7 +36,6 @@ void print_summary_block(std::FILE* out, std::string_view suite_name,
     print_line("unexpected successes", counts.xpasses, color::magenta, true);
     print_line("skipped tests", counts.skipped, color::yellow, true);
     print_line("unresolved testcases", counts.unresolved, color::red, true);
-    print_line("untested testcases", counts.untested, "", true);
     std::fflush(out);
 }
 
@@ -84,8 +85,8 @@ int runner::run(const options& options) const {
         }
     }
 
-    std::FILE* console_out = options.console_out ? options.console_out : stdout;
-    std::FILE* duped_console_out = nullptr;
+    FILE* console_out = options.console_out ? options.console_out : stdout;
+    FILE* duped_console_out = nullptr;
 
     int log_fd = ::open(log_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (log_fd != -1) {
