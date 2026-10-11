@@ -1,7 +1,6 @@
 module;
 
 #include <dwhbll/testing/testing.h>
-#include <dwhbll/testing/harness.h>
 
 export module dwhbll.testing;
 
@@ -16,7 +15,6 @@ export namespace dwhbll::test {
     using dwhbll::test::xfail;
 
     using dwhbll::test::expect;
-    using dwhbll::test::expect_true;
     using dwhbll::test::expect_false;
     using dwhbll::test::expect_null;
     using dwhbll::test::expect_not_null;

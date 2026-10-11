@@ -1,7 +1,6 @@
 #pragma once
 
 #define EXPECT(cond) ::dwhbll::test::expect((cond), #cond)
-#define EXPECT_TRUE(cond) ::dwhbll::test::expect_true((cond), #cond)
 #define EXPECT_FALSE(cond) ::dwhbll::test::expect_false((cond), "!(" #cond ")")
 #define EXPECT_EQ(a, b) ::dwhbll::test::expect_eq((a), (b))
 #define EXPECT_NE(a, b) ::dwhbll::test::expect_ne((a), (b))
@@ -17,8 +16,6 @@
 
 #define REQUIRE(cond) \
     do { if (!::dwhbll::test::expect((cond), #cond)) return; } while (0)
-#define REQUIRE_TRUE(cond) \
-    do { if (!::dwhbll::test::expect_true((cond), #cond)) return; } while (0)
 #define REQUIRE_FALSE(cond) \
     do { if (!::dwhbll::test::expect_false((cond), "!(" #cond ")")) return; } while (0)
 #define REQUIRE_EQ(a, b) \

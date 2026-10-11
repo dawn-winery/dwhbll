@@ -31,11 +31,6 @@ void report_failure(std::string message, std::source_location loc);
 bool expect(bool cond, std::string_view msg = {},
             std::source_location loc = std::source_location::current());
 
-inline bool expect_true(bool cond, std::string_view msg = "expected true",
-                        std::source_location loc = std::source_location::current()) {
-    return expect(cond, msg, loc);
-}
-
 inline bool expect_false(bool cond, std::string_view msg = "expected false",
                          std::source_location loc = std::source_location::current()) {
     return expect(!cond, msg, loc);
