@@ -9,6 +9,7 @@ namespace dwhbll::memory {
 	/**
 	 * Thread safe memory pool
 	 * @tparam T the type of the object in the pool
+	 * @tparam BlockSize Number of objects per slab
 	 */
 	template <typename T, size_t BlockSize = std::max(1024/sizeof(T), 1ul)>
 	class Pool {
@@ -176,8 +177,8 @@ namespace dwhbll::memory {
 				for (std::size_t i = 0; i < BlockSize; i++) {
 					if (!current->used[i])
 						continue;
-					if (current->object[i] == value) {
-						return current->object + i;
+					if (current->object_data.object[i] == value) {
+						return current->object_data.object + i;
 					}
 				}
 			}
