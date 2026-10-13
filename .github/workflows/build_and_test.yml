@@ -33,12 +33,12 @@ jobs:
         run: |
           CC=gcc-16 CXX=g++-16 cmake -B build . -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-            -DBUILD_HARDEN=YES
-            -DBUILD_HARDEN_EXPENSIVE=YES
+            -DBUILD_HARDEN=YES \
+            -DBUILD_HARDEN_EXPENSIVE=YES \
             -DDWHBLL_SANITIZER=${{ matrix.sanitizer }} \
             -DDWHBLL_TESTS=ON \
             -DDWHBLL_BENCHMARKS=ON \
-            -DDWHBLL_UNICODE_SUPPORT=YES
+            -DDWHBLL_UNICODE_SUPPORT=YES \
             -DDWHBLL_DWCC_CPP=YES
           cmake --build build
 
