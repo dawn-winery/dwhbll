@@ -1,5 +1,6 @@
 #include <dwhbll/testing/testing.h>
 #include <dwhbll/linalg/matrix.h>
+#include <dwhbll/linalg/nmatrix.h>
 
 #include <cstdlib>
 #include <print>
@@ -9,6 +10,57 @@ using namespace dwhbll::test;
 using namespace dwhbll::linalg;
 
 namespace matrix {
+
+
+[[=test]]
+void new_static_zero_init()
+{
+	constexpr int M = 4, N = 4;
+	dwhbll::linalg::matrix<int, M, N> mat;
+	REQUIRE(mat.size() == (M * N));
+
+	for(int i = 0; i < M; i++)
+        for(int j = 0; j < N; j++)
+            REQUIRE((mat[i,j] == 0));
+}
+
+
+[[=test]]
+void new_dyn_zero_init()
+{
+	constexpr int M = 4, N = 4;
+
+	/// Full dynamic
+	{
+		dwhbll::linalg::matrix<int> mat(M, N);
+		REQUIRE(mat.size() == (M * N));
+
+		for(int i = 0; i < M; i++)
+	        for(int j = 0; j < N; j++)
+	            REQUIRE((mat[i,j] == 0));
+	}
+    /// Cols dynamic
+    {
+	    dwhbll::linalg::matrix<int, M> mat(N);
+		REQUIRE(mat.size() == (M * N));
+
+		for(int i = 0; i < M; i++)
+	        for(int j = 0; j < N; j++)
+	            REQUIRE((mat[i,j] == 0));
+    }
+	/// Rows dynamic
+	{
+	    dwhbll::linalg::matrix<int, std::dynamic_extent, M> mat(N);
+		REQUIRE(mat.size() == (M * N));
+
+		for(int i = 0; i < M; i++)
+	        for(int j = 0; j < N; j++)
+	            REQUIRE((mat[i,j] == 0));
+	}
+}
+
+
+
 
 [[=test]]
 void zero_init()

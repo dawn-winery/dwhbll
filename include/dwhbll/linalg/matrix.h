@@ -9,18 +9,14 @@
 #include <concepts>
 #include <cstddef>
 
-
-
 namespace dwhbll::linalg {
-
-
 
 #ifdef DWHBLL_GPU_ENABLED
 // Computation volume at which point we switch to the GPU
 constexpr uint64_t GPU_VOLUME_THRESHOLD = (uint64_t) LINALG_GPU_THRESHOLD * LINALG_GPU_THRESHOLD * LINALG_GPU_THRESHOLD;
 
 template <typename ComputeT>
-std::vector<ComputeT> matmul_gpu_wrapper(const std::vector<ComputeT>& A, const std::vector<ComputeT>& B, 
+std::vector<ComputeT> matmul_gpu_wrapper(const std::vector<ComputeT>& A, const std::vector<ComputeT>& B,
                                          std::pair<size_t, size_t> dimA, std::pair<size_t, size_t> dimB);
 
 
