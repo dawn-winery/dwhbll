@@ -109,10 +109,11 @@ namespace dwhbll::stl_ext {
 
         struct DUMMY_TYPE_NEVER{};
         union DATA {
-            DUMMY_TYPE_NEVER NEVER{};
+            DUMMY_TYPE_NEVER NEVER;
             T OK_VALUE;
             E ERR_VALUE;
 
+            constexpr DATA() noexcept : NEVER{} {}
             constexpr ~DATA() {}
         } data;
         state type = state::invalid;
