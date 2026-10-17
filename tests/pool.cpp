@@ -128,6 +128,28 @@ void pool_int_find()
     REQUIRE(k == k2);
 }
 
+struct foo {
+    int* c = nullptr;
+    foo() = default;
+    foo(int* count) : c(count) {}
+    ~foo() {
+        if (c)
+            (*c)++;
+    }
+};
+
+[[=test]]
+void pool_nontrivial_destructor()
+{
+    int c = 0;
+    {
+        dwhbll::memory::Pool<foo> testPool;
+        auto* obj = testPool.acquire(&c).disown();
+        testPool.offer(obj);
+    }
+    EXPECT(c == 1);
+}
+
 }
 
 TEST_REGISTER_FILE();
