@@ -19,17 +19,17 @@ using namespace dwhbll::test;
 
 namespace xxh {
     uint16_t consume_u16_le(uint8_t* &ptr) {
-        uint16_t result = (uint16_t)ptr[0] | ((uint16_t)ptr[1] << 8);
+        uint16_t result = ((uint16_t)ptr[0] & 0xFF) | (((uint16_t)ptr[1] << 8) & 0xFF00);
         ptr += 2;
         return result;
     }
 
     uint32_t consume_u32_le(uint8_t* &ptr) {
-        return (uint32_t)consume_u16_le(ptr) | ((uint32_t)consume_u16_le(ptr) << 16);
+        return ((uint32_t)consume_u16_le(ptr) & 0xFFFF) | (((uint32_t)consume_u16_le(ptr) << 16) & 0xFFFF0000);
     }
 
     uint64_t consume_u64_le(uint8_t* &ptr) {
-        return (uint64_t)consume_u32_le(ptr) | ((uint64_t)consume_u32_le(ptr) << 32);
+        return ((uint64_t)consume_u32_le(ptr) & 0xFFFFFFFF) | (((uint64_t)consume_u32_le(ptr) << 32) & 0xFFFFFFFF00000000);
     }
 
     void test_xxh32(uint8_t* &ptr, const std::string &buffer, uint64_t seed, std::size_t &pass, std::size_t &total) {
@@ -139,6 +139,7 @@ namespace xxh {
         REQUIRE(fd != -1);
 
         auto bytes = (std::uint8_t*)mmap(nullptr, src_file_len, PROT_READ, MAP_PRIVATE, fd, 0);
+        dwhbll::console::info("Original Bytes @ {:#x}", (std::size_t)bytes);
 
         dwhbll::sanify::deferred _([&]() -> void {
             munmap(bytes, src_file_len);
@@ -160,26 +161,26 @@ namespace xxh {
             secret[i] = *bytes++;
         }
 
-        ASSERT(consume_u16_le(bytes) == 4);
+        EXPECT(consume_u16_le(bytes) == 4);
 
         // XXH32
-        ASSERT(consume_u16_le(bytes) == 2);
+        EXPECT(consume_u16_le(bytes) == 2);
         test_xxh32(bytes, text, 0, pass, total);
         test_xxh32(bytes, text, seed, pass, total);
 
         // XXH64
-        ASSERT(consume_u16_le(bytes) == 2);
+        EXPECT(consume_u16_le(bytes) == 2);
         test_xxh64(bytes, text, 0, pass, total);
         test_xxh64(bytes, text, seed, pass, total);
 
         // XXH3 64
-        ASSERT(consume_u16_le(bytes) == 3);
+        EXPECT(consume_u16_le(bytes) == 3);
         test_xxh364seed(bytes, text, 0, pass, total);
         test_xxh364seed(bytes, text, seed, pass, total);
         test_xxh364secret(bytes, text, secret, pass, total);
 
         // XXH3 128
-        ASSERT(consume_u16_le(bytes) == 3);
+        EXPECT(consume_u16_le(bytes) == 3);
         test_xxh3128seed(bytes, text, 0, pass, total);
         test_xxh3128seed(bytes, text, seed, pass, total);
         test_xxh3128secret(bytes, text, secret, pass, total);
