@@ -6,16 +6,19 @@
 
 #include <sys/socket.h>
 
+#define REACTOR reactor::get_thread_reactor()
+
 #define MAKE_PROMISE \
 uring_promise promise; \
 auto sqes = co_await detail::wait_for_sqe(1); \
 auto* sqe = sqes[0]; \
-reactor::get_thread_reactor()->prepare_sqe(promise, sqe);
+rt->prepare_sqe(promise, sqe);
 
-#define SUBMIT reactor::get_thread_reactor()->submit();
+#define SUBMIT rt->submit();
 
 namespace dwhbll::concurrency::coroutine::wrappers::calls {
     task<> nop() {
+        auto rt = REACTOR;
         MAKE_PROMISE
 
         io_uring_prep_nop(sqe);
@@ -26,6 +29,7 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
     }
 
     task<int> open(const char *fptr, int flags, mode_t mode) {
+        auto rt = REACTOR;
         MAKE_PROMISE
 
         io_uring_prep_openat(sqe, AT_FDCWD, fptr, flags, mode);
@@ -41,6 +45,7 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
     }
 
     task<> close(int fd) {
+        auto rt = REACTOR;
         MAKE_PROMISE
 
         io_uring_prep_close(sqe, fd);
@@ -54,6 +59,7 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
     }
 
     task<ssize_t> read(int fd, void *buf, uint32_t count, off_t offset) {
+        auto rt = REACTOR;
         MAKE_PROMISE
 
         io_uring_prep_read(sqe, fd, buf, count, offset);
@@ -66,6 +72,7 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
     }
 
     task<ssize_t> write(int fd, void *buf, uint32_t count, off_t offset) {
+        auto rt = REACTOR;
         MAKE_PROMISE
 
         io_uring_prep_write(sqe, fd, buf, count, offset);
@@ -78,6 +85,7 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
     }
 
     task<int> poll(int fd, short poll_mask) {
+        auto rt = REACTOR;
         MAKE_PROMISE
 
         io_uring_prep_poll_add(sqe, fd, poll_mask);
@@ -93,6 +101,7 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
     }
 
     task<stl_ext::Result<stl_ext::UNIT, int>> connect(int fd, ::sockaddr * addr, socklen_t addrlen) {
+        auto rt = REACTOR;
         MAKE_PROMISE
 
         io_uring_prep_connect(sqe, fd, addr, addrlen);
@@ -107,6 +116,7 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
     }
 
     task<stl_ext::Result<ssize_t, int>> send(int fd, const void *buf, size_t len, int flags) {
+        auto rt = REACTOR;
         MAKE_PROMISE
 
         io_uring_prep_send(sqe, fd, buf, len, flags);
@@ -121,6 +131,7 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
     }
 
     task<stl_ext::Result<ssize_t, int>> recv(int fd, void *buf, size_t len, int flags) {
+        auto rt = REACTOR;
         MAKE_PROMISE
 
         io_uring_prep_recv(sqe, fd, buf, len, flags);
@@ -135,6 +146,7 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
     }
 
     task<int> statx(int dirfd, const char *path, int flags, int mask, struct ::statx *statxbuf) {
+        auto rt = REACTOR;
         MAKE_PROMISE
 
         io_uring_prep_statx(sqe, dirfd, path, flags, mask, statxbuf);
@@ -147,6 +159,7 @@ namespace dwhbll::concurrency::coroutine::wrappers::calls {
     }
 
     task<stl_ext::Result<int, int>> accept(int fd, sockaddr *addr, socklen_t *addrlen, int flags) {
+        auto rt = REACTOR;
         MAKE_PROMISE
 
         io_uring_prep_accept(sqe, fd, addr, addrlen, flags);
