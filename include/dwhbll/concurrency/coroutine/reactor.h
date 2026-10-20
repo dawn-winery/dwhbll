@@ -20,6 +20,8 @@ namespace dwhbll::concurrency::coroutine {
     class reactor;
 
     namespace detail {
+        class sqe_awaitable;
+
         extern thread_local reactor* live_reactor;
     }
 
@@ -61,13 +63,17 @@ namespace dwhbll::concurrency::coroutine {
 
         static void clear_thread_live_reactor();
 
+    public:
+        static reactor* get_thread_reactor();
+
+    private:
         void update_timer_tasks();
 
         std::optional<std::chrono::steady_clock::time_point> get_first_time_expire();
 
         collections::SortedLinkedList<timer_task> time_tasks;
         collections::Ring<user_data*> ready_queue;
-        collections::Ring<user_data*> sqe_waiters;
+        collections::Ring<std::pair<user_data*, std::size_t>> sqe_waiters;
 
         std::int64_t inflight_jobs = 0; ///< Number of jobs in flight (tasks)
         std::int64_t inflight_completions = 0; ///< Number of completions in flight (waiting on kernel)
@@ -99,6 +105,10 @@ namespace dwhbll::concurrency::coroutine {
         struct cancellation_token {};
 
         [[nodiscard]] task<> cancel_job(cancellation_token* token, job *job);
+
+        void enqueue_sqe_waiter(detail::sqe_awaitable *awaitable, std::coroutine_handle<> handle, std::size_t waiting);
+
+        friend class detail::sqe_awaitable;
 
     public:
         class reactor_job {
@@ -163,15 +173,11 @@ namespace dwhbll::concurrency::coroutine {
             return fut;
         }
 
-        static reactor* get_thread_reactor();
-
-        io_uring_sqe *get_sqe(uring_promise& h);
+        user_data* prepare_sqe(uring_promise& h, io_uring_sqe *sqe);
 
         void submit();
 
         void process_cqe(io_uring_cqe* cqe);
-
-        void enqueue_sqe_waiter(uring_sqe_awaitable *awaitable, std::coroutine_handle<> handle);
 
         io_uring* get_uring_ptr();
     };

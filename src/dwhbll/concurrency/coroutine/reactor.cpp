@@ -5,8 +5,8 @@
 #include <dwhbll/concurrency/coroutine/cancellable_base.h>
 #include <dwhbll/concurrency/coroutine/cancellation_exception.h>
 #include <dwhbll/concurrency/coroutine/detached_task.h>
+#include <dwhbll/concurrency/coroutine/detail/sqe_awaitable.h>
 #include <dwhbll/concurrency/coroutine/uring_promise.h>
-#include <dwhbll/concurrency/coroutine/uring_sqe_awaitable.h>
 #include <dwhbll/debug/debug.h>
 #include <dwhbll/console/logging.h>
 #include <dwhbll/exceptions/rt_exception_base.h>
@@ -29,6 +29,12 @@ namespace dwhbll::concurrency::coroutine {
 
     void reactor::clear_thread_live_reactor() {
         detail::live_reactor = nullptr;
+    }
+
+    reactor * reactor::get_thread_reactor() {
+        if (!detail::live_reactor)
+            throw exceptions::rt_exception_base("There is no currently running reactor on this thread!");
+        return detail::live_reactor;
     }
 
     void reactor::update_timer_tasks() {
@@ -143,8 +149,9 @@ namespace dwhbll::concurrency::coroutine {
 
             if (completion->is_uring) {
                 uring_promise promise;
-                co_await wait_for_sqe();
-                auto* sqe = get_sqe(promise);
+                auto sqes = co_await detail::wait_for_sqe(1);
+                auto* sqe = sqes[0];
+                prepare_sqe(promise, sqe);
 
                 io_uring_prep_cancel(sqe, completion, 0);
 
@@ -153,6 +160,18 @@ namespace dwhbll::concurrency::coroutine {
                 (void)co_await promise;
             }
         }
+    }
+
+    void reactor::enqueue_sqe_waiter(detail::sqe_awaitable *awaitable, std::coroutine_handle<> handle, std::size_t waiting) {
+        auto* data = user_data_lifetime_begin();
+        data->promise = awaitable;
+        data->handle = handle;
+
+        if (current_job->cancelled) {
+            awaitable->cancel();
+            ready_queue.push_back(data);
+        } else
+            sqe_waiters.push_back({data, waiting});
     }
 
     void reactor::reactor_job::cancel() const {
@@ -242,12 +261,19 @@ namespace dwhbll::concurrency::coroutine {
                 resume_stall_check(front, front->handle);
             }
 
-            while (!sqe_waiters.empty() &&
-                io_uring_sq_space_left(&ring) > 0) {
+            while (!sqe_waiters.empty()) {
+                auto [h, waiting] = sqe_waiters.front();
 
-                auto h = sqe_waiters.front();
-                sqe_waiters.pop_front();
-                resume_stall_check(h, h->handle);
+                if (io_uring_sq_space_left(&ring) >= waiting) {
+                    sqe_waiters.pop_front();
+
+                    auto awaitable = static_cast<detail::sqe_awaitable *>(h->promise);
+
+                    awaitable->fill_sqes(&ring);
+
+                    resume_stall_check(h, h->handle);
+                } else
+                    break;
             }
         }
     }
@@ -278,17 +304,9 @@ namespace dwhbll::concurrency::coroutine {
         return reactor_job{job};
     }
 
-    reactor * reactor::get_thread_reactor() {
-        if (!detail::live_reactor)
-            throw exceptions::rt_exception_base("There is no currently running reactor on this thread!");
-        return detail::live_reactor;
-    }
-
-    io_uring_sqe *reactor::get_sqe(uring_promise& h) {
-        io_uring_sqe* sqe = io_uring_get_sqe(&ring);
-
+    reactor::user_data* reactor::prepare_sqe(uring_promise& h, io_uring_sqe *sqe) {
         if (!sqe)
-            return nullptr;
+            debug::unreachable();
 
         auto* data = user_data_lifetime_begin();
         data->promise = &h;
@@ -298,7 +316,7 @@ namespace dwhbll::concurrency::coroutine {
 
         inflight_completions++;
 
-        return sqe;
+        return data;
     }
 
     void reactor::submit() {
@@ -319,18 +337,6 @@ namespace dwhbll::concurrency::coroutine {
         resume_stall_check(job_info, promise->waiter); // resume the coroutine
 
         io_uring_cqe_seen(&ring, cqe);
-    }
-
-    void reactor::enqueue_sqe_waiter(uring_sqe_awaitable *awaitable, std::coroutine_handle<> handle) {
-        auto* data = user_data_lifetime_begin();
-        data->promise = awaitable;
-        data->handle = handle;
-
-        if (current_job->cancelled) {
-            awaitable->cancel();
-            ready_queue.push_back(data);
-        } else
-            sqe_waiters.push_back(data);
     }
 
     io_uring * reactor::get_uring_ptr() {
