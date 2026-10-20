@@ -1,15 +1,16 @@
 #include <dwhbll/concurrency/coroutine/wrappers/syscall_wrappers.h>
 
+#include <dwhbll/concurrency/coroutine/detail/sqe_awaitable.h>
 #include <dwhbll/concurrency/coroutine/uring_promise.h>
 #include <dwhbll/concurrency/coroutine/reactor.h>
-#include <dwhbll/concurrency/coroutine/uring_sqe_awaitable.h>
 
 #include <sys/socket.h>
 
 #define MAKE_PROMISE \
 uring_promise promise; \
-co_await wait_for_sqe(); \
-auto* sqe = reactor::get_thread_reactor()->get_sqe(promise);
+auto sqes = co_await detail::wait_for_sqe(1); \
+auto* sqe = sqes[0]; \
+reactor::get_thread_reactor()->prepare_sqe(promise, sqe);
 
 #define SUBMIT reactor::get_thread_reactor()->submit();
 

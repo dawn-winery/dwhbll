@@ -99,7 +99,6 @@ set(DWHBLL_SOURCES
     src/dwhbll/concurrency/coroutine/reactor.cpp
     src/dwhbll/concurrency/coroutine/sleep_task.cpp
     src/dwhbll/concurrency/coroutine/uring_promise.cpp
-    src/dwhbll/concurrency/coroutine/uring_sqe_awaitable.cpp
     src/dwhbll/concurrency/coroutine/wrappers/file.cpp
     src/dwhbll/concurrency/coroutine/wrappers/syscall_wrappers.cpp
     src/dwhbll/concurrency/spinlock.cpp
@@ -157,11 +156,11 @@ set(DWHBLL_SOURCES
     include/dwhbll/concurrency/coroutine/cancellation_exception.h
     include/dwhbll/concurrency/coroutine/defer_again.h
     include/dwhbll/concurrency/coroutine/detached_task.h
+    include/dwhbll/concurrency/coroutine/detail/sqe_awaitable.h
     include/dwhbll/concurrency/coroutine/reactor.h
     include/dwhbll/concurrency/coroutine/sleep_task.h
     include/dwhbll/concurrency/coroutine/task.h
     include/dwhbll/concurrency/coroutine/uring_promise.h
-    include/dwhbll/concurrency/coroutine/uring_sqe_awaitable.h
     include/dwhbll/concurrency/coroutine/wrappers/file.h
     include/dwhbll/concurrency/coroutine/wrappers/syscall_wrappers.h
     include/dwhbll/concurrency/queues/bounded_mpsc_queue.h
