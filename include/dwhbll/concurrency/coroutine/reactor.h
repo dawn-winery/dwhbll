@@ -11,7 +11,6 @@
 #include <dwhbll/concurrency/coroutine/detached_task.h>
 
 #include <liburing.h>
-#include <dwhbll/concurrency/coroutine/cancellation_exception.h>
 
 namespace dwhbll::concurrency::coroutine {
     class uring_sqe_awaitable;
