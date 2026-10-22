@@ -121,7 +121,7 @@ namespace dwhbll::async::net {
 
     task<stl_ext::Result<stl_ext::UNIT, int>> socket::read(std::span<std::uint8_t> buffer) {
         if (!has_socket())
-            debug::panic();
+            co_return stl_ext::Err(-1);
 
         auto buf = buffer;
 
@@ -144,7 +144,7 @@ namespace dwhbll::async::net {
 
     task<stl_ext::Result<stl_ext::UNIT, int>> socket::write(std::span<const std::uint8_t> buffer) {
         if (!has_socket())
-            debug::panic();
+            co_return stl_ext::Err(-1);
 
         auto buf = buffer;
 
@@ -162,7 +162,7 @@ namespace dwhbll::async::net {
 
     task<stl_ext::Result<ssize_t, int>> socket::read_some(std::span<std::uint8_t> buffer) {
         if (!has_socket())
-            debug::panic();
+            co_return stl_ext::Err(-1);
 
         auto r = co_await calls::recv(fd, buffer.data(), buffer.size(), 0);
 
@@ -174,7 +174,7 @@ namespace dwhbll::async::net {
 
     task<stl_ext::Result<ssize_t, int>> socket::write_some(std::span<const std::uint8_t> buffer) {
         if (!has_socket())
-            debug::panic();
+            co_return stl_ext::Err(-1);
 
         co_return co_await calls::send(fd, buffer.data(), buffer.size(), 0);
     }
