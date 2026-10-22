@@ -19,7 +19,34 @@ namespace dwhbll::async::net {
 
     public:
         // Promoting constructor.
-        using decorated_socket::decorated_socket;
+        buffered_socket(std::unique_ptr<isocket>&& super) : decorated_socket(std::move(super)) { }
+
+        buffered_socket(const buffered_socket &other) = delete;
+
+        buffered_socket(buffered_socket &&other) noexcept
+            : decorated_socket(std::move(other)),
+              inbound_buffer(other.inbound_buffer),
+              inbound_head(other.inbound_head),
+              inbound_size(other.inbound_size),
+              outbound_buffer(other.outbound_buffer),
+              outbound_head(other.outbound_head),
+              outbound_size(other.outbound_size) {
+        }
+
+        buffered_socket & operator=(const buffered_socket &other) = delete;
+
+        buffered_socket & operator=(buffered_socket &&other) noexcept {
+            if (this == &other)
+                return *this;
+            decorated_socket::operator =(std::move(other));
+            inbound_buffer = other.inbound_buffer;
+            inbound_head = other.inbound_head;
+            inbound_size = other.inbound_size;
+            outbound_buffer = other.outbound_buffer;
+            outbound_head = other.outbound_head;
+            outbound_size = other.outbound_size;
+            return *this;
+        }
 
         concurrency::coroutine::task<stl_ext::Result<stl_ext::UNIT, int>> read(std::span<std::uint8_t> buffer) override;
 

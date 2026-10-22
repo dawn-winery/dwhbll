@@ -11,6 +11,23 @@ namespace dwhbll::async::net {
     public:
         decorated_socket(std::unique_ptr<isocket>&& super) : super_(std::move(super)) { }
 
+        decorated_socket(const decorated_socket &other) = delete;
+
+        decorated_socket(decorated_socket &&other) noexcept
+            : isocket(other),
+              super_(std::move(other.super_)) {
+        }
+
+        decorated_socket & operator=(const decorated_socket &other) = delete;
+
+        decorated_socket & operator=(decorated_socket &&other) noexcept {
+            if (this == &other)
+                return *this;
+            isocket::operator =(other);
+            super_ = std::move(other.super_);
+            return *this;
+        }
+
         ~decorated_socket() override = default;
 
         [[nodiscard]] bool is_shutdown() const noexcept override {
