@@ -33,6 +33,12 @@ if (NOT COMPILER_HAS_REFLECTION)
     message(WARNING "Compiler does not support reflection. Reflection parts of the library will be disabled.")
 endif()
 
+check_cxx_compiler_flag("-fcontracts" COMPILER_HAS_CONTRACTS)
+if (NOT COMPILER_HAS_CONTRACTS)
+    message(WARNING "Compiler does not support contracts. Some parts of the library will be disabled.")
+endif()
+
+
 if (DWHBLL_DWCC_CPP AND NOT DWHBLL_UNICODE_SUPPORT)
     message(FATAL_ERROR
         "DWHBLL_DWCC_CPP requires DWHBLL_UNICODE_SUPPORT!"
@@ -449,8 +455,12 @@ install(TARGETS dwhbll
 
 if (COMPILER_HAS_REFLECTION)
     add_library(dwhbll_test_main STATIC src/dwhbll/testing/test_main.cpp)
-    target_compile_options(dwhbll_core PRIVATE "-freflection")
-    target_compile_options(dwhbll_test_main PRIVATE "-freflection")
+    target_compile_options(dwhbll_core PUBLIC "-freflection")
+    if (COMPILER_HAS_CONTRACTS)
+    	target_compile_options(dwhbll_core PUBLIC "-fcontracts")
+     target_compile_options(dwhbll_test_main PRIVATE "-fcontracts")
+    endif()
+    # target_compile_options(dwhbll_test_main PRIVATE "-freflection")
 
     target_link_libraries(dwhbll_test_main PUBLIC dwhbll_core)
 
@@ -517,6 +527,7 @@ if (DWHBLL_TESTS AND COMPILER_HAS_REFLECTION)
 
     add_executable(dwhbll_test ${DWHBLL_TEST_SOURCES})
     target_compile_options(dwhbll_test PRIVATE "-freflection")
+    target_compile_options(dwhbll_test PRIVATE "-fconcepts-diagnostics-depth=2")
     target_link_libraries(dwhbll_test PRIVATE dwhbll dwhbll_test_main)
     target_include_directories(dwhbll_test PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated/include")
 

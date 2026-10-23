@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <print>
 #include <random>
+#include <span>
 
 using namespace dwhbll::test;
 using namespace dwhbll::linalg;
@@ -18,10 +19,112 @@ void new_static_zero_init()
 	constexpr int M = 4, N = 4;
 	dwhbll::linalg::matrix<int, M, N> mat;
 	REQUIRE(mat.size() == (M * N));
+	REQUIRE(mat.get_rows() == M);
+	REQUIRE(mat.get_cols() == N);
 
 	for(int i = 0; i < M; i++)
         for(int j = 0; j < N; j++)
             REQUIRE((mat[i,j] == 0));
+}
+
+[[=test]]
+void new_static_init_with_data()
+{
+	{
+		constexpr int M = 4, N = 4;
+		dwhbll::linalg::matrix<size_t, M, N> mat {
+			0, 1, 2, 3,
+			4, 5, 6, 7,
+			8, 9, 10, 11,
+			12, 13, 14, 15,
+		};
+
+		REQUIRE(mat.size() == (M * N));
+		REQUIRE(mat.get_rows() == M);
+		REQUIRE(mat.get_cols() == N);
+
+		for(size_t i = 0; i < M; i++)
+	        for(size_t j = 0; j < N; j++)
+	         	REQUIRE((mat[i,j] == i*M+j));
+	}
+
+	{
+		constexpr int M = 4;
+		dwhbll::linalg::matrix<size_t, M> mat {
+			0, 1, 2,
+			3, 4, 5,
+			6, 7, 8,
+			9, 10, 11
+		};
+
+		REQUIRE(mat.size() == (M * 3));
+		REQUIRE(mat.get_rows() == M);
+		REQUIRE(mat.get_cols() == 3);
+
+		for(size_t i = 0; i < M; i++)
+	        for(size_t j = 0; j < mat.get_cols(); j++)
+	         	REQUIRE((mat[i,j] == i*mat.get_cols()+j));
+	}
+
+	{
+		constexpr int N = 3;
+		dwhbll::linalg::matrix<size_t, std::dynamic_extent, N> mat {
+			0, 1, 2,
+			3, 4, 5,
+			6, 7, 8,
+			9, 10, 11
+		};
+
+		REQUIRE(mat.size() == (4 * N));
+		REQUIRE(mat.get_rows() == 4);
+		REQUIRE(mat.get_cols() == N);
+
+		for(size_t i = 0; i < mat.get_rows(); i++)
+	        for(size_t j = 0; j < N; j++)
+	         	REQUIRE((mat[i,j] == i*N+j));
+	}
+
+}
+
+
+[[=test]]
+void new_dyn_init_with_data()
+{
+	{
+		dwhbll::linalg::matrix<size_t> m {
+			{ 0, 1, 2 },
+			{ 3, 4, 5 },
+			{ 6, 7, 8 },
+			{ 9, 10, 11},
+			{ 12, 13, 14}
+		};
+
+		REQUIRE(m.size() == 15);
+		REQUIRE(m.get_rows() == 5);
+		REQUIRE(m.get_cols() == 3);
+
+		for(size_t i = 0; i < m.get_rows(); i++)
+	        for(size_t j = 0; j < m.get_cols(); j++)
+	            REQUIRE((m[i,j] == i*m.get_cols()+j));
+	}
+
+	{
+		dwhbll::linalg::col_matrix<size_t> m {
+			{ 0, 1, 2 },
+			{ 3, 4, 5 },
+			{ 6, 7, 8 },
+			{ 9, 10, 11},
+			{ 12, 13, 14}
+		};
+
+		REQUIRE(m.size() == 15);
+		REQUIRE(m.get_rows() == 3);
+		REQUIRE(m.get_cols() == 5);
+
+		for(size_t i = 0; i < m.get_rows(); i++)
+	        for(size_t j = 0; j < m.get_cols(); j++)
+	            REQUIRE((m[i,j] == j*m.get_rows()+i));
+	}
 }
 
 
@@ -34,6 +137,8 @@ void new_dyn_zero_init()
 	{
 		dwhbll::linalg::matrix<int> mat(M, N);
 		REQUIRE(mat.size() == (M * N));
+		REQUIRE(mat.get_rows() == M);
+		REQUIRE(mat.get_cols() == N);
 
 		for(int i = 0; i < M; i++)
 	        for(int j = 0; j < N; j++)
@@ -43,6 +148,8 @@ void new_dyn_zero_init()
     {
 	    dwhbll::linalg::matrix<int, M> mat(N);
 		REQUIRE(mat.size() == (M * N));
+		REQUIRE(mat.get_rows() == M);
+		REQUIRE(mat.get_cols() == N);
 
 		for(int i = 0; i < M; i++)
 	        for(int j = 0; j < N; j++)
@@ -52,6 +159,8 @@ void new_dyn_zero_init()
 	{
 	    dwhbll::linalg::matrix<int, std::dynamic_extent, M> mat(N);
 		REQUIRE(mat.size() == (M * N));
+		REQUIRE(mat.get_rows() == M);
+		REQUIRE(mat.get_cols() == N);
 
 		for(int i = 0; i < M; i++)
 	        for(int j = 0; j < N; j++)
