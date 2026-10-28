@@ -82,9 +82,10 @@ namespace dwhbll::stl_ext {
 
         struct DUMMY_TYPE_NEVER{};
         union DATA {
-            DUMMY_TYPE_NEVER NEVER{};
+            DUMMY_TYPE_NEVER NEVER;
             T SOME_VALUE;
 
+            constexpr DATA() noexcept : NEVER{} {}
             constexpr ~DATA() {}
         } data;
         state type = state::none;
