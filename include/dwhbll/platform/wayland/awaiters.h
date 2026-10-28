@@ -10,6 +10,8 @@ namespace dwhbll::platform::wayland {
 
 class display;
 class window;
+class shm_swapchain;
+class shm_buffer;
 
 class sync_awaiter : public concurrency::coroutine::cancellable_base {
 public:
@@ -82,6 +84,22 @@ private:
     uint64_t obs_id_ = 0;
     std::coroutine_handle<> waiter_{};
     bool done_ = false;
+};
+
+class shm_acquire_awaiter : public concurrency::coroutine::cancellable_base {
+public:
+    shm_acquire_awaiter(shm_swapchain& chain) : chain_(chain) {}
+    ~shm_acquire_awaiter();
+
+    [[nodiscard]] bool await_ready() const noexcept;
+    void await_suspend(std::coroutine_handle<> h) noexcept;
+    shm_buffer* await_resume();
+
+private:
+    shm_swapchain& chain_;
+    std::coroutine_handle<> waiter_{};
+    shm_buffer* acquired_ = nullptr;
+    friend class shm_swapchain;
 };
 
 } // namespace dwhbll::platform::wayland

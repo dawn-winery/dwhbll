@@ -15,6 +15,13 @@ const xdg_wm_base_listener wm_base_listener_ = {
     }
 };
 
+const wl_shm_listener display::shm_listener_ = {
+    .format = [](void* data, wl_shm*, uint32_t format) {
+        auto* self = static_cast<display*>(data);
+        self->shm_formats_.push_back(format);
+    }
+};
+
 Result<display, std::string> display::init(Option<std::string> name) noexcept {
     struct wl_display* disp = wl_display_connect(std::move(name).map_or(nullptr,
                 [](std::string&& s) {
@@ -31,6 +38,8 @@ Result<display, std::string> display::init(Option<std::string> name) noexcept {
 }
 
 display::~display() noexcept {
+    if (shm_)
+        wl_shm_destroy(shm_);
     if (wm_base_)
         xdg_wm_base_destroy(wm_base_);
     if (compositor_)
@@ -50,10 +59,14 @@ display::display(display&& o) noexcept
       reading_ready_(std::exchange(o.reading_ready_, false)),
       registry_(std::move(o.registry_)),
       compositor_(std::exchange(o.compositor_, nullptr)),
-      wm_base_(std::exchange(o.wm_base_, nullptr))
+      wm_base_(std::exchange(o.wm_base_, nullptr)),
+      shm_(std::exchange(o.shm_, nullptr)),
+      shm_formats_(std::move(o.shm_formats_))
 {
     if (registry_)
         registry_->display_ = this;
+    if (shm_)
+        wl_proxy_set_user_data(reinterpret_cast<wl_proxy*>(shm_), this);
 }
 
 display& display::operator=(display&& o) noexcept {
@@ -115,6 +128,27 @@ sync_awaiter display::sync() {
     return sync_awaiter(*this);
 }
 
+void display::sync(std::function<void()> on_done) {
+    // TODO: Surely there's gotta be a better way to do this?
+    struct sync_ctx {
+        std::function<void()> cb;
+    };
+    auto* ctx = new sync_ctx{std::move(on_done)};
+    static const wl_callback_listener sync_cb_listener = {
+        .done = [](void* data, wl_callback* cb, uint32_t) {
+            auto* c = static_cast<sync_ctx*>(data);
+            if (c->cb)
+                c->cb();
+            delete c;
+            wl_callback_destroy(cb);
+        }
+    };
+    wl_callback* cb = wl_display_sync(display_);
+    wl_proxy_set_queue(reinterpret_cast<wl_proxy*>(cb), queue_);
+    wl_callback_add_listener(cb, &sync_cb_listener, ctx);
+    flush();
+}
+
 display::display(struct wl_display* d, wl_event_queue* q)
     : display_(d),
       queue_(q),
@@ -132,6 +166,13 @@ display::display(struct wl_display* d, wl_event_queue* q)
                 if (res.is_ok()) {
                     wm_base_ = static_cast<xdg_wm_base*>(res.unwrap());
                     xdg_wm_base_add_listener(wm_base_, &wm_base_listener_, nullptr);
+                }
+            } else if (g.interface == "wl_shm" && !shm_) {
+                auto res = registry_->bind_raw(&wl_shm_interface, 1);
+                if (res.is_ok()) {
+                    shm_ = static_cast<wl_shm*>(res.unwrap());
+                    wl_proxy_set_queue(reinterpret_cast<wl_proxy*>(shm_), queue_);
+                    wl_shm_add_listener(shm_, &shm_listener_, this);
                 }
             }
         });
@@ -159,6 +200,18 @@ xdg_wm_base* display::wm_base() noexcept {
         }
     }
     return wm_base_;
+}
+
+wl_shm* display::shm() noexcept {
+    if (!shm_ && registry_ && registry_->has("wl_shm")) {
+        auto res = registry_->bind_raw(&wl_shm_interface, 1);
+        if (res.is_ok()) {
+            shm_ = static_cast<wl_shm*>(res.unwrap());
+            wl_proxy_set_queue(reinterpret_cast<wl_proxy*>(shm_), queue_);
+            wl_shm_add_listener(shm_, &shm_listener_, this);
+        }
+    }
+    return shm_;
 }
 
 } // namespace dwhbll::platform::wayland

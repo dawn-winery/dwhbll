@@ -9,11 +9,13 @@
 namespace dwhbll::platform::wayland {
 
 class display;
+class shm_swapchain;
+class shm_buffer;
 
 class window {
 public:
     static stl_ext::Result<window, std::string>
-    init(display& disp, uint32_t width = 1280, uint32_t height = 720,
+    init(class display& disp, uint32_t width = 1280, uint32_t height = 720,
          std::string title = "dwhbll window", std::string app_id = "dwhbll");
     ~window();
 
@@ -27,15 +29,37 @@ public:
     [[nodiscard]] bool should_close() const noexcept { return should_close_; }
     [[nodiscard]] bool is_configured() const noexcept { return configured_; }
 
+    [[nodiscard]] class display& display() const noexcept { return disp_; }
     [[nodiscard]] wl_surface* surface() const noexcept { return surface_; }
 
     void commit();
+    void damage(int32_t x, int32_t y, int32_t width, int32_t height);
+
+    void set_on_configure(std::function<void(uint32_t w, uint32_t h)> cb) {
+        on_configure_ = std::move(cb);
+    }
+    void set_on_close(std::function<void()> cb) {
+        on_close_ = std::move(cb);
+    }
+    void request_frame(std::function<void(uint32_t time)> cb);
 
     [[nodiscard]] configure_awaiter wait_for_configure() noexcept;
     [[nodiscard]] frame_awaiter next_frame() noexcept;
 
+    stl_ext::Result<shm_swapchain*, std::string>
+    init_shm(uint32_t buffer_count = 2, uint32_t format = WL_SHM_FORMAT_ARGB8888);
+
+    [[nodiscard]] bool has_shm() const noexcept { return shm_ != nullptr; }
+    [[nodiscard]] shm_swapchain* shm() noexcept { return shm_.get(); }
+
+    [[nodiscard]] shm_buffer* try_acquire_buffer() noexcept;
+    // UB if shm is not initialized
+    shm_acquire_awaiter acquire() noexcept;
+
+    void present(shm_buffer& buf) noexcept;
+
 private:
-    display& disp_;
+    class display& disp_;
     wl_surface* surface_ = nullptr;
     xdg_surface* xdg_surface_ = nullptr;
     xdg_toplevel* xdg_toplevel_ = nullptr;
@@ -46,8 +70,12 @@ private:
     bool should_close_ = false;
 
     std::coroutine_handle<> configure_waiter_{};
+    std::unique_ptr<shm_swapchain> shm_;
 
-    window(display& disp, uint32_t width, uint32_t height,
+    std::function<void(uint32_t, uint32_t)> on_configure_;
+    std::function<void()> on_close_;
+
+    window(class display& disp, uint32_t width, uint32_t height,
            std::string title, std::string app_id,
            wl_compositor* comp, xdg_wm_base* wm_base);
 

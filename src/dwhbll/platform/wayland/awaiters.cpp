@@ -5,7 +5,9 @@
 #include <dwhbll/platform/wayland/display.h>
 #include <dwhbll/platform/wayland/registry.h>
 #include <dwhbll/platform/wayland/window.h>
+#include <dwhbll/platform/wayland/shm_swapchain.h>
 #include <wayland-client.h>
+#include <algorithm>
 
 namespace dwhbll::platform::wayland {
 
@@ -75,9 +77,8 @@ void frame_awaiter::on_done(void* data, wl_callback* cb, uint32_t time) {
 }
 
 configure_awaiter::~configure_awaiter() {
-    if (win_.configure_waiter_ == waiter_) {
+    if (win_.configure_waiter_ == waiter_)
         win_.configure_waiter_ = {};
-    }
 }
 
 bool configure_awaiter::await_ready() const noexcept {
@@ -131,6 +132,29 @@ stl_ext::Result<void*, std::string> wait_global_awaiter::await_resume() {
         obs_id_ = 0;
     }
     return reg_.bind_raw(iface_, version_);
+}
+
+shm_acquire_awaiter::~shm_acquire_awaiter() {
+    if (waiter_) {
+        auto it = std::find(chain_.acquire_waiters_.begin(), chain_.acquire_waiters_.end(), waiter_);
+        if (it != chain_.acquire_waiters_.end())
+            chain_.acquire_waiters_.erase(it);
+    }
+}
+
+bool shm_acquire_awaiter::await_ready() const noexcept {
+    return chain_.try_acquire() != nullptr;
+}
+
+void shm_acquire_awaiter::await_suspend(std::coroutine_handle<> h) noexcept {
+    waiter_ = h;
+    chain_.acquire_waiters_.push_back(h);
+}
+
+shm_buffer* shm_acquire_awaiter::await_resume() {
+    if (is_cancelled())
+        throw concurrency::coroutine::cancellation_exception();
+    return chain_.try_acquire();
 }
 
 } // namespace dwhbll::platform::wayland

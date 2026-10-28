@@ -31,6 +31,8 @@ public:
 
     wl_compositor* compositor() noexcept;
     xdg_wm_base* wm_base() noexcept;
+    wl_shm* shm() noexcept;
+    const std::vector<uint32_t>& shm_formats() const noexcept { return shm_formats_; }
 
     bool prepare_poll() noexcept;
     int flush() noexcept;
@@ -39,6 +41,7 @@ public:
     void dispatch() noexcept;
 
     [[nodiscard]] sync_awaiter sync();
+    void sync(std::function<void()> on_done);
 
 private:
     bool alive_ = true;
@@ -50,6 +53,10 @@ private:
 
     wl_compositor* compositor_ = nullptr;
     xdg_wm_base* wm_base_ = nullptr;
+    wl_shm* shm_ = nullptr;
+    std::vector<uint32_t> shm_formats_;
+
+    static const wl_shm_listener shm_listener_;
 
     display(struct wl_display* d, wl_event_queue* q);
 };

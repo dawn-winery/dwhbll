@@ -306,11 +306,17 @@ if (DWHBLL_WAYLAND)
         include/dwhbll/platform/wayland/registry.h
         include/dwhbll/platform/wayland/awaiters.h
         include/dwhbll/platform/wayland/window.h
+        include/dwhbll/platform/wayland/shm_buffer.h
+        include/dwhbll/platform/wayland/shm_pool.h
+        include/dwhbll/platform/wayland/shm_swapchain.h
 
         src/dwhbll/platform/wayland/display.cpp
         src/dwhbll/platform/wayland/registry.cpp
         src/dwhbll/platform/wayland/awaiters.cpp
         src/dwhbll/platform/wayland/window.cpp
+        src/dwhbll/platform/wayland/shm_buffer.cpp
+        src/dwhbll/platform/wayland/shm_pool.cpp
+        src/dwhbll/platform/wayland/shm_swapchain.cpp
     )
 
     # For some reason using pkg_get_variable doesn't work.
