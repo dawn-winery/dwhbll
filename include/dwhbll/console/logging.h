@@ -85,6 +85,12 @@ namespace dwhbll::console {
 
     }
 
+    /**
+     * @brief check if STDERR and STDOUT are referring to TTYs
+     * @param force check anyway even if already checked.
+     */
+    void checkTTY(bool force = false);
+
     void setLevel(Level level);
 
     void setCerrLevel(Level level);
