@@ -66,6 +66,12 @@ namespace dwhbll::files::executables {
             return;
         }
 
+        if (image_base.size() < addr.value() + size) {
+            console::warn("data entry is too small to fit the data! (RVA: {:#x})", virtual_address);
+            console::info("Maybe it reaches into uninit region?");
+            return;
+        }
+
         data_view = image_base.subspan(addr.value(), size);
     }
 

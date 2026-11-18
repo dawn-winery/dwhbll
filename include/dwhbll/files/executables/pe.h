@@ -8,6 +8,7 @@
 #include <dwhbll/files/executables/mz.h>
 
 // TODO: the parser should probably be improved to not panic everywhere :xdd:
+// TODO: improve parser to be able to modify arbitrary binaries (e.g. extend past end with data)
 
 namespace dwhbll::files::executables {
     enum class MACHINE_TYPE : uint16_t {
