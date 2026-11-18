@@ -47,7 +47,7 @@ namespace dwhbll::console {
 
             if constexpr (std::formattable<U, char>) {
                 return std::forward<T>(value);
-            } 
+            }
 #if __cpp_impl_reflection >= 202506L
             else
                 return dwhbll::meta::dbg(value);
@@ -61,7 +61,7 @@ namespace dwhbll::console {
 
         template <typename T>
         using log_format_arg_t =
-            std::remove_cvref_t<decltype(log_arg_to_format_arg(std::declval<T>()))>;
+            std::decay_t<decltype(log_arg_to_format_arg(std::declval<T>()))>;
 
         template <typename... Args>
         std::string render(
