@@ -14,6 +14,8 @@ namespace dwhbll::files {
         void unload();
 
     public:
+        binary_file();
+
         explicit binary_file(const std::filesystem::path &path);
 
         ~binary_file();

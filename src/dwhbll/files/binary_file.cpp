@@ -64,6 +64,8 @@ namespace dwhbll::files {
         len = 0;
     }
 
+    binary_file::binary_file() {}
+
     binary_file::binary_file(const std::filesystem::path &path) {
         if (load(path).is_err())
 #if __cpp_lib_format_path >= 202506L
