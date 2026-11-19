@@ -2,12 +2,14 @@
 
 #include <filesystem>
 
+#include <dwhbll/sanify/stl_ext.h>
+
 namespace dwhbll::files {
     class binary_file {
         uint8_t* file{};
         std::size_t len{};
 
-        void load(const std::filesystem::path &path);
+        [[nodiscard]] stl_ext::errno_result<stl_ext::UNIT> load(const std::filesystem::path &path);
 
         void unload();
 

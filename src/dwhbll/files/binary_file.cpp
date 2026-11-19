@@ -9,7 +9,7 @@
 #include <unistd.h>
 
 namespace dwhbll::files {
-    void binary_file::load(const std::filesystem::path &path) {
+    stl_ext::errno_result<stl_ext::UNIT> binary_file::load(const std::filesystem::path &path) {
         if (file) {
 #if __cpp_lib_format_path >= 202506L
             console::warn("There is already a file loaded?! Unloading before loading {}", path.display_string());
@@ -26,14 +26,12 @@ namespace dwhbll::files {
 #endif
         int fd = open(fname.c_str(), O_RDONLY);
 
-        if (fd == -1) {
-            debug::panic("Failed to open file: {}", fname);
-        }
+        if (fd == -1)
+            return stl_ext::Err(errno);
 
         struct stat st{};
-        if (fstat(fd, &st) == -1) {
-            debug::panic("Failed to stat open file: {}", fname);
-        }
+        if (fstat(fd, &st) == -1)
+            return stl_ext::Err(errno);
 
         len = st.st_size;
 
@@ -41,7 +39,7 @@ namespace dwhbll::files {
             nullptr,
             len,
             PROT_READ,
-            MAP_PRIVATE,
+            MAP_SHARED,
             fd,
             0
         );
@@ -49,9 +47,11 @@ namespace dwhbll::files {
         close(fd);
 
         if (mapping == MAP_FAILED)
-            debug::panic("Failed to map file: {}", fname);
+            return stl_ext::Err(errno);
 
         file = static_cast<std::uint8_t*>(mapping);
+
+        return stl_ext::Ok();
     }
 
     void binary_file::unload() {
@@ -65,7 +65,12 @@ namespace dwhbll::files {
     }
 
     binary_file::binary_file(const std::filesystem::path &path) {
-        load(path);
+        if (load(path).is_err())
+#if __cpp_lib_format_path >= 202506L
+            console::warn("Failed to load file {}", path.display_string());
+#else
+            console::warn("Failed to load file {}", path.string());
+#endif
     }
 
     binary_file::~binary_file() {
