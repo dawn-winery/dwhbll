@@ -128,6 +128,7 @@ set(DWHBLL_SOURCES
     src/dwhbll/network/dns/dns.cpp
     src/dwhbll/network/http.cpp
     src/dwhbll/network/socket_manager.cpp
+    src/dwhbll/platform/linux_wrappers/daemon.cpp
     src/dwhbll/platform/linux_wrappers/ptrace.cpp
     src/dwhbll/sanify/deferred.cpp
     src/dwhbll/subprocess/process.cpp
@@ -220,6 +221,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/network/http.h
     include/dwhbll/network/http_server.h
     include/dwhbll/network/socket_manager.h
+    include/dwhbll/platform/linux_wrappers/daemon.h
     include/dwhbll/platform/linux_wrappers/ptrace.h
     include/dwhbll/sanify/all.h
     include/dwhbll/sanify/coroutines.h
