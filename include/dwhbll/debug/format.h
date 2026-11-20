@@ -1,5 +1,10 @@
 #pragma once
 
+#include <format>
+#include <version>
+
+#if __cpp_impl_reflection >= 202506L
+
 #include <meta>
 #include <dwhbll/json/json.h>
 #include <cassert>
@@ -104,8 +109,6 @@ constexpr std::string dbg(T const& val, int depth = 0, int step = 4, bool first_
         return dbg_print_value(val, depth, step);
 }
 
-#define 🦀 dbg
-
 #define LOG_FUNC(func) \
     constexpr std::string_view __id = std::meta::identifier_of(^^func); \
     std::string __s; \
@@ -116,3 +119,16 @@ constexpr std::string dbg(T const& val, int depth = 0, int step = 4, bool first_
     trace(std::format("function {}:\n{}", __id, __s));
 
 } // namespace dwhbll::meta
+
+#else
+
+namespace dwhbll::meta {
+template <typename T>
+constexpr std::string dbg(T const& val, int depth = 0, int step = 4, bool first_indent = true) {
+    return std::format<T>("{}", val);
+}
+}
+
+#endif
+
+#define 🦀 dbg
