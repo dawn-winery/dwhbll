@@ -17,6 +17,9 @@ General list of library components:
 - Opinionated sanify library (`sanify/*`)
   - `u64`, `i64`, `u32`, etc. typedefs
   - Optional `using namespace` for some long namespace names.
+  - Sugars library
+    - Sugary ranges
+    - Rust inspired sugary enums (see [docs](docs/enum.md) for usage)
 - Entire WIP C++26/29 compiler in dwcc-dev branch (`lang/*`)
 - Async runtime (WIP, C++20 coroutine, io_uring backend)
 - Usable memory pool (needs work)

@@ -227,6 +227,7 @@ set(DWHBLL_SOURCES
     include/dwhbll/sanify/lang_ext.h
     include/dwhbll/sanify/stl_ext.h
     include/dwhbll/sanify/sugar/all.h
+    include/dwhbll/sanify/sugar/enum.h
     include/dwhbll/sanify/sugar/ranges.h
     include/dwhbll/sanify/types.h
     include/dwhbll/stl_ext/common_helpers.h
