@@ -1,6 +1,7 @@
 #include <dwhbll/concurrency/spinlock.h>
+
+#include <dwhbll/debug/panic.h>
 #include <dwhbll/console/logging.h>
-#include <dwhbll/exceptions/concurrency_exception.h>
 
 #if defined(__x86_64__) || defined(__i386__)
 #include <xmmintrin.h>
