@@ -1,4 +1,6 @@
+#include <cstddef>
 #include <ranges>
+#include <type_traits>
 #include <dwhbll/unicode/helpers.h>
 
 #include <dwhbll/unicode/table.h>
@@ -607,5 +609,75 @@ namespace dwhbll::unicode {
                 return true;
             }
         }
+    }
+
+    namespace {
+    struct utf8_format {
+        char32_t maxcp;
+        int continuation;
+        char32_t offset;
+    };
+
+    constexpr utf8_format formats[] = {
+        {0x007F,   0, 0x00},
+        {0x07FF,   1, 0xC0},
+        {0xFFFF,   2, 0xE0},
+        {0x10FFFF, 3, 0xF0},
+    };
+
+    auto append_utf8(std::string& res, char32_t cp) -> void {
+        if (cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF))
+            cp = U'\uFFFD';
+
+        for (const auto& format : formats) {
+            if (cp > format.maxcp)
+                continue;
+
+            auto count = format.continuation;
+            res.push_back(static_cast<char>((cp >> (6 * count)) + format.offset));
+
+            for (; count > 0; --count) {
+                const auto payload = cp >> (6 * (count - 1));
+                res.push_back(static_cast<char>(0x80 | (payload & 0x3F)));
+            }
+            return;
+        }
+    }
+    }
+
+    auto to_utf8(std::span<const char32_t> code_points) -> std::string {
+        auto res = std::string{};
+        res.reserve(code_points.size());
+
+        for (const auto cp : code_points)
+            append_utf8(res, cp);
+
+        return res;
+    }
+
+    auto decode_wide(std::wstring_view str) -> std::u32string {
+        std::u32string res;
+        res.reserve(str.size());
+
+        static_assert(sizeof(wchar_t) == 2 || sizeof(wchar_t) == 4);
+        for (auto i = std::size_t{0}; i < str.size(); ++i) {
+            auto cp = static_cast<char32_t>((wchar_t)(str[i]));
+            if constexpr (sizeof(wchar_t) == 2) {
+                if (cp >= 0xD800 && cp <= 0xDBFF && i + 1 < str.size()) {
+                    const auto low = static_cast<char32_t>((wchar_t)(str[i + 1]));
+                    if (low >= 0xDC00 && low <= 0xDFFF) {
+                        cp = 0x10000 + ((cp - 0xD800) << 10) + (low - 0xDC00);
+                        ++i;
+                    }
+                }
+            }
+
+            if (cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF))
+                cp = U'\uFFFD';
+
+            res.push_back(cp);
+        }
+
+        return res;
     }
 }
