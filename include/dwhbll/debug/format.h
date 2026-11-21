@@ -10,6 +10,7 @@
 #include <dwhbll/stl_ext/cow.h>
 #include <dwhbll/stl_ext/option.h>
 #include <dwhbll/stl_ext/result.h>
+#include <dwhbll/unicode/helpers.h>
 #include <cassert>
 
 namespace dwhbll::console {
@@ -48,6 +49,10 @@ constexpr std::string dbg_print_value(T const& val, int depth, int step) {
     if constexpr (std::convertible_to<T, std::string_view>)
         return std::format("{:?}", std::string_view(val)); // want strings to be quoted
 
+    else if constexpr (std::convertible_to<T const&, std::wstring_view>) {
+        const auto code_points = unicode::decode_wide(std::wstring_view(val));
+        return std::format("{:?}", unicode::to_utf8(code_points));
+    }
     // DO NOT MOVE THIS BELOW FORMATTABLE BECAUSE SOME GENIUS MADE UNBOUNDED VIEW FORMATTABLE
     else if constexpr (unbounded_range<T>)
         return "[<unbounded range>]";
