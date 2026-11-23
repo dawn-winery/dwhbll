@@ -37,6 +37,13 @@ struct std::formatter<T, char> {
             {
                 if constexpr (std::meta::is_variable(m)) 
                     if constexpr (requires { [:m:].discriminant(); }) {
+                    if constexpr (std::convertible_to<decltype([:m:]), std::string_view>)
+                    {
+                        if (std::string_view([:m:].discriminant()) == std::string_view(active.discriminator()))
+                            out = std::format_to(out, "{}", std::meta::identifier_of(m));  
+                    }
+                    else{
+                    
                         if ([:m:].discriminant() == active.discriminator())
                             out = std::format_to(out, "{}", std::meta::identifier_of(m));
                     }
