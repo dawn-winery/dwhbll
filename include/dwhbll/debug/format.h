@@ -216,3 +216,4 @@ constexpr std::string dbg(T const& val, int depth = 0, int step = 4, bool first_
 #include <dwhbll/debug/formatters/option.h>
 #include <dwhbll/debug/formatters/result.h>
 #include <dwhbll/debug/formatters/cow.h>
+#include <dwhbll/debug/formatters/enum.h>
