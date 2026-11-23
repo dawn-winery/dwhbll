@@ -1,6 +1,7 @@
 #include <dwhbll/platform/linux_wrappers/daemon.h>
 
 #include <fcntl.h>
+#include <unistd.h>
 
 #include <dwhbll/debug/debug.h>
 #include <dwhbll/console/logging.h>
