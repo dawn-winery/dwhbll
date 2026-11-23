@@ -9,6 +9,9 @@ namespace dwhbll::sanify::sugar::detail {
     struct base_variant_tuple {
         TV index_{};
 
+        template <typename T>
+        base_variant_tuple(T&& index) : index_(std::forward<T>(index)) {}
+
         [[nodiscard]] constexpr TV discriminator() const {
             return index_;
         }
