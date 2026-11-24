@@ -35,19 +35,17 @@ struct std::formatter<T, char> {
             template for (constexpr auto m:
                 std::define_static_array(std::meta::members_of(^^T, ctx2)))
             {
-                if constexpr (std::meta::is_variable(m)) 
+                if constexpr (std::meta::is_variable(m)) {
                     if constexpr (requires { [:m:].discriminant(); }) {
-                    if constexpr (std::convertible_to<decltype([:m:]), std::string_view>)
-                    {
-                        if (std::string_view([:m:].discriminant()) == std::string_view(active.discriminator()))
-                            out = std::format_to(out, "{}", std::meta::identifier_of(m));  
+                        if constexpr (std::convertible_to<decltype([:m:].discriminant()), std::string_view>) {
+                            if (std::string_view([:m:].discriminant()) == std::string_view(active.discriminator()))
+                                out = std::format_to(out, "{}", std::meta::identifier_of(m));
+                        } else {
+                            if ([:m:].discriminant() == active.discriminator())
+                                out = std::format_to(out, "{}", std::meta::identifier_of(m));
+                        }
                     }
-                    else{
-                    
-                        if ([:m:].discriminant() == active.discriminator())
-                            out = std::format_to(out, "{}", std::meta::identifier_of(m));
-                    }
-                
+                }
             }
             
             auto x = true; 
