@@ -182,7 +182,7 @@ constexpr std::string dbg_print_struct(T const &val, int depth, int step) {
 template <typename T>
 constexpr std::string dbg(T const& val, int depth = 0, int step = 4, bool first_indent = true) {
     std::string indent = get_indentation(depth, step);
-    constexpr std::string_view type = std::meta::display_string_of(^^T);
+    // constexpr std::string_view type = std::meta::display_string_of(^^T);
     if(first_indent)
         return std::format("{} {}", indent, dbg_print_value(val, depth, step));
     else
@@ -216,3 +216,4 @@ constexpr std::string dbg(T const& val, int depth = 0, int step = 4, bool first_
 #include <dwhbll/debug/formatters/option.h>
 #include <dwhbll/debug/formatters/result.h>
 #include <dwhbll/debug/formatters/cow.h>
+#include <dwhbll/debug/formatters/enum.h>
