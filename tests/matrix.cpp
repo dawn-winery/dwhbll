@@ -1,3 +1,4 @@
+#include "dwhbll/math/vec4.h"
 #include <dwhbll/testing/testing.h>
 #include <dwhbll/linalg/matrix.h>
 #include <dwhbll/linalg/nmatrix.h>
@@ -6,6 +7,7 @@
 #include <print>
 #include <random>
 #include <span>
+#include <type_traits>
 
 using namespace dwhbll::test;
 using namespace dwhbll::linalg;
@@ -168,6 +170,64 @@ void new_dyn_zero_init()
 	}
 }
 
+[[=test]]
+void new_addition()
+{
+	constexpr size_t M = 4, N = 4;
+
+	dwhbll::linalg::matrix<int, M, N> m1 {
+		1, 2, 3, 4,
+		5, 6, 7, 8,
+		9, 10, 11, 12,
+		13, 14, 15, 16
+	};
+
+	dwhbll::linalg::matrix<int, M, N> m2 {
+		16, 15, 14, 13,
+		12, 11, 10, 9,
+		8, 7, 6, 5,
+		4, 3, 2, 1
+	};
+
+	auto m3 = m1 + m2;
+	REQUIRE(m3.get_rows() == M);
+	REQUIRE(m3.get_cols() == N);
+	REQUIRE((std::is_same_v<decltype(m3)::value_type, int>));
+
+	for (size_t i = 0; i < M; i++)
+		for (size_t j = 0; j < N; j++)
+			REQUIRE((m3[i, j] == 17));
+}
+
+
+[[=test]]
+void new_substraction()
+{
+	constexpr size_t M = 4, N = 4;
+
+	dwhbll::linalg::matrix<int, M, N> m1 {
+		0, 1, 2, 3,
+		4, 5, 6, 7,
+		8, 9, 10, 11,
+		12, 13, 14, 15
+	};
+
+	dwhbll::linalg::matrix<int, M, N> m2 {
+		15, 14, 13, 12,
+		11, 10, 9, 8,
+		7, 6, 5, 4,
+		3, 2, 1, 0
+	};
+
+	auto m3 = m2 - m1;
+	REQUIRE(m3.get_rows() == M);
+	REQUIRE(m3.get_cols() == N);
+	REQUIRE((std::is_same_v<decltype(m3)::value_type, int>));
+
+	for (size_t i = 0; i < M; i++)
+		for (size_t j = 0; j < N; j++)
+			REQUIRE((m3[i, j] == static_cast<int>(15 - 2 * (i * N + j))));
+}
 
 
 

@@ -1,15 +1,12 @@
-#include <concepts>
+#include "../stl_ext/packs.h"
+#include "../debug/debug.h"
+#include "concepts.h"
 #include <initializer_list>
-#include <vector>
 #include <array>
 #include <mdspan>
-#include <memory>
 #include <span>
 #include <ranges>
 #include <contracts>
-#include <type_traits>
-#include "../stl_ext/packs.h"
-#include "concepts.h"
 
 namespace dwhbll::linalg {
 
@@ -17,8 +14,7 @@ namespace dwhbll::linalg {
 namespace __details {
 
 	// Dimension helpers
-	template <size_t Dim> struct is_dim_static { static constexpr bool value = (Dim != std::dynamic_extent); };
-	template <size_t Dim> constexpr bool is_dim_static_v = is_dim_static<Dim>::value;
+	template <size_t Dim> constexpr bool is_dim_static_v = (Dim != std::dynamic_extent);
 
 	enum class StaticDim {
 		None = 0,
@@ -44,17 +40,37 @@ namespace __details {
 	static constexpr StaticDim which_dim_static = static_dim_helper<Row, Col>::value;
 
 
-	///@brief Helper for chosing the type of the dimension members.
+	/// @brief Helper for chosing the type of the dimension members.
 	/// If Dim is static, uses std::integral_constant to give it 0 size
 	/// enabling it to be potentially overlapping and thus enabling move
 	/// semantics and assignments despite being const
 	template <size_t Dim>
 	using dim_t = std::conditional_t<is_dim_static_v<Dim>, std::integral_constant<size_t, Dim>, size_t>;
 
+
+	/**
+	 * @brief Checks that dimensions are compatible for operations
+	 * @note  Optimistic when a dimension is dynamic. To check at runtime using
+	 *		  asserts or contracts
+	 */
+	template <size_t D1, size_t D2>
+	constexpr bool dim_compatible_v = (!is_dim_static_v<D1>) || (!is_dim_static_v<D2>) || D1 == D2;
+	template <size_t R1, size_t C1, size_t R2, size_t C2>
+	constexpr bool matrix_dims_compatible_v = dim_compatible_v<R1, R2> && dim_compatible_v<C1, C2>;
+
+	/**
+	 * @brief Verifies that the matrix element types T and U have a common type
+	 * 		  that is also a matrix element. Should work out of the box for all
+	 *		  primitive types, but may requires a std::common_type specialization
+	 *		  for custom matrix element types.
+	 */
+	template <MatElt T, MatElt U>
+	constexpr bool common_mat_elt = std::common_with<T, U> && MatElt<std::common_type_t<T, U>>;
+
 	/**
 	 * @brief Helper to ensure nested initializer lists are rectangular.
-	 * Rectangularity means that all instances of the 2nd level of matrices
-	 * are exactly the same size
+	 * 		  Rectangularity means that all instances of the 2nd level of matrices
+	 * 		  are exactly the same size
      * @tparam T the type inside the nested lists
      * @param args the nested lists to verify
      * @return true if args is rectangular, false otherwise
@@ -78,7 +94,7 @@ using col_major = std::layout_left;
 constexpr size_t static_size_limit = 4096;	// If you need a single 4 KiB object on the stack, no, you need help
 
 /**
- * @brief Flat in-memory storage for a 2x2 matrix
+ * @brief Flat in-memory storage for a matrix
  * @tparam T element type to store in the matrix, must satisfy the MatElt concept
  * @tparam Row the number of rows, default is dynamic
  * @tparam Col the number of colums, default is dynamic
@@ -99,10 +115,8 @@ class matrix {
 	static constexpr bool is_fully_static 	= __details::which_dim_static<Row, Col> == __details::StaticDim::Both;
 	static constexpr size_t static_size		= is_fully_static ? Row * Col : 0;
 
-	using value_type = T;
-	using layout = Layout;
 	using storage_t = std::conditional_t<
-		is_fully_static && std::is_same_v<Allocator, std::allocator<T>> && static_size < static_size_limit,
+		is_fully_static && std::is_same_v<Allocator, std::allocator<T>> && (static_size * sizeof(T)) < static_size_limit,
 		std::array<T, static_size>,
 		std::vector<T, Allocator>
 	>;
@@ -113,6 +127,9 @@ class matrix {
 	storage_t storage;
 
 public:
+	using value_type = T;
+	using layout = Layout;
+
 	/**
 	 * @brief Default constructor for constructing with nothing
 	 * @note If the matrix has a std::array storage backing, the rows,
@@ -146,7 +163,7 @@ public:
 
 	/**
 	 * @brief Constructor to 0 init a half static matrix along its rows
-	 * @param[size_t] r the initial number of columns
+	 * @param[size_t] c the initial number of columns
 	 */
 	matrix(size_t c)
 		requires(__details::which_dim_static<Row, Col> == __details::StaticDim::Row)
@@ -160,7 +177,7 @@ public:
 	 * @tparam Args the variadic list of type of the inserted elements. Inferred by the compiler
 	 * @param[Args...] args the elements to insert
 	 * @note All inserted elements must be convertible to internal type of the matrix
-	 * @note The amount of inserted element must be divisible by the static matrix to ensure a rectangular matrix
+	 * @note The amount of inserted element must be divisible by the static matrix dimension to ensure a rectangular matrix
 	 */
 	template<MatElt... Args>
 	matrix(Args&&... args)
@@ -207,9 +224,54 @@ public:
 	}
 
 
+	template <MatElt U, size_t R2, size_t C2, class L2, class A2>
+	friend auto operator+(const matrix& lhs, const matrix<U, R2, C2, L2, A2>& rhs)
+		requires (__details::matrix_dims_compatible_v<Row, R2, Col, C2>
+			&& __details::common_mat_elt<T, U> && std::is_same_v<Layout, L2>)
+	{
+		ASSERT(lhs.get_rows() == rhs.get_rows(), "Rows must match for adding matrices");
+		ASSERT(lhs.get_cols() == rhs.get_cols(), "Columns must match for adding matrices");
+
+		using OutT = std::common_type_t<T, U>;
+		matrix<OutT, Row, Col, Layout, Allocator> out;
+
+		for (size_t i = 0; i < lhs.get_rows(); i++) {
+			for (size_t j = 0; j < lhs.get_cols(); j++) {
+				out[i, j] = lhs[i, j] + rhs[i, j];
+			}
+		}
+
+		return out;
+	}
+
+
+	template <MatElt U, size_t R2, size_t C2, class L2, class A2>
+	friend auto operator-(const matrix& lhs, const matrix<U, R2, C2, L2, A2>& rhs)
+		requires (__details::matrix_dims_compatible_v<Row, R2, Col, C2>
+			&& __details::common_mat_elt<T, U> && std::is_same_v<Layout, L2>)
+	{
+		ASSERT(lhs.get_rows() == rhs.get_rows(), "Rows must match for subtracting matrices");
+		ASSERT(lhs.get_cols() == rhs.get_cols(), "Columns must match for subtracting matrices");
+
+		using OutT = std::common_type_t<T, U>;
+		matrix<OutT, Row, Col, Layout, Allocator> out;
+
+		for (size_t i = 0; i < lhs.get_rows(); i++) {
+			for (size_t j = 0; j < lhs.get_cols(); j++) {
+				out[i, j] = lhs[i, j] - rhs[i, j];
+			}
+		}
+
+		return out;
+	}
+
+
 	size_t get_rows() const { return rows; }
+
 	size_t get_cols() const { return cols; }
+
 	size_t size() const { return storage.size(); }
+
 	bool is_square()  const {
 		if constexpr (is_fully_static)
 			return Row == Col;
@@ -222,6 +284,7 @@ public:
 				return rows == cols;
 		}
 	}
+
 	template <class Self>
 	auto data(this Self& self) { return self.storage.data(); }
 };

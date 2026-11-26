@@ -17,8 +17,6 @@ namespace dwhbll::linalg {
 			{ (a - b) }  	-> std::convertible_to<T>;
 			{ (a * b) }  	-> std::convertible_to<T>;
 			{ (a / b) }  	-> std::convertible_to<T>;
-			{ (a && b) } 	-> std::convertible_to<T>;
-			{ (a || b) } 	-> std::convertible_to<T>;
 			{ (-a) } 	 	-> std::convertible_to<T>;
 			{ (a += b) } 	-> std::same_as<T&>;
 			{ (a -= b) } 	-> std::same_as<T&>;
