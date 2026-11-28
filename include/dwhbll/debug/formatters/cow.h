@@ -18,6 +18,6 @@ struct std::formatter<dwhbll::stl_ext::cow<T>, char> {
         if (ptr == nullptr)
             return std::format_to(ctx.out(), "<empty cow>");
 
-        return std::format_to(ctx.out(), "{}",dwhbll::meta::dbg(*ptr,0,5,false));
+        return std::format_to(ctx.out(), "{}",dwhbll::meta::dbg(*ptr, false));
     }
 };

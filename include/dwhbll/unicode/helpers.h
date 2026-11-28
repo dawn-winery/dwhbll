@@ -8,6 +8,7 @@ namespace dwhbll::unicode {
 
     [[nodiscard]] auto to_utf8(std::span<const char32_t> str) -> std::string;
     [[nodiscard]] auto decode_wide(std::wstring_view str) -> std::u32string;
+    [[nodiscard]] auto decode_utf16(std::u16string_view str) -> std::u32string;
 
     namespace normalization {
         [[nodiscard]] bool is_hangul_syllable(char32_t c);

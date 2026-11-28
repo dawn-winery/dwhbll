@@ -14,10 +14,10 @@ struct std::formatter<dwhbll::stl_ext::Result<T, E>, char> {
 
     auto format(const dwhbll::stl_ext::Result<T, E>& result, auto& ctx) const {
         if (result.is_ok()) {
-            return std::format_to(ctx.out(), "Ok({})", dwhbll::meta::🦀(result.unwrap(), 0, 5, false));
+            return std::format_to(ctx.out(), "Ok({})", dwhbll::meta::🦀(result.unwrap(), false));
         }
         if (result.is_err()) {
-            return std::format_to(ctx.out(), "Err({})", dwhbll::meta::🦀(result.unwrap_err(), 0, 5, false));
+            return std::format_to(ctx.out(), "Err({})", dwhbll::meta::🦀(result.unwrap_err(), false));
         }
         return std::format_to(ctx.out(), "<invalid Result>");
     }

@@ -5,5 +5,5 @@
 // TODO: do better
 namespace dwhbll::meta {
     template <typename T>
-    constexpr std::string dbg(const T&, int, int, bool);
+    constexpr std::string dbg(const T&, bool, int);
 }

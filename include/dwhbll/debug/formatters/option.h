@@ -15,7 +15,7 @@ struct std::formatter<dwhbll::stl_ext::Option<T>, char> {
     auto format(const dwhbll::stl_ext::Option<T>& option, auto& ctx) const {
         if (option.is_some()) {
             return std::format_to(ctx.out(), "Some({})",
-                dwhbll::meta::dbg(option.unwrap(), 0, 5, false));
+                dwhbll::meta::dbg(option.unwrap(), false));
         }
         return std::format_to(ctx.out(), "None");
     }

@@ -655,16 +655,17 @@ namespace dwhbll::unicode {
         return res;
     }
 
-    auto decode_wide(std::wstring_view str) -> std::u32string {
+    template <typename CharT>
+    static auto decode_pairs(std::basic_string_view<CharT> str) -> std::u32string {
         std::u32string res;
         res.reserve(str.size());
 
-        static_assert(sizeof(wchar_t) == 2 || sizeof(wchar_t) == 4);
+        static_assert(sizeof(CharT) == 2 || sizeof(CharT) == 4);
         for (auto i = std::size_t{0}; i < str.size(); ++i) {
-            auto cp = static_cast<char32_t>((wchar_t)(str[i]));
-            if constexpr (sizeof(wchar_t) == 2) {
+            auto cp = static_cast<char32_t>(str[i]);
+            if constexpr (sizeof(CharT) == 2) {
                 if (cp >= 0xD800 && cp <= 0xDBFF && i + 1 < str.size()) {
-                    const auto low = static_cast<char32_t>((wchar_t)(str[i + 1]));
+                    const auto low = static_cast<char32_t>(str[i + 1]);
                     if (low >= 0xDC00 && low <= 0xDFFF) {
                         cp = 0x10000 + ((cp - 0xD800) << 10) + (low - 0xDC00);
                         ++i;
@@ -679,5 +680,13 @@ namespace dwhbll::unicode {
         }
 
         return res;
+    }
+
+    auto decode_wide(std::wstring_view str) -> std::u32string {
+        return decode_pairs(str);
+    }
+
+    auto decode_utf16(std::u16string_view str) -> std::u32string {
+        return decode_pairs(str);
     }
 }

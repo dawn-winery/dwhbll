@@ -14,7 +14,6 @@ namespace {
         requires dwhbll::sanify::sugar::detail::is_self_tuple<T, std::variant_alternative_t<0, typename T::storage_t>>;
         value.__impl_storage_t();
     };
-
 }
 
 
@@ -23,14 +22,14 @@ struct std::formatter<T, char> {
     constexpr auto parse(std::format_parse_context& ctx) {
         return ctx.begin();
     }
-
+    
     auto format(const T& x, auto& ctx) const {
         return std::visit([&](const auto& active) {
 
             auto out = std::format_to(ctx.out(), "{}::",std::meta::identifier_of(^^T));
 
             // match helpers against discriminator id to find the name of the bloody Discriminator
-
+            
             constexpr auto ctx2 = std::meta::access_context::unchecked();
             template for (constexpr auto m:
                 std::define_static_array(std::meta::members_of(^^T, ctx2)))
@@ -52,7 +51,7 @@ struct std::formatter<T, char> {
             if constexpr (requires { active.tuple; })
             {
                 out = std::apply([&](const auto&... fields) {
-                     ((out = std::format_to(out, "{}{}",std::exchange(x, false) ? "(" : ", ",dwhbll::meta::dbg(fields, 0, 5, false))), ...);
+                     ((out = std::format_to(out, "{}{}",std::exchange(x, false) ? "(" : ", ",dwhbll::meta::dbg(fields, false))), ...);
                      return out;
                  }, active.tuple);
             }
